@@ -1,0 +1,11 @@
+# Changelog
+
+Alle nennenswerten Änderungen an diesem Projekt werden hier festgehalten.
+Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
+Versionierung nach [SemVer](https://semver.org/lang/de/).
+
+## [Unreleased]
+
+### Hinzugefügt
+
+- Monorepo-Gerüst mit pnpm-Workspaces, TypeScript-Basiskonfiguration, ESLint und Prettier.

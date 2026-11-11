@@ -1,0 +1,27 @@
+# Abhängigkeiten
+node_modules/
+.pnpm-store/
+
+# Build-Ausgaben
+dist/
+out-tsc/
+.angular/
+*.tsbuildinfo
+coverage/
+
+# Umgebungen (nie einchecken, siehe .env.example)
+.env
+.env.*
+!.env.example
+
+# Lokale Daten
+infra/data/
+backups/
+*.log
+
+# Editor / OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db

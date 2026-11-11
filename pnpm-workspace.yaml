@@ -1,0 +1,13 @@
+packages:
+  - apps/*
+  - packages/*
+
+# Exakte Versionen beim Hinzufügen von Abhängigkeiten (Spezifikation, Abschnitt 17).
+saveExact: true
+
+# Neue Releases erst nach 14 Tagen installieren (Schutz vor kompromittierten Paketen).
+# Angabe in Minuten.
+minimumReleaseAge: 20160
+
+# Nur ausdrücklich erlaubte Pakete dürfen Install-Scripts ausführen.
+allowBuilds: {}
