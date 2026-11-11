@@ -9,3 +9,5 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 ### Hinzugefügt
 
 - Monorepo-Gerüst mit pnpm-Workspaces, TypeScript-Basiskonfiguration, ESLint und Prettier.
+- Scripts `setup.sh`, `dev.sh`, `test.sh` und `migrate.sh` sowie Docker Compose für die Entwicklung
+  (Postgres 18, Valkey 8).

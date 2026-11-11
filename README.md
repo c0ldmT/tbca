@@ -25,6 +25,28 @@ tbca/
 └── scripts/     # alle Abläufe als Bash-Scripts
 ```
 
+## Schnellstart
+
+```bash
+scripts/setup.sh   # pnpm, Abhängigkeiten, .env.development
+scripts/dev.sh     # Postgres + Valkey (Docker), Migrationen, Apps mit Hot Reload
+scripts/test.sh    # Format, Lint, Typen, Tests, Audit
+```
+
+Unter Windows laufen alle Scripts in WSL2 (Ubuntu) mit Docker Desktop oder Docker Engine.
+
+## Scripts
+
+| Script               | Zweck                                                               |
+| -------------------- | ------------------------------------------------------------------- |
+| `scripts/setup.sh`   | pnpm und Abhängigkeiten installieren, `.env.<umgebung>` anlegen     |
+| `scripts/dev.sh`     | Dienste per Docker, Apps nativ; `services`, `down`, `reset`, `logs` |
+| `scripts/test.sh`    | Prettier, ESLint, Typprüfung, Unit-Tests, `pnpm audit`              |
+| `scripts/migrate.sh` | Migrationen ausführen; `generate`, `seed`                           |
+
+Jedes Script zeigt mit `--help` seine Optionen. Die Umgebung wählt `TBCA_ENV`
+(`development` oder `production`); Variablen sind in `.env.example` dokumentiert.
+
 ## Patches einspielen
 
 Änderungen werden als `git format-patch`-Dateien geliefert:
