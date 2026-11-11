@@ -1,0 +1,92 @@
+:host {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: 100dvh;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--tbca-space-4);
+  top: -100px;
+  padding: var(--tbca-space-2) var(--tbca-space-4);
+  background: var(--tbca-neon-cyan);
+  color: var(--tbca-bg-void);
+  z-index: 10;
+}
+
+.skip-link:focus {
+  top: var(--tbca-space-2);
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tbca-space-4);
+  padding: var(--tbca-space-3) clamp(var(--tbca-space-4), 4vw, var(--tbca-space-12));
+  padding-top: max(var(--tbca-space-3), env(safe-area-inset-top));
+  border-bottom: 1px solid var(--tbca-line);
+  background: rgb(7 8 13 / 0.85);
+  backdrop-filter: blur(6px);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.wordmark {
+  font: 700 var(--tbca-text-lg) / 1 var(--tbca-font-display);
+  letter-spacing: 0.08em;
+  color: var(--tbca-text-primary);
+  text-decoration: none;
+  min-height: var(--tbca-touch-target);
+  display: inline-flex;
+  align-items: center;
+}
+
+.bar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--tbca-space-3);
+}
+
+.lang {
+  display: inline-flex;
+  border: 1px solid var(--tbca-line);
+}
+
+.lang__option {
+  min-width: var(--tbca-touch-target);
+  min-height: var(--tbca-touch-target);
+  border: 0;
+  background: transparent;
+  color: var(--tbca-text-muted);
+  font: 500 var(--tbca-text-sm) / 1 var(--tbca-font-mono);
+  cursor: pointer;
+}
+
+.lang__option[aria-pressed='true'] {
+  color: var(--tbca-bg-void);
+  background: var(--tbca-neon-cyan);
+}
+
+main {
+  outline: none;
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tbca-space-6);
+  padding: var(--tbca-space-6) clamp(var(--tbca-space-4), 4vw, var(--tbca-space-12));
+  padding-bottom: max(var(--tbca-space-6), env(safe-area-inset-bottom));
+  border-top: 1px solid var(--tbca-line);
+  font-size: var(--tbca-text-sm);
+}
+
+.footer a {
+  color: var(--tbca-text-muted);
+}
+
+.footer a:hover {
+  color: var(--tbca-text-primary);
+}

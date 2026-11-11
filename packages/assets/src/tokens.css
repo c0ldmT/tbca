@@ -1,0 +1,70 @@
+/*
+ * TBCA Design-Tokens (Spezifikation, Abschnitt 18).
+ * Dark-first Cyberpunk; Glitch ist ein dosiertes Akzentmittel, kein Dauerzustand.
+ * Werte müssen zu src/tokens.ts passen (Test in packages/assets).
+ */
+:root {
+  color-scheme: dark;
+
+  /* Flächen */
+  --tbca-bg-void: #07080d;
+  --tbca-surface-1: #0f1220;
+  --tbca-surface-2: #171b2e;
+  --tbca-line: #262c47;
+
+  /* Akzente */
+  --tbca-neon-cyan: #00f0ff;
+  --tbca-neon-magenta: #ff2a6d;
+  --tbca-neon-yellow: #f5e400;
+
+  /* Text */
+  --tbca-text-primary: #e6eaf5;
+  --tbca-text-muted: #8a93b2;
+
+  /* Rarität-Tiers (Tier = aufgerundet Rarität / 3) */
+  --tbca-tier-1: #c9ced9;
+  --tbca-tier-2: #00f0ff;
+  --tbca-tier-3: #ffb000;
+  --tbca-tier-4: #b44cff;
+  --tbca-tier-5: #ff3b3b;
+  --tbca-tier-6: #7df9ff;
+  --tbca-tier-6-holo: linear-gradient(
+    115deg,
+    #7df9ff 0%,
+    #b44cff 30%,
+    #ff2a6d 55%,
+    #f5e400 80%,
+    #7df9ff 100%
+  );
+
+  /* Schrift */
+  --tbca-font-display: 'Chakra Petch', 'Segoe UI', system-ui, sans-serif;
+  --tbca-font-body: 'Inter Variable', 'Inter', system-ui, sans-serif;
+  --tbca-font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Typo-Skala (Verhältnis 1,25) */
+  --tbca-text-sm: 0.875rem;
+  --tbca-text-base: 1rem;
+  --tbca-text-lg: 1.25rem;
+  --tbca-text-xl: 1.563rem;
+  --tbca-text-2xl: 1.953rem;
+  --tbca-text-display: clamp(2.6rem, 11vw, 6.5rem);
+
+  /* Abstände (4er-Raster) */
+  --tbca-space-1: 0.25rem;
+  --tbca-space-2: 0.5rem;
+  --tbca-space-3: 0.75rem;
+  --tbca-space-4: 1rem;
+  --tbca-space-6: 1.5rem;
+  --tbca-space-8: 2rem;
+  --tbca-space-12: 3rem;
+
+  /* Form: abgeschrägte HUD-Ecke statt Rundung */
+  --tbca-chamfer: 14px;
+  --tbca-touch-target: 44px;
+
+  /* Bewegung */
+  --tbca-glitch-ms: 300ms;
+  --tbca-fast-ms: 120ms;
+  --tbca-base-ms: 200ms;
+}

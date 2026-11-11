@@ -4,7 +4,7 @@ Webbasiertes, rundenbasiertes Auto-Battler-RPG im Cyberpunk-Stil, das Communitie
 Twitch und im Web aktiv hält. Die vollständige Spezifikation liegt außerhalb des Repos
 („TBCA – Spezifikation v0.1“).
 
-> Status: **Phase 0 – Fundament.** Noch nicht spielbar.
+> Status: **Phase 0 – Fundament.** Noch nicht spielbar; Login und Testkampf funktionieren.
 
 ## Voraussetzungen
 
@@ -33,7 +33,8 @@ scripts/dev.sh     # Postgres + Valkey (Docker), Migrationen, Apps mit Hot Reloa
 scripts/test.sh    # Format, Lint, Typen, Tests, Audit
 ```
 
-Danach läuft die API unter <http://localhost:3000/api/health>. Für den Login wird eine
+Danach läuft die Website unter <http://localhost:4200>, die API unter
+<http://localhost:3000/api/health>. Für den Login wird eine
 Discord-Developer-App benötigt (siehe [apps/api/README.md](apps/api/README.md)).
 
 Unter Windows laufen alle Scripts in WSL2 (Ubuntu) mit Docker Desktop oder Docker Engine.

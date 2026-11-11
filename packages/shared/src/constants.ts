@@ -1,20 +1,20 @@
-import { z } from 'zod';
+/**
+ * Konstanten ohne Laufzeitabhängigkeiten. Die Website importiert sie über
+ * `@tbca/shared/constants`, damit Zod nicht im Browser-Bundle landet.
+ */
 
 /** Unterstützte Sprachen; Englisch ist der Rückfall für fehlende Übersetzungen. */
 export const LOCALES = ['de', 'en'] as const;
-export const DEFAULT_LOCALE = 'de' satisfies Locale;
-export const FALLBACK_LOCALE = 'en' satisfies Locale;
-export const localeSchema = z.enum(LOCALES);
-export type Locale = z.infer<typeof localeSchema>;
+export type Locale = (typeof LOCALES)[number];
+export const DEFAULT_LOCALE: Locale = 'de';
+export const FALLBACK_LOCALE: Locale = 'en';
 
 /** Plattformen, über die sich Spieler anmelden bzw. Identitäten verknüpfen. */
 export const IDENTITY_PROVIDERS = ['discord', 'twitch'] as const;
-export const identityProviderSchema = z.enum(IDENTITY_PROVIDERS);
-export type IdentityProvider = z.infer<typeof identityProviderSchema>;
+export type IdentityProvider = (typeof IDENTITY_PROVIDERS)[number];
 
 export const GLOBAL_ROLES = ['player', 'superadmin'] as const;
-export const globalRoleSchema = z.enum(GLOBAL_ROLES);
-export type GlobalRole = z.infer<typeof globalRoleSchema>;
+export type GlobalRole = (typeof GLOBAL_ROLES)[number];
 
 /** Header, in dem schreibende Anfragen das CSRF-Token mitschicken. */
 export const CSRF_HEADER = 'x-csrf-token';

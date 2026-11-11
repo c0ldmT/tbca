@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { globalRoleSchema, identityProviderSchema, localeSchema } from './constants.js';
+import { globalRoleSchema, identityProviderSchema, localeSchema } from './schemas.js';
 
 /** GET /api/health */
 export const healthResponseSchema = z.object({

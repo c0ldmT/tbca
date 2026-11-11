@@ -1,0 +1,79 @@
+<ng-container *transloco="let t">
+  <section class="hero">
+    <h1 class="hero__title" tbcaGlitch>{{ t('app.name') }}</h1>
+    <p class="hero__tagline">{{ t('home.tagline') }}</p>
+
+    @if (loginResult(); as result) {
+      <p class="notice" [class.notice--error]="result === 'failed'" role="status">
+        {{ t('auth.result.' + result) }}
+      </p>
+    }
+    @if (logoutFailed()) {
+      <p class="notice notice--error" role="alert">{{ t('auth.logoutFailed') }}</p>
+    }
+
+    <div class="hero__auth" aria-live="polite">
+      @if (auth.state() === null) {
+        <a class="tbca-button" [href]="auth.loginUrl()">{{ t('auth.login') }}</a>
+      } @else if (auth.user(); as user) {
+        <p class="hero__user">{{ t('auth.signedInAs', { name: auth.displayName() }) }}</p>
+        <button type="button" class="tbca-button tbca-button--ghost" (click)="logout()">
+          {{ t('auth.logout') }}
+        </button>
+      }
+    </div>
+
+    <p class="hero__status">{{ t('home.status') }}</p>
+  </section>
+
+  <section class="arena" aria-labelledby="arena-title">
+    <div class="arena__intro">
+      <h2 id="arena-title">{{ t('home.demo.title') }}</h2>
+      <p>{{ t('home.demo.description') }}</p>
+    </div>
+
+    <div class="arena__panel">
+      <ul class="fighters">
+        @for (fighter of fighters(); track fighter.name) {
+          <li class="fighter" [class.fighter--down]="fighter.hp === 0">
+            <span class="fighter__name">{{ fighter.name }}</span>
+            <span class="fighter__bar" aria-hidden="true">
+              <span class="fighter__fill" [style.width.%]="fighter.percent"></span>
+            </span>
+            <span class="fighter__hp">{{
+              t('home.demo.hp', { hp: fighter.hp, max: fighter.max })
+            }}</span>
+          </li>
+        }
+      </ul>
+
+      @if (outcome(); as end) {
+        <p class="arena__outcome" [tbcaGlitch]="result().logHash">
+          {{ t(end.key, end.params) }}
+        </p>
+      }
+
+      <h3 class="visually-hidden">{{ t('home.demo.log') }}</h3>
+      <ol class="log" tabindex="0" [attr.aria-label]="t('home.demo.log')">
+        @for (line of lines(); track $index) {
+          <li class="log__line" [attr.data-tone]="line.tone">{{ t(line.key, line.params) }}</li>
+        }
+      </ol>
+
+      <dl class="meta">
+        <div>
+          <dt>{{ t('home.demo.seed') }}</dt>
+          <dd>{{ seed() }}</dd>
+        </div>
+        <div>
+          <dt>{{ t('home.demo.fingerprint') }}</dt>
+          <dd>{{ result().logHash }}</dd>
+        </div>
+      </dl>
+
+      <button type="button" class="tbca-button tbca-button--ghost" (click)="rerun()">
+        {{ t('home.demo.rerun') }}
+      </button>
+    </div>
+  </section>
+</ng-container>

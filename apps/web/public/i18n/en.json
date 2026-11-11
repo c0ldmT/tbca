@@ -1,0 +1,59 @@
+{
+  "app": {
+    "name": "TurnBased Cyber Arena",
+    "skipToContent": "Skip to content",
+    "language": "Language",
+    "imprint": "Legal notice",
+    "privacy": "Privacy",
+    "home": "Home"
+  },
+  "auth": {
+    "login": "Sign in with Discord",
+    "logout": "Sign out",
+    "signedInAs": "Signed in as {{ name }}",
+    "result": {
+      "success": "You are signed in.",
+      "cancelled": "Sign-in cancelled. You can try again any time.",
+      "failed": "Sign-in failed. Please try again."
+    },
+    "logoutFailed": "Signing out didn't work. Please reload the page."
+  },
+  "home": {
+    "tagline": "Turn-based fights for your community – on Discord, Twitch and the web.",
+    "status": "The arena is under construction. Characters, dungeon and PvP arrive in phase 1.",
+    "demo": {
+      "title": "Test fight",
+      "description": "Computed by the same engine as on the server, right here in your browser. Same seed, same fight.",
+      "rerun": "Start a new test fight",
+      "seed": "Seed",
+      "fingerprint": "Fingerprint",
+      "hp": "{{ hp }} of {{ max }} HP",
+      "log": "Fight log"
+    }
+  },
+  "battle": {
+    "round": "Round {{ round }}",
+    "suddenDeath": "Sudden death: damage ×{{ factor }}",
+    "hit": "{{ source }} hits {{ target }} for {{ value }}",
+    "crit": "{{ source }} critically hits {{ target }} for {{ value }}",
+    "miss": "{{ source }} misses {{ target }}",
+    "defeat": "{{ name }} is down",
+    "win": "{{ name }} wins after {{ rounds }} rounds",
+    "draw": "Draw after {{ rounds }} rounds"
+  },
+  "legal": {
+    "imprint": {
+      "title": "Legal notice",
+      "body": "The operator of this instance provides the legally required details."
+    },
+    "privacy": {
+      "title": "Privacy policy",
+      "body": "TBCA stores platform IDs, display names and activity counters, never message contents. The operator of this instance provides the full policy."
+    }
+  },
+  "notFound": {
+    "title": "Signal lost",
+    "body": "This page doesn't exist.",
+    "back": "Back to home"
+  }
+}

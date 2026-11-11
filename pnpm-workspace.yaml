@@ -12,3 +12,12 @@ minimumReleaseAge: 20160
 # Nur ausdrücklich erlaubte Pakete dürfen Install-Scripts ausführen.
 allowBuilds:
   esbuild: true
+  # Bringen vorkompilierte Binaries mit; das Install-Script wäre nur ein Fallback-Build.
+  '@parcel/watcher': false
+  lmdb: false
+  msgpackr-extract: false
+
+# Sicherheitsupdates für transitive Abhängigkeiten, bis die Eltern-Pakete nachziehen.
+overrides:
+  # @angular/build 22.2.4 bringt vite 8.3.0 mit (launch-editor, GHSA hoch); behoben ab 8.3.3.
+  vite: 8.3.5

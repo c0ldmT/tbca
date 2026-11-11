@@ -20,3 +20,11 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 - `@tbca/api`: NestJS mit Fastify, Healthcheck, Discord-OAuth-Login, Server-Sessions im
   httpOnly-Cookie, CSRF-Schutz, Sicherheits-Header und strukturierte Logs ohne personenbezogene
   Daten.
+- `@tbca/assets`: Design-Tokens als CSS-Variablen und TypeScript-Konstanten inkl. Rarität-Tiers;
+  Test auf Übereinstimmung und WCAG-AA-Kontrast.
+- `@tbca/web`: Angular-Shell (zoneless) mit Design-Tokens, Routing, Transloco (DE/EN), Discord-Login,
+  Glitch-Effekt und einem Testkampf, den die Engine direkt im Browser berechnet.
+
+### Sicherheit
+
+- `vite` per Override auf 8.3.5 angehoben (Lücke in `launch-editor` bis 8.3.2).

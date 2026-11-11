@@ -30,8 +30,13 @@ export default defineConfig(
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
       eqeqeq: ['error', 'always'],
-      'no-console': 'warn',
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
     },
+  },
+  {
+    // Website läuft im Browser; Tests nutzen Vitest-Globals.
+    files: ['apps/web/src/**/*.ts'],
+    languageOptions: { globals: { ...globals.browser, ...globals.vitest } },
   },
   {
     // Kommandozeilen-Programme dürfen auf die Konsole schreiben.

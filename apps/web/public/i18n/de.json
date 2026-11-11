@@ -1,0 +1,59 @@
+{
+  "app": {
+    "name": "TurnBased Cyber Arena",
+    "skipToContent": "Zum Inhalt springen",
+    "language": "Sprache",
+    "imprint": "Impressum",
+    "privacy": "Datenschutz",
+    "home": "Startseite"
+  },
+  "auth": {
+    "login": "Mit Discord anmelden",
+    "logout": "Abmelden",
+    "signedInAs": "Angemeldet als {{ name }}",
+    "result": {
+      "success": "Du bist angemeldet.",
+      "cancelled": "Anmeldung abgebrochen. Du kannst es jederzeit erneut versuchen.",
+      "failed": "Anmeldung fehlgeschlagen. Bitte versuch es noch einmal."
+    },
+    "logoutFailed": "Abmelden hat nicht geklappt. Bitte lade die Seite neu."
+  },
+  "home": {
+    "tagline": "Rundenbasierte Kämpfe für deine Community – auf Discord, Twitch und im Web.",
+    "status": "Die Arena ist im Aufbau. Charaktere, Dungeon und PvP folgen in Phase 1.",
+    "demo": {
+      "title": "Testkampf",
+      "description": "Berechnet von derselben Engine wie auf dem Server, hier direkt in deinem Browser. Gleicher Seed, gleicher Verlauf.",
+      "rerun": "Neuen Testkampf starten",
+      "seed": "Seed",
+      "fingerprint": "Fingerabdruck",
+      "hp": "{{ hp }} von {{ max }} HP",
+      "log": "Kampfverlauf"
+    }
+  },
+  "battle": {
+    "round": "Runde {{ round }}",
+    "suddenDeath": "Sudden Death: Schaden ×{{ factor }}",
+    "hit": "{{ source }} trifft {{ target }} für {{ value }}",
+    "crit": "{{ source }} trifft {{ target }} kritisch für {{ value }}",
+    "miss": "{{ source }} verfehlt {{ target }}",
+    "defeat": "{{ name }} ist kampfunfähig",
+    "win": "{{ name }} gewinnt nach {{ rounds }} Runden",
+    "draw": "Unentschieden nach {{ rounds }} Runden"
+  },
+  "legal": {
+    "imprint": {
+      "title": "Impressum",
+      "body": "Die Angaben nach § 5 DDG ergänzt der Betreiber dieser Instanz."
+    },
+    "privacy": {
+      "title": "Datenschutzerklärung",
+      "body": "TBCA speichert Plattform-IDs, Anzeigenamen und Aktivitätszähler, aber nie Nachrichteninhalte. Die vollständige Erklärung ergänzt der Betreiber dieser Instanz."
+    }
+  },
+  "notFound": {
+    "title": "Signal verloren",
+    "body": "Diese Seite gibt es nicht.",
+    "back": "Zur Startseite"
+  }
+}

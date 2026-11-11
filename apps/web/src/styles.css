@@ -1,0 +1,183 @@
+/* Schriften lokal ausgeliefert (keine Anfragen an Google, DSGVO). */
+@import '@fontsource/chakra-petch/500.css';
+@import '@fontsource/chakra-petch/700.css';
+@import '@fontsource-variable/inter/index.css';
+@import '@fontsource-variable/jetbrains-mono/index.css';
+@import '@tbca/assets/tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--tbca-bg-void);
+  color: var(--tbca-text-primary);
+  font-family: var(--tbca-font-body);
+  font-size: 100%;
+  line-height: 1.55;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  /* Feines Raster als Untergrund, ohne Bild-Asset. */
+  background-image:
+    linear-gradient(rgb(0 240 255 / 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(0 240 255 / 0.035) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--tbca-font-display);
+  font-weight: 700;
+  line-height: 1.1;
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--tbca-neon-cyan);
+  text-underline-offset: 0.2em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--tbca-neon-cyan);
+  outline-offset: 3px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Schaltflächen: abgeschrägte Ecke statt Rundung, mindestens 44 px hoch. */
+.tbca-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tbca-space-2);
+  min-height: var(--tbca-touch-target);
+  padding: 0 var(--tbca-space-6);
+  border: 0;
+  font: 600 var(--tbca-text-base) / 1 var(--tbca-font-display);
+  letter-spacing: 0.02em;
+  color: var(--tbca-bg-void);
+  background: var(--tbca-neon-cyan);
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
+  cursor: pointer;
+  text-decoration: none;
+  transition: filter var(--tbca-fast-ms) ease-out;
+}
+
+.tbca-button:hover {
+  filter: brightness(1.15);
+}
+
+.tbca-button--ghost {
+  color: var(--tbca-text-primary);
+  background: var(--tbca-surface-2);
+}
+
+/* Glitch: RGB-Split und Slice-Verschiebung, höchstens --tbca-glitch-ms lang.
+   Gesteuert von der Direktive [tbcaGlitch]; bei reduzierter Bewegung nie aktiv. */
+.tbca-glitch {
+  position: relative;
+}
+
+.tbca-glitch--active::before,
+.tbca-glitch--active::after {
+  content: attr(data-glitch-text);
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+.tbca-glitch--active::before {
+  color: var(--tbca-neon-cyan);
+  animation: tbca-glitch-a var(--tbca-glitch-ms) steps(1, end) both;
+}
+
+.tbca-glitch--active::after {
+  color: var(--tbca-neon-magenta);
+  animation: tbca-glitch-b var(--tbca-glitch-ms) steps(1, end) both;
+}
+
+@keyframes tbca-glitch-a {
+  0% {
+    clip-path: inset(8% 0 62% 0);
+    transform: translate(-0.06em, 0);
+  }
+  25% {
+    clip-path: inset(55% 0 20% 0);
+    transform: translate(0.05em, 0);
+  }
+  50% {
+    clip-path: inset(30% 0 45% 0);
+    transform: translate(-0.03em, 0);
+  }
+  75% {
+    clip-path: inset(75% 0 5% 0);
+    transform: translate(0.04em, 0);
+  }
+  100% {
+    clip-path: inset(50% 0 50% 0);
+    transform: none;
+  }
+}
+
+@keyframes tbca-glitch-b {
+  0% {
+    clip-path: inset(70% 0 10% 0);
+    transform: translate(0.06em, 0);
+  }
+  25% {
+    clip-path: inset(15% 0 65% 0);
+    transform: translate(-0.05em, 0);
+  }
+  50% {
+    clip-path: inset(48% 0 30% 0);
+    transform: translate(0.03em, 0);
+  }
+  75% {
+    clip-path: inset(5% 0 80% 0);
+    transform: translate(-0.04em, 0);
+  }
+  100% {
+    clip-path: inset(50% 0 50% 0);
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .tbca-glitch--active::before,
+  .tbca-glitch--active::after {
+    content: none;
+  }
+}
