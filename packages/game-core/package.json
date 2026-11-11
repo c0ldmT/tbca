@@ -1,0 +1,28 @@
+{
+  "name": "@tbca/game-core",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Deterministische Spiellogik: Kampf-Engine, Formeln, PRNG, Clock – reines TypeScript ohne I/O",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "@tbca/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "vitest": "5.0.5"
+  }
+}

@@ -33,5 +33,60 @@ export default defineConfig(
       'no-console': 'warn',
     },
   },
+  {
+    // Spiellogik muss deterministisch und frei von I/O bleiben (Spezifikation, Abschnitt 6).
+    files: ['packages/game-core/src/**/*.ts'],
+    rules: {
+      'no-restricted-globals': [
+        'error',
+        { name: 'Date', message: 'Zeit nur über den Clock-Service (GameClock) lesen.' },
+        { name: 'performance', message: 'Keine Laufzeitmessung in der Spiellogik.' },
+        { name: 'crypto', message: 'Zufall nur über Xoshiro128ss mit Seed.' },
+      ],
+      'no-restricted-properties': [
+        'error',
+        { object: 'Math', property: 'random', message: 'Zufall nur über Xoshiro128ss mit Seed.' },
+        ...[
+          'pow',
+          'exp',
+          'expm1',
+          'log',
+          'log2',
+          'log10',
+          'log1p',
+          'cbrt',
+          'hypot',
+          'sin',
+          'cos',
+          'tan',
+          'asin',
+          'acos',
+          'atan',
+          'atan2',
+          'sinh',
+          'cosh',
+          'tanh',
+          'asinh',
+          'acosh',
+          'atanh',
+        ].map((property) => ({
+          object: 'Math',
+          property,
+          message: 'Kann sich zwischen JS-Engines unterscheiden; Festkomma oder Tabellen nutzen.',
+        })),
+      ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "BinaryExpression[operator='**'], AssignmentExpression[operator='**=']",
+          message: 'Potenzen wie Math.pow vermeiden; Festkomma oder Tabellen nutzen.',
+        },
+      ],
+      'no-restricted-imports': [
+        'error',
+        { patterns: [{ group: ['node:*'], message: 'game-core bleibt frei von Node-APIs.' }] },
+      ],
+    },
+  },
   prettier,
 );
