@@ -10,4 +10,5 @@ saveExact: true
 minimumReleaseAge: 20160
 
 # Nur ausdrücklich erlaubte Pakete dürfen Install-Scripts ausführen.
-allowBuilds: {}
+allowBuilds:
+  esbuild: true

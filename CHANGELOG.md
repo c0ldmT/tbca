@@ -14,3 +14,5 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 - `@tbca/game-core`: PRNG xoshiro128\*\*, Festkomma-Arithmetik, erstes Kampf-Gerüst (N gegen N,
   Initiative-Leiste, Sudden Death, Event-Log mit Fingerabdruck), Clock-Service mit Zeitfaktor und
   Vorspulen; Tests zum Determinismus.
+- `@tbca/db`: Drizzle-Grundschema (Account, Identity, Session, Community, Character, Season,
+  Config), erste Migration, Migrations-Runner und idempotenter Dev-Seed.

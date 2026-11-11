@@ -1,0 +1,40 @@
+{
+  "name": "@tbca/db",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Drizzle-Schema, Migrationen und Seeds für PostgreSQL",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "@tbca/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "drizzle"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "generate": "drizzle-kit generate",
+    "migrate": "tsx --conditions=@tbca/source src/cli/migrate.ts",
+    "seed": "tsx --conditions=@tbca/source src/cli/seed.ts",
+    "studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@tbca/game-core": "workspace:*",
+    "drizzle-orm": "0.45.4",
+    "pg": "8.23.1",
+    "uuid": "14.0.3"
+  },
+  "devDependencies": {
+    "@types/pg": "8.23.1",
+    "drizzle-kit": "0.31.11",
+    "tsx": "4.23.15",
+    "vitest": "5.0.5"
+  }
+}

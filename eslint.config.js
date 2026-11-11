@@ -34,6 +34,11 @@ export default defineConfig(
     },
   },
   {
+    // Kommandozeilen-Programme dürfen auf die Konsole schreiben.
+    files: ['**/src/cli/**/*.ts'],
+    rules: { 'no-console': 'off' },
+  },
+  {
     // Spiellogik muss deterministisch und frei von I/O bleiben (Spezifikation, Abschnitt 6).
     files: ['packages/game-core/src/**/*.ts'],
     rules: {
