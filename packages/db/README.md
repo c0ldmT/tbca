@@ -22,5 +22,5 @@ Die Unit-Tests laufen ohne Datenbank. Die Integrationstests brauchen eine eigene
 Datenbank, deren Inhalt sie bei jedem Lauf löschen:
 
 ```bash
-TBCA_TEST_DATABASE_URL=postgres://tbca:…@localhost:5432/tbca_test pnpm --filter @tbca/db test
+TBCA_TEST_DATABASE_URL=postgres://tbca:…@localhost:55432/tbca_test pnpm --filter @tbca/db test
 ```

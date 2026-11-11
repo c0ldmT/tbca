@@ -14,8 +14,24 @@ export TBCA_ENV=development
 cd "$ROOT_DIR" || exit 1
 load_env
 
+# Bricht mit einer klaren Meldung ab, wenn ein fremder Dienst den Port belegt.
+ensure_port_free() {
+  local service="$1" port="$2" variable="$3"
+  if [[ -n "$(compose_dev ps --quiet --status running "$service" 2>/dev/null)" ]]; then
+    return 0 # unser eigener Container läuft bereits
+  fi
+  if port_in_use "$port"; then
+    die "Port $port ($service) ist schon belegt, vermutlich durch ein lokal installiertes $service
+  oder einen Container eines anderen Projekts. Prüfen mit:
+    sudo ss -ltnp 'sport = :$port'   oder   docker ps --filter publish=$port
+  Lösung: in $(basename "$(env_file)") einen freien Port setzen, z. B. $variable=$((port + 1))"
+  fi
+}
+
 start_services() {
   require_cmd docker "Docker wird für Postgres und Valkey benötigt."
+  ensure_port_free postgres "$POSTGRES_PORT" POSTGRES_PORT
+  ensure_port_free valkey "$VALKEY_PORT" VALKEY_PORT
   info "Starte Postgres und Valkey"
   compose_dev up --detach --wait
   ok "Dienste laufen (Postgres :${POSTGRES_PORT}, Valkey :${VALKEY_PORT})"

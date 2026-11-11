@@ -29,12 +29,17 @@ require_node
 ok "Node.js $(node -v)"
 
 PNPM_VERSION="$(pnpm_version)"
-if ! has_cmd pnpm || [[ "$(pnpm --version)" != "$PNPM_VERSION" ]]; then
+if ! has_cmd pnpm || [[ "$(pnpm --version 2>/dev/null | tail -n 1)" != "$PNPM_VERSION" ]] ||
+  ! pnpm_is_native; then
   info "Installiere pnpm $PNPM_VERSION"
-  npm install --global "pnpm@$PNPM_VERSION" >/dev/null ||
+  # Das Install-Script von pnpm legt das native Binary an; es muss laufen dürfen,
+  # auch wenn npm global mit ignore-scripts konfiguriert ist.
+  npm install --global --ignore-scripts=false "pnpm@$PNPM_VERSION" >/dev/null ||
     die "pnpm konnte nicht installiert werden. Ggf. npm-Prefix prüfen (npm config get prefix)."
+  hash -r
+  pnpm_is_native || warn "pnpm läuft weiter über Node.js (langsamer, aber funktionsfähig)."
 fi
-ok "pnpm $(pnpm --version)"
+ok "pnpm $(pnpm --version 2>/dev/null | tail -n 1)"
 
 info "Installiere Abhängigkeiten"
 install_args=()

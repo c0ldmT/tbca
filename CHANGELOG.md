@@ -25,6 +25,15 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 - `@tbca/web`: Angular-Shell (zoneless) mit Design-Tokens, Routing, Transloco (DE/EN), Discord-Login,
   Glitch-Effekt und einem Testkampf, den die Engine direkt im Browser berechnet.
 
+### Behoben
+
+- Entwicklungsdienste nutzen die Ports 55432 (Postgres) und 56379 (Valkey), damit lokal
+  installierte Dienste nicht kollidieren. `scripts/dev.sh` meldet belegte Ports vorab verständlich.
+- `DATABASE_URL` und `VALKEY_URL` werden aus den `POSTGRES_*`- bzw. `VALKEY_PORT`-Werten
+  abgeleitet, wenn sie leer sind; Port und Passwort stehen damit nur an einer Stelle.
+- `scripts/setup.sh` installiert pnpm mit erlaubtem Install-Script neu, wenn es nur über Node.js
+  statt als natives Binary läuft.
+
 ### Sicherheit
 
 - `vite` per Override auf 8.3.5 angehoben (Lücke in `launch-editor` bis 8.3.2).

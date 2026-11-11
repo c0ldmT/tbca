@@ -2,7 +2,7 @@
  * Integrationstest gegen eine echte PostgreSQL-Datenbank.
  * Läuft nur, wenn TBCA_TEST_DATABASE_URL gesetzt ist; die Datenbank wird dabei geleert.
  *
- *   TBCA_TEST_DATABASE_URL=postgres://tbca:…@localhost:5432/tbca_test pnpm --filter @tbca/db test
+ *   TBCA_TEST_DATABASE_URL=postgres://tbca:…@localhost:55432/tbca_test pnpm --filter @tbca/db test
  */
 import { and, eq, sql } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';

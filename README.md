@@ -37,6 +37,9 @@ Danach läuft die Website unter <http://localhost:4200>, die API unter
 <http://localhost:3000/api/health>. Für den Login wird eine
 Discord-Developer-App benötigt (siehe [apps/api/README.md](apps/api/README.md)).
 
+Postgres und Valkey laufen in der Entwicklung auf den Ports 55432 und 56379, damit sie nicht
+mit lokal installierten Diensten kollidieren; ändern lässt sich das in `.env.development`.
+
 Unter Windows laufen alle Scripts in WSL2 (Ubuntu) mit Docker Desktop oder Docker Engine.
 
 ## Scripts

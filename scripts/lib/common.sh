@@ -35,6 +35,12 @@ require_node() {
   ' "$min" || die "Node.js $(node -v) ist zu alt, benötigt wird mindestens v$min."
 }
 
+# true, wenn pnpm als natives Binary läuft. Hat npm das Install-Script von pnpm
+# übersprungen, läuft es langsamer über Node.js und meldet das bei jedem Aufruf.
+pnpm_is_native() {
+  ! pnpm --version 2>&1 | grep -q 'running through Node.js'
+}
+
 # Die in package.json festgelegte pnpm-Version.
 pnpm_version() {
   node -p 'require(process.argv[1]).packageManager.split("@")[1]' "$ROOT_DIR/package.json"
@@ -53,6 +59,19 @@ load_env() {
   # shellcheck disable=SC1090
   source "$file"
   set +a
+
+  # Abgeleitete Werte, damit Ports und Passwort nur an einer Stelle stehen.
+  if [[ -z "${DATABASE_URL:-}" && -n "${POSTGRES_PASSWORD:-}" ]]; then
+    export DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-localhost}:${POSTGRES_PORT}/${POSTGRES_DB}"
+  fi
+  if [[ -z "${VALKEY_URL:-}" && -n "${VALKEY_PORT:-}" ]]; then
+    export VALKEY_URL="redis://localhost:${VALKEY_PORT}"
+  fi
+}
+
+# true, wenn auf 127.0.0.1:<port> bereits etwas lauscht.
+port_in_use() {
+  (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null
 }
 
 # docker compose (v2) oder das ältere docker-compose.
