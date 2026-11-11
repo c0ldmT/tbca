@@ -16,3 +16,7 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
   Vorspulen; Tests zum Determinismus.
 - `@tbca/db`: Drizzle-Grundschema (Account, Identity, Session, Community, Character, Season,
   Config), erste Migration, Migrations-Runner und idempotenter Dev-Seed.
+- `@tbca/shared`: geteilte Zod-Schemas für Healthcheck, `/auth/me` und Fehler sowie Konstanten.
+- `@tbca/api`: NestJS mit Fastify, Healthcheck, Discord-OAuth-Login, Server-Sessions im
+  httpOnly-Cookie, CSRF-Schutz, Sicherheits-Header und strukturierte Logs ohne personenbezogene
+  Daten.

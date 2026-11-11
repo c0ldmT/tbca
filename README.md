@@ -33,6 +33,9 @@ scripts/dev.sh     # Postgres + Valkey (Docker), Migrationen, Apps mit Hot Reloa
 scripts/test.sh    # Format, Lint, Typen, Tests, Audit
 ```
 
+Danach läuft die API unter <http://localhost:3000/api/health>. Für den Login wird eine
+Discord-Developer-App benötigt (siehe [apps/api/README.md](apps/api/README.md)).
+
 Unter Windows laufen alle Scripts in WSL2 (Ubuntu) mit Docker Desktop oder Docker Engine.
 
 ## Scripts
