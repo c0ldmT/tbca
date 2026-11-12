@@ -2,7 +2,7 @@
   "name": "@tbca/assets",
   "version": "0.1.0",
   "private": true,
-  "description": "Design-Tokens; später SVG-Icon-Generator und ZzFX-Sounds",
+  "description": "Design-Tokens, prozedurale Item-Icons und Klassen-Silhouetten",
   "license": "MIT",
   "type": "module",
   "sideEffects": [

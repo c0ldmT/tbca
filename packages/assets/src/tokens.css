@@ -17,6 +17,18 @@
   --tbca-neon-magenta: #ff2a6d;
   --tbca-neon-yellow: #f5e400;
 
+  /* Rückmeldungen */
+  --tbca-success: #3dffa8;
+  --tbca-danger-text: #ff6b8e;
+
+  /* Hologramm-Glas */
+  --tbca-glass-top: rgb(23 27 46 / 0.74);
+  --tbca-glass-bottom: rgb(12 15 28 / 0.62);
+  --tbca-glass-blur: 14px;
+  --tbca-edge: rgb(0 240 255 / 0.2);
+  --tbca-edge-soft: rgb(0 240 255 / 0.1);
+  --tbca-well: rgb(7 8 13 / 0.55);
+
   /* Text */
   --tbca-text-primary: #e6eaf5;
   --tbca-text-muted: #8a93b2;
