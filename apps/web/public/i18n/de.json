@@ -639,7 +639,11 @@
     "lastRun": "Letzter Run",
     "runsLeft": "{{ left }} von {{ max }} Runs übrig",
     "useChipShort": "Einsetzen ({{ owned }})",
-    "feeShort": "Gebühr {{ fee }}"
+    "feeShort": "Gebühr {{ fee }}",
+    "sealedHint": "{{ count }} versiegelte Funde – der Inhalt zeigt sich beim Ausstieg",
+    "found": "+{{ count }} Fund",
+    "fighting": "Kampf läuft",
+    "skipFight": "Überspringen"
   },
   "monsters": {
     "drone": "Drohne",

@@ -49,6 +49,11 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ### Geändert
 
+- Dungeon: Nach „Weiter“ läuft der Kampf der Etage im Kampf-HUD (Tempo 2×, überspringbar); das
+  Ergebnis der Etage erscheint erst danach.
+- Dungeon: Der Run-Loot ist bis zum Ausstieg versiegelt. Die API liefert während des Runs nur die
+  Zahl der Funde (`loot.sealed`, `loot.count`), die Website zeigt verschlossene Kapseln mit
+  „+1 Fund“; Items und Credits zeigt erst der Loot-Reveal.
 - Website: Die Komponenten `EquipmentPanel`, `Workbench` und `ItemCard` sind durch Ausrüstungs- und
   Werkstatt-Tab ersetzt. Kampfdaten im Verlauf folgen der eingestellten Sprache.
 - Website: Die Grafikstufe „Auto“ startet auf „Hoch“ und senkt erst nach gemessener Zeichenzeit

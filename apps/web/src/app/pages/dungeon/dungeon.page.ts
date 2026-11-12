@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoDirective, TranslocoService } from '@jsverse/transloco';
-import type { DungeonView } from '@tbca/shared';
+import type { DungeonView, FightView } from '@tbca/shared';
 
 import { ApiFailure } from '../../core/api-failure';
 import { AuthService } from '../../core/auth.service';
@@ -9,6 +9,8 @@ import { CharacterService } from '../../core/character.service';
 import { EconomyService } from '../../core/economy.service';
 import { GameConfigService } from '../../core/game-config.service';
 import { HudStatusService } from '../../core/hud-status.service';
+import { LanguageService } from '../../core/language.service';
+import { PvpService } from '../../core/pvp.service';
 import { SoundService } from '../../core/sound.service';
 import { GlitchDirective } from '../../shared/glitch.directive';
 import { LootReveal } from '../../shared/loot-reveal/loot-reveal';
@@ -16,14 +18,26 @@ import { Bar } from '../../shared/ui/bar';
 import { ItemIcon } from '../../shared/ui/item-icon';
 import { Segments } from '../../shared/ui/segments';
 import { tier } from '../../shared/item-format';
+import { ReplayPlayer } from '../replay/replay-player';
 
 /**
  * Dungeon: Run starten, Etage für Etage weiter oder mit dem Loot raus. Der Schacht links zeigt
- * die Tiefe, Boss-Etagen alle fünf Ebenen. Beim Ausstieg öffnet sich der Loot-Reveal.
+ * die Tiefe, Boss-Etagen alle fünf Ebenen. Nach „Weiter“ läuft der Kampf der Etage im
+ * Kampf-HUD; das Ergebnis erscheint erst danach (oder nach „Überspringen“). Der Run-Loot ist
+ * bis zum Ausstieg versiegelt; dann öffnet sich der Loot-Reveal.
  */
 @Component({
   selector: 'tbca-dungeon-page',
-  imports: [TranslocoDirective, RouterLink, GlitchDirective, Bar, Segments, ItemIcon, LootReveal],
+  imports: [
+    TranslocoDirective,
+    RouterLink,
+    GlitchDirective,
+    Bar,
+    Segments,
+    LootReveal,
+    ReplayPlayer,
+    ItemIcon,
+  ],
   templateUrl: './dungeon.page.html',
   styleUrl: './dungeon.page.css',
 })
@@ -34,6 +48,8 @@ export class DungeonPage {
   private readonly gameConfig = inject(GameConfigService);
   private readonly hud = inject(HudStatusService);
   private readonly sound = inject(SoundService);
+  private readonly pvp = inject(PvpService);
+  private readonly language = inject(LanguageService);
   private readonly transloco = inject(TranslocoService);
 
   protected readonly view = signal<DungeonView | null>(null);
@@ -43,6 +59,17 @@ export class DungeonPage {
   protected readonly backupChip = signal(false);
   protected readonly previousHp = signal<number | null>(null);
   protected readonly revealOpen = signal(false);
+  /** Laufender Etagenkampf: das Ergebnis (pending) wird erst nach der Wiedergabe gezeigt. */
+  protected readonly battle = signal<{
+    fight: FightView;
+    floor: number;
+    pending: DungeonView;
+  } | null>(null);
+  /** Kurzer Hinweis nach einer gewonnenen Etage, z. B. „+1 Fund“. */
+  protected readonly found = signal(0);
+  protected readonly sealedSlots = computed(() =>
+    Array.from({ length: this.run()?.loot.count ?? 0 }, (_, i) => i),
+  );
 
   protected readonly run = computed(() => this.view()?.run ?? null);
   protected readonly active = computed(() => this.run()?.status === 'active');
@@ -79,7 +106,10 @@ export class DungeonPage {
   }
 
   protected decideTime(iso: string): string {
-    return new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    return new Date(iso).toLocaleTimeString(this.language.current(), {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   }
 
   protected tierOf(rarity: number): number {
@@ -112,13 +142,60 @@ export class DungeonPage {
   }
 
   protected async action(name: 'continue' | 'heal' | 'leave'): Promise<void> {
-    this.sound.play('click');
-    await this.act(() => this.economy.dungeonAction(name));
+    if (name !== 'continue') {
+      await this.act(() => this.economy.dungeonAction(name));
+      this.afterResult();
+      return;
+    }
+    // Weiter: Ergebnis zurückhalten und erst den Kampf der Etage zeigen
+    const floor = (this.run()?.floor ?? 0) + 1;
+    this.busy.set(true);
+    this.error.set(null);
+    try {
+      const pending = await this.economy.dungeonAction('continue');
+      const fightId = pending.run?.lastFightId;
+      const fight = fightId ? await this.pvp.fight(fightId).catch(() => null) : null;
+      if (fight) this.battle.set({ fight, floor, pending });
+      else this.reveal(pending);
+    } catch (error) {
+      this.error.set(error instanceof ApiFailure ? error.code : 'unknown');
+      this.busy.set(false);
+    }
+  }
+
+  /** Wiedergabe zu Ende: das Ende kurz stehen lassen, dann das Ergebnis zeigen. */
+  protected onFinished(b: { pending: DungeonView }): void {
+    setTimeout(() => {
+      if (this.battle()?.pending === b.pending) this.endBattle();
+    }, 1400);
+  }
+
+  /** Ende der Wiedergabe (oder Überspringen): jetzt das Ergebnis der Etage zeigen. */
+  protected endBattle(): void {
+    const b = this.battle();
+    if (!b) return;
+    this.battle.set(null);
+    this.reveal(b.pending);
+  }
+
+  private reveal(view: DungeonView): void {
+    const before = this.run()?.loot.count ?? 0;
+    this.setView(view);
+    this.busy.set(false);
+    void this.characters.refresh();
+    const r = this.run();
+    if (r?.status === 'active') {
+      this.found.set(Math.max(0, r.loot.count - before));
+      this.sound.play('success');
+    }
+    this.afterResult();
+  }
+
+  private afterResult(): void {
     const r = this.run();
     if (!r) return;
     if (r.status === 'defeated') this.sound.play('fail');
     else if (r.status !== 'active' && r.loot.items.length > 0) this.revealOpen.set(true);
-    else if (name === 'continue' && r.status === 'active') this.sound.play('hit');
   }
 
   private setView(view: DungeonView): void {

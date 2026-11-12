@@ -639,7 +639,11 @@
     "lastRun": "Last run",
     "runsLeft": "{{ left }} of {{ max }} runs left",
     "useChipShort": "Use ({{ owned }})",
-    "feeShort": "Fee {{ fee }}"
+    "feeShort": "Fee {{ fee }}",
+    "sealedHint": "{{ count }} sealed finds – revealed when you leave",
+    "found": "+{{ count }} find",
+    "fighting": "Fight in progress",
+    "skipFight": "Skip"
   },
   "monsters": {
     "drone": "Drone",

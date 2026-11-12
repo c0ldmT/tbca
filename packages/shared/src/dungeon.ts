@@ -18,7 +18,11 @@ export interface DungeonRunView {
   maxEnergy: number;
   injectors: number;
   backupChip: boolean;
-  loot: { items: ItemData[]; credits: number };
+  /**
+   * Run-Loot. Solange der Run läuft, ist er versiegelt: nur die Zahl der Funde ist bekannt,
+   * Items und Credits zeigt erst der Loot-Reveal nach dem Ausstieg.
+   */
+  loot: { sealed: boolean; count: number; items: ItemData[]; credits: number };
   xpGained: number;
   lastFightId: string | null;
   /** Vorschau der nächsten Etage. */

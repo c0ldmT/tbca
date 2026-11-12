@@ -50,12 +50,16 @@ describe('Dungeon', () => {
     expect((await call('GET', '/api/characters/me')).json().credits).toBe(100 - 7);
     if (view.run.status === 'active') {
       expect(view.run.floor).toBe(1);
-      expect(view.run.loot.items.length).toBeGreaterThan(0);
+      // Versiegelt: nur die Zahl der Funde, kein Inhalt
+      expect(view.run.loot).toMatchObject({ sealed: true, items: [], credits: 0 });
+      expect(view.run.loot.count).toBeGreaterThan(0);
       expect(view.run.next).toMatchObject({ floor: 2 });
       const itemsBefore = t.inventory.items.length;
       const left = (await call('POST', '/api/dungeon/leave')).json();
       expect(left.run.status).toBe('left');
-      expect(t.inventory.items.length).toBe(itemsBefore + view.run.loot.items.length);
+      expect(left.run.loot.sealed).toBe(false);
+      expect(left.run.loot.items).toHaveLength(view.run.loot.count);
+      expect(t.inventory.items.length).toBe(itemsBefore + view.run.loot.count);
       expect((await call('GET', '/api/characters/me')).json().xp).toBe(view.run.xpGained);
     } else {
       expect(view.run.status).toBe('defeated');
@@ -114,7 +118,7 @@ describe('Dungeon', () => {
     const later = (await call('GET', '/api/dungeon')).json();
     expect(later.run.status).toBe('timed_out');
     expect(t.inventory.items.filter((i) => i.source === 'dungeon')).toHaveLength(
-      view.run.loot.items.length,
+      view.run.loot.count,
     );
   });
 

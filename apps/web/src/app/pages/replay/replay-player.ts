@@ -5,6 +5,7 @@ import {
   effect,
   inject,
   input,
+  output,
   signal,
   untracked,
   type OnDestroy,
@@ -50,6 +51,10 @@ export class ReplayPlayer implements OnDestroy {
   readonly fight = input.required<ReplayData>();
   /** Team, das als „eigenes“ unten bzw. links erscheint. */
   readonly ownTeam = input(0);
+  /** Starttempo, z. B. 2 für den Dungeon, wo der Kampf nur kurz verfolgt wird. */
+  readonly startSpeed = input<(typeof SPEEDS)[number]>(1);
+  /** Meldet, wenn die automatische Wiedergabe das Ende erreicht hat. */
+  readonly finished = output<void>();
 
   protected readonly speeds = SPEEDS;
   protected readonly frameIndex = signal(0);
@@ -195,6 +200,7 @@ export class ReplayPlayer implements OnDestroy {
       this.fight();
       untracked(() => {
         this.frameIndex.set(0);
+        this.speed.set(this.startSpeed());
         this.play();
       });
     });
@@ -285,6 +291,7 @@ export class ReplayPlayer implements OnDestroy {
     if (!this.playing()) return;
     if (this.atEnd()) {
       this.playing.set(false);
+      this.finished.emit();
       return;
     }
     this.timer = setTimeout(() => {

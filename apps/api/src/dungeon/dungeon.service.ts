@@ -362,7 +362,11 @@ export class DungeonService {
         maxEnergy: latest.snapshot.stats.energyMax,
         injectors: latest.injectors,
         backupChip: latest.backupChip,
-        loot: latest.loot,
+        // Während des Runs versiegelt: nur die Zahl der Funde, der Inhalt kommt beim Ausstieg
+        loot:
+          latest.status === 'active'
+            ? { sealed: true, count: latest.loot.items.length, items: [], credits: 0 }
+            : { sealed: false, count: latest.loot.items.length, ...latest.loot },
         xpGained: latest.xpGained,
         lastFightId: latest.lastFightId,
         next: nextPlan && {
