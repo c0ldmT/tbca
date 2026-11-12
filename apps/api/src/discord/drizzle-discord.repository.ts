@@ -72,6 +72,79 @@ export class DrizzleDiscordRepository implements DiscordRepository {
       });
   }
 
+  async setLeagueChannel(
+    guildId: string,
+    channelId: string,
+    enabled: boolean,
+    from: Date,
+  ): Promise<void> {
+    const guild = await this.communityForGuild(guildId);
+    if (!guild) throw new Error('Server ist keiner Community zugeordnet');
+    await this.db.transaction(async (tx) => {
+      if (enabled)
+        await tx
+          .update(communityChannel)
+          .set({ leagueNews: false })
+          .where(
+            and(
+              eq(communityChannel.kind, 'discord_channel'),
+              eq(communityChannel.parentExternalId, guildId),
+            ),
+          );
+      await tx
+        .insert(communityChannel)
+        .values({
+          communityId: guild.communityId,
+          kind: 'discord_channel',
+          externalId: channelId,
+          parentExternalId: guildId,
+          leagueNews: enabled,
+          leagueAnnouncedUntil: from,
+        })
+        .onConflictDoUpdate({
+          target: [communityChannel.kind, communityChannel.externalId],
+          set: {
+            leagueNews: enabled,
+            ...(enabled ? { leagueAnnouncedUntil: from } : {}),
+            communityId: guild.communityId,
+            parentExternalId: guildId,
+          },
+        });
+    });
+  }
+
+  async leagueChannels() {
+    const rows = await this.db
+      .select({
+        guildId: communityChannel.parentExternalId,
+        channelId: communityChannel.externalId,
+        communityId: communityChannel.communityId,
+        announcedUntil: communityChannel.leagueAnnouncedUntil,
+      })
+      .from(communityChannel)
+      .where(
+        and(eq(communityChannel.kind, 'discord_channel'), eq(communityChannel.leagueNews, true)),
+      );
+    return rows.map((r) => ({
+      guildId: r.guildId ?? '',
+      channelId: r.channelId,
+      communityId: r.communityId,
+      announcedUntil: r.announcedUntil ?? new Date(0),
+    }));
+  }
+
+  async markLeagueAnnounced(channelId: string, until: Date): Promise<void> {
+    await this.db
+      .update(communityChannel)
+      .set({ leagueAnnouncedUntil: until })
+      .where(
+        and(
+          eq(communityChannel.kind, 'discord_channel'),
+          eq(communityChannel.externalId, channelId),
+        ),
+      );
+  }
+
   async setRole(
     communityId: string,
     accountId: string,

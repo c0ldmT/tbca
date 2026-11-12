@@ -6,6 +6,7 @@ import { CharacterModule } from '../character/character.module.js';
 import { DrizzleCharacterRepository } from '../character/drizzle-character.repository.js';
 import { DungeonModule } from '../dungeon/dungeon.module.js';
 import { FightModule } from '../fight/fight.module.js';
+import { LeagueModule } from '../league/league.module.js';
 import { TeamModule } from '../team/team.module.js';
 import { CHARACTER_REPOSITORY, DB_CONNECTION, DISCORD_REPOSITORY } from '../tokens.js';
 import { DiscordController, PassiveXpJobController } from './discord.controller.js';
@@ -14,7 +15,7 @@ import { DrizzleDiscordRepository } from './drizzle-discord.repository.js';
 import { ServiceTokenGuard } from './service-token.guard.js';
 
 @Module({
-  imports: [AuthModule, CharacterModule, FightModule, DungeonModule, TeamModule],
+  imports: [AuthModule, CharacterModule, FightModule, DungeonModule, TeamModule, LeagueModule],
   controllers: [DiscordController, PassiveXpJobController],
   providers: [
     DiscordService,

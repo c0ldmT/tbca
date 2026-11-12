@@ -820,6 +820,53 @@ describe.skipIf(!url)('Drizzle-Repositories (Integration)', () => {
     expect((await repo.ratings([a.id])).size).toBe(0);
   });
 
+  it('verwaltet Liga-Kanäle und findet Heimat-Mitglieder', async () => {
+    const discord = new DrizzleDiscordRepository(conn.db);
+    const guildId = `9${Date.now()}`.slice(0, 18);
+    const guild = await discord.ensureGuildCommunity(guildId, 'Liga-Server');
+    const [first, second] = [`8${Date.now()}1`.slice(0, 18), `8${Date.now()}2`.slice(0, 19)];
+    const t0 = new Date('2026-11-12T10:00:00Z');
+    await discord.setLeagueChannel(guildId, first, true, t0);
+    await discord.setLeagueChannel(guildId, second, true, t0);
+    // Nur ein Liga-Kanal je Server
+    const mine = (await discord.leagueChannels()).filter((c) => c.guildId === guildId);
+    expect(mine).toEqual([
+      { guildId, channelId: second, communityId: guild.communityId, announcedUntil: t0 },
+    ]);
+    const t1 = new Date('2026-11-12T20:00:00Z');
+    await discord.markLeagueAnnounced(second, t1);
+    expect(
+      (await discord.leagueChannels()).find((c) => c.channelId === second)!.announcedUntil,
+    ).toEqual(t1);
+    await discord.setLeagueChannel(guildId, second, false, t1);
+    expect((await discord.leagueChannels()).some((c) => c.guildId === guildId)).toBe(false);
+
+    // Heimat-Mitglieder der Community
+    const current = await new DrizzleSeasonRepository(conn.db).findCurrent();
+    const chars = new DrizzleCharacterRepository(conn.db);
+    const make = async (name: string) => {
+      const [acc] = await conn.db.insert(account).values({}).returning();
+      return chars.create({
+        accountId: acc!.id,
+        seasonId: current!.id,
+        name: `${name}${Date.now() % 100000}`,
+        classId: 'medtech',
+        level: 1,
+        xp: 0,
+        allocated: { str: 0, dex: 0, int: 0, con: 0 },
+        loadouts: {},
+      });
+    };
+    const home = await make('Hm');
+    const away = await make('Aw');
+    await discord.ensureMember(guild.communityId, home.accountId);
+    const league = new DrizzleLeagueRepository(conn.db);
+    expect([...(await league.homeMembers(guild.communityId, [home.id, away.id]))]).toEqual([
+      home.id,
+    ]);
+    expect(await league.recentCycles(randomUUID(), 2)).toEqual([]);
+  });
+
   it('liefert die Rohdaten für den Balancing-Export', async () => {
     const current = (await new DrizzleSeasonRepository(conn.db).findCurrent())!;
     const rows = await new DrizzleExportRepository(conn.db).rows(current.id, new Date(0), 50);

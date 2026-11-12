@@ -13,6 +13,7 @@ import {
 } from '@tbca/game-core';
 import type {
   ChallengeResponse,
+  DiscordLeagueNewsItem,
   LeaderboardEntry,
   LeagueCharacterRef,
   LeagueDivisionView,
@@ -234,6 +235,67 @@ export class LeagueService {
       isBot: r.isBot,
       me: r.characterId === me?.id,
     }));
+  }
+
+  /**
+   * Ankündigungen für eine Community: gespielte Spieltage und beendete Zyklen im Zeitraum
+   * (`after`, `until`], nur mit Paarungen und Plätzen von Spielern dieser Heimat-Community.
+   */
+  async news(communityId: string, after: number, until: number): Promise<DiscordLeagueNewsItem[]> {
+    const season = await this.seasons.current();
+    const items: DiscordLeagueNewsItem[] = [];
+    const inRange = (d: Date | null) => !!d && d.getTime() > after && d.getTime() <= until;
+    // Älterer Zyklus zuerst, damit die Reihenfolge der Ankündigungen stimmt
+    for (const cycle of (await this.repo.recentCycles(season.id, 2)).reverse()) {
+      const members = await this.repo.members(cycle.id);
+      const home = await this.repo.homeMembers(
+        communityId,
+        members.map((m) => m.characterId),
+      );
+      if (home.size === 0) continue;
+      const matches = await this.repo.matches(cycle.id);
+      const refs = await this.refs(members.map((m) => m.characterId));
+      const name = (id: string | null) => (id ? (refs.get(id)?.name ?? '—') : '—');
+      const days = [...new Set(matches.map((m) => m.matchday))].sort((a, b) => a - b);
+      for (const day of days) {
+        const ofDay = matches.filter((m) => m.matchday === day && m.status !== 'bye');
+        if (ofDay.length === 0 || ofDay.some((m) => m.status !== 'played')) continue;
+        if (!inRange(ofDay[0]!.playAt)) continue;
+        const results = ofDay
+          .filter(
+            (m) =>
+              (m.aCharacterId && home.has(m.aCharacterId)) ||
+              (m.bCharacterId && home.has(m.bCharacterId)),
+          )
+          .map((m) => ({
+            a: name(m.aCharacterId),
+            b: name(m.bCharacterId),
+            winner: m.draw ? null : m.winnerCharacterId ? name(m.winnerCharacterId) : null,
+            url: m.fightId ? `${this.env.WEB_ORIGIN}/replay/${m.fightId}` : null,
+          }));
+        if (results.length)
+          items.push({
+            kind: 'matchday',
+            cycle: cycle.number,
+            matchday: day,
+            playAt: ofDay[0]!.playAt.toISOString(),
+            results,
+          });
+      }
+      if (cycle.status === 'finished' && inRange(cycle.finishedAt)) {
+        const rows = members
+          .filter((m) => home.has(m.characterId) && m.place !== null)
+          .sort((x, y) => x.division - y.division || x.place! - y.place!)
+          .map((m) => ({
+            name: name(m.characterId),
+            division: m.division + 1,
+            place: m.place!,
+            movement: m.movement ?? 'stay',
+          }));
+        if (rows.length) items.push({ kind: 'cycle_end', cycle: cycle.number, rows });
+      }
+    }
+    return items;
   }
 
   // --- Ablauf -----------------------------------------------------------------

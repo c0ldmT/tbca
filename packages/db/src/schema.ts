@@ -227,6 +227,10 @@ export const communityChannel = pgTable(
     /** Übergeordnete Plattform-ID, z. B. der Discord-Server eines Kanals. */
     parentExternalId: text('parent_external_id'),
     xpEnabled: boolean('xp_enabled').notNull().default(false),
+    /** Kanal für Liga-Ankündigungen (höchstens einer je Server). */
+    leagueNews: boolean('league_news').notNull().default(false),
+    /** Bis zu diesem Spielzeitpunkt wurde in diesem Kanal angekündigt. */
+    leagueAnnouncedUntil: timestamp('league_announced_until', { withTimezone: true }),
     createdAt: createdAt(),
   },
   (t) => [

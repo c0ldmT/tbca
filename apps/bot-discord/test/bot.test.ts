@@ -3,7 +3,13 @@ import { describe, expect, it, vi } from 'vitest';
 import { fingerprint } from '../src/activity.js';
 import { ApiClient } from '../src/api-client.js';
 import { allCommands } from '../src/commands.js';
-import { handleButton, handleCommand, handleMessage, type CommandInput } from '../src/handlers.js';
+import {
+  deliverLeagueNews,
+  handleButton,
+  handleCommand,
+  handleMessage,
+  type CommandInput,
+} from '../src/handlers.js';
 
 function fakeFetch(responses: Record<string, { status: number; body: unknown }>) {
   const calls: { url: string; init: RequestInit }[] = [];
@@ -244,5 +250,113 @@ describe('Discord-Bot', () => {
     });
     expect(reply.content).toContain('Sieg!');
     expect(reply.content).toContain('Neo: +90 XP');
+  });
+
+  const leagueView = (overrides: Record<string, unknown> = {}) => ({
+    rating: 1532,
+    games: 3,
+    placementLeft: 2,
+    joined: false,
+    division: null,
+    next: null,
+    fight: null,
+    url: 'https://tbca.example/fight/league',
+    ...overrides,
+  });
+
+  it('zeigt die Liga mit Platzierungs- und Anmelde-Button', async () => {
+    const { fn } = fakeFetch({ league: { status: 200, body: leagueView() } });
+    const api = new ApiClient('http://api', 't'.repeat(40), fn);
+    const reply = await handleCommand(api, input({ subcommand: 'liga' }));
+    expect(reply.content).toContain('Rating **1532**');
+    expect(reply.content).toContain('noch 2 gewertete Kämpfe');
+    expect(reply.buttons?.map((b) => b.customId)).toEqual([
+      'lg:placement:333333333333333333',
+      'lg:join:333333333333333333',
+    ]);
+  });
+
+  it('führt Liga-Buttons nur für den Besitzer aus', async () => {
+    const placed = leagueView({
+      placementLeft: 0,
+      joined: true,
+      division: { index: 2, count: 3, place: 1, points: 9, size: 8 },
+      next: { matchday: 4, playAt: '2026-11-13T19:00:00.000Z', locked: true },
+    });
+    const { fn, calls } = fakeFetch({ league: { status: 200, body: placed } });
+    const api = new ApiClient('http://api', 't'.repeat(40), fn);
+    const foreign = await handleButton(api, {
+      customId: 'lg:join:333333333333333333',
+      userId: '444444444444444444',
+      displayName: 'Trin',
+      locale: 'de',
+    });
+    expect(foreign.content).toContain('nicht deine Liga');
+    expect(calls).toHaveLength(0);
+    const reply = await handleButton(api, {
+      customId: 'lg:join:333333333333333333',
+      userId: '333333333333333333',
+      displayName: 'Neo',
+      locale: 'en-US',
+    });
+    expect(JSON.parse(String(calls[0]!.init.body))).toMatchObject({ action: 'join' });
+    expect(reply.content).toContain('Division 2 of 3: place 1 of 8, 9 points');
+    expect(reply.content).toContain('<t:1794596400:f>');
+    expect(reply.buttons?.map((b) => b.customId)).toEqual(['lg:leave:333333333333333333']);
+  });
+
+  it('setzt den Liga-Kanal und verschickt Ankündigungen in der Sprache des Servers', async () => {
+    const { fn } = fakeFetch({
+      'league-channel': { status: 200, body: { name: 'Night City' } },
+      'league-news': {
+        status: 200,
+        body: [
+          {
+            guildId: '111111111111111111',
+            channelId: '222222222222222222',
+            url: 'https://tbca.example/fight/league',
+            items: [
+              {
+                kind: 'matchday',
+                cycle: 1,
+                matchday: 2,
+                playAt: '2026-11-13T19:00:00.000Z',
+                results: [
+                  { a: 'Neo', b: 'Trin', winner: 'Neo', url: 'https://tbca.example/replay/x' },
+                ],
+              },
+              {
+                kind: 'cycle_end',
+                cycle: 1,
+                rows: [{ name: 'Neo', division: 2, place: 1, movement: 'up' }],
+              },
+            ],
+          },
+        ],
+      },
+    });
+    const api = new ApiClient('http://api', 't'.repeat(40), fn);
+    const admin = await handleCommand(
+      api,
+      input({
+        command: 'tbca-admin',
+        subcommand: 'liga-kanal',
+        opts: { kanal: { id: '222222222222222222' }, aktiv: true },
+      }),
+    );
+    expect(admin.content).toContain('Liga-Ankündigungen');
+    const sent: string[] = [];
+    const n = await deliverLeagueNews(
+      api,
+      async (target, content) => {
+        expect(target.channelId).toBe('222222222222222222');
+        sent.push(content);
+      },
+      () => 'de',
+    );
+    expect(n).toBe(1);
+    expect(sent[0]).toContain('Spieltag 2');
+    expect(sent[0]).toContain('**Neo** gewinnt');
+    expect(sent[0]).toContain('Platz 1 – Aufstieg ▲');
   });
 });

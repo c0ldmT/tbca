@@ -11,6 +11,16 @@ export interface DiscordRepository {
   /** Legt eine Community für den Server an (oder liefert die vorhandene). */
   ensureGuildCommunity(guildId: string, name: string): Promise<GuildCommunity>;
   setChannelXp(guildId: string, channelId: string, enabled: boolean): Promise<void>;
+  /**
+   * Kanal für Liga-Ankündigungen setzen (andere Kanäle des Servers werden abgeschaltet) oder
+   * abschalten. Beim Einschalten beginnen die Ankündigungen bei `from` (kein Rückstand).
+   */
+  setLeagueChannel(guildId: string, channelId: string, enabled: boolean, from: Date): Promise<void>;
+  /** Alle Kanäle mit Liga-Ankündigungen. */
+  leagueChannels(): Promise<
+    { guildId: string; channelId: string; communityId: string; announcedUntil: Date }[]
+  >;
+  markLeagueAnnounced(channelId: string, until: Date): Promise<void>;
   /** Rolle in der Community setzen (Mitgliedschaft muss bestehen). */
   setRole(
     communityId: string,

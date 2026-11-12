@@ -232,3 +232,91 @@ describe('Interne Discord-API', () => {
     expect(missing.json().code).toBe('opponent_not_found');
   });
 });
+
+describe('Liga über Discord', () => {
+  const HOUR = 60 * 60 * 1000;
+  /** Weitere platzierte und angemeldete Spieler, alle mit Heimat im Test-Server. */
+  async function players(n: number) {
+    const ids: string[] = [];
+    for (let i = 0; i < n; i++) {
+      const userId = `55555555555555555${i}`;
+      const created = (
+        await bot('POST', 'register', {
+          guildId: GUILD,
+          userId,
+          displayName: `P${i}`,
+          name: `Runner${i}`,
+          classId: 'bruiser',
+        })
+      ).json();
+      t.league.ratingRows.set(created.id, {
+        characterId: created.id,
+        seasonId: t.seasons.current!.id,
+        rating: 1500 + i,
+        rd: 100,
+        volatility: 0.06,
+        games: 5,
+        wins: 3,
+        losses: 2,
+        draws: 0,
+        leagueJoined: true,
+      });
+      ids.push(created.id);
+    }
+    return ids;
+  }
+
+  it('zeigt den Stand, meldet an und platziert', async () => {
+    await setup();
+    await players(2);
+    const status = (
+      await bot('POST', 'league', { userId: USER, displayName: 'Neo', action: 'status' })
+    ).json();
+    expect(status).toMatchObject({ rating: null, placementLeft: 5, joined: false, division: null });
+    expect(status.url).toBe(`${WEB_ORIGIN}/fight/league`);
+    const placed = (
+      await bot('POST', 'league', { userId: USER, displayName: 'Neo', action: 'placement' })
+    ).json();
+    expect(placed.placementLeft).toBe(4);
+    expect(placed.fight.url).toContain('/replay/');
+    const joined = (
+      await bot('POST', 'league', { userId: USER, displayName: 'Neo', action: 'join' })
+    ).json();
+    expect(joined.joined).toBe(true);
+  });
+
+  it('kündigt gespielte Spieltage im Liga-Kanal der Heimat-Community an, jeweils einmal', async () => {
+    await setup();
+    await players(4);
+    await bot('POST', 'league-channel', { guildId: GUILD, channelId: CHANNEL, enabled: true });
+    expect((await job('league-tick')).json().cyclesStarted).toBe(1);
+    expect((await bot('POST', 'league-news')).json()).toEqual([]);
+
+    t.time.tick(9 * HOUR); // 21:00 – Spieltag 1 ist gespielt
+    expect((await job('league-tick')).json().played).toBe(2);
+    const news = (await bot('POST', 'league-news')).json();
+    expect(news).toHaveLength(1);
+    expect(news[0]).toMatchObject({ guildId: GUILD, channelId: CHANNEL });
+    expect(news[0].items[0]).toMatchObject({ kind: 'matchday', cycle: 1, matchday: 1 });
+    expect(news[0].items[0].results).toHaveLength(2);
+    // Schon angekündigt
+    expect((await bot('POST', 'league-news')).json()).toEqual([]);
+
+    // Bis zum Zyklusende vorspulen: drei Spieltage, danach das Abschluss-Ranking
+    t.time.tick(2 * 24 * HOUR);
+    await job('league-tick');
+    const rest = (await bot('POST', 'league-news')).json()[0].items;
+    expect(rest.map((i: { kind: string }) => i.kind)).toEqual([
+      'matchday',
+      'matchday',
+      'cycle_end',
+    ]);
+    expect(rest[2].rows).toHaveLength(4);
+
+    // Abschalten: keine Ankündigungen mehr
+    await bot('POST', 'league-channel', { guildId: GUILD, channelId: CHANNEL, enabled: false });
+    t.time.tick(24 * HOUR);
+    await job('league-tick');
+    expect((await bot('POST', 'league-news')).json()).toEqual([]);
+  });
+});

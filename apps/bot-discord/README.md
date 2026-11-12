@@ -25,8 +25,15 @@ Fehlt `BOT_SERVICE_TOKEN` in einer älteren `.env.development`, einen zufällige
 | ------------------------ | ------------ | ---------------------------------------------- |
 | `/tbca-admin einrichten` | Server-Admin | Server als Community anlegen                   |
 | `/tbca-admin xp-kanal`   | Server-Admin | XP für Nachrichten in einem Kanal an/aus       |
+| `/tbca-admin liga-kanal` | Server-Admin | Liga-Ankündigungen in einem Kanal an/aus       |
 | `/tbca registrieren`     | alle         | Charakter anlegen (Schatten-Account)           |
 | `/tbca profil`           | alle         | Level, XP und Credits                          |
 | `/tbca kampf`            | alle         | Gegner herausfordern, Zusammenfassung + Replay |
+| `/tbca liga`             | alle         | Rating, Platzierung, Anmelden (mit Buttons)    |
+
+Nach einem Spieltag schickt der Bot innerhalb einer Minute die Ergebnisse der Spieler mit
+Heimat in dieser Community in den Liga-Kanal, am Zyklusende auch Platz und Auf- oder Abstieg.
+Die Zeiten erscheinen als Discord-Zeitstempel in der Ortszeit jedes Lesers. Neue Commands
+erst nach `scripts/bot.sh register-commands` sichtbar.
 
 Ein späterer Web-Login mit demselben Discord-Account übernimmt den Schatten-Account samt Charakter.

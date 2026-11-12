@@ -196,6 +196,32 @@ export class DrizzleLeagueRepository implements LeagueRepository {
     return row ?? null;
   }
 
+  async recentCycles(seasonId: string, limit: number): Promise<CycleRecord[]> {
+    return this.db
+      .select()
+      .from(leagueCycle)
+      .where(eq(leagueCycle.seasonId, seasonId))
+      .orderBy(desc(leagueCycle.number))
+      .limit(limit);
+  }
+
+  async homeMembers(communityId: string, characterIds: readonly string[]): Promise<Set<string>> {
+    if (characterIds.length === 0) return new Set();
+    const rows = await this.db
+      .select({ id: character.id })
+      .from(character)
+      .innerJoin(
+        communityMember,
+        and(
+          eq(communityMember.accountId, character.accountId),
+          eq(communityMember.isHome, true),
+          eq(communityMember.communityId, communityId),
+        ),
+      )
+      .where(inArray(character.id, [...characterIds]));
+    return new Set(rows.map((r) => r.id));
+  }
+
   createCycle(input: Parameters<LeagueRepository['createCycle']>[0]): Promise<CycleRecord> {
     return this.db.transaction(async (tx) => {
       const [cycle] = await tx

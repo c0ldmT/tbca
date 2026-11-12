@@ -1,6 +1,8 @@
 import type {
   DiscordDungeonView,
   DiscordFightSummary,
+  DiscordLeagueNews,
+  DiscordLeagueView,
   DiscordTeamFightSummary,
   DiscordTeamView,
 } from '@tbca/shared';
@@ -96,8 +98,69 @@ const de = {
       ? '\n' + f.rewards.map((r) => `${r.name}: +${r.xp} XP, +${r.credits} Credits`).join('\n')
       : ' Keine Belohnung.') +
     `\nReplay: ${f.replayUrl}`,
+  league: (v: DiscordLeagueView): string => {
+    const lines = [
+      v.rating === null
+        ? '**Liga** – noch kein Rating.'
+        : `**Liga** – Rating **${v.rating}** aus ${v.games} gewerteten Kämpfen.`,
+    ];
+    if (v.fight) lines.push(de.fight(v.fight));
+    if (v.placementLeft > 0)
+      lines.push(`Platzierung: noch ${v.placementLeft} gewertete Kämpfe bis zur Einteilung.`);
+    if (v.division)
+      lines.push(
+        `Division ${v.division.index} von ${v.division.count}: Platz ${v.division.place} von ${v.division.size}, ${v.division.points} Punkte.`,
+      );
+    if (v.next)
+      lines.push(
+        `Spieltag ${v.next.matchday}: ${stamp(v.next.playAt)}` +
+          (v.next.locked ? ' – gesperrt, es zählt der Stand vom Lock.' : ''),
+      );
+    else if (v.joined && v.placementLeft === 0)
+      lines.push('Angemeldet – du wirst im nächsten Zyklus eingeteilt.');
+    lines.push(v.url);
+    return lines.join('\n');
+  },
+  leagueButtons: {
+    placement: (left: number) => `Platzierungskampf (noch ${left})`,
+    join: 'Für die Liga anmelden',
+    leave: 'Abmelden',
+    notYours: 'Das ist nicht deine Liga-Ansicht. Nutze `/tbca liga`.',
+  },
+  leagueChannel: (enabled: boolean): string =>
+    enabled
+      ? 'Liga-Ankündigungen kommen jetzt in diesen Kanal.'
+      : 'In diesem Kanal gibt es keine Liga-Ankündigungen mehr.',
+  leagueNews: (n: DiscordLeagueNews): string =>
+    n.items
+      .map((i) =>
+        i.kind === 'matchday'
+          ? `⚔️ **Liga · Zyklus ${i.cycle}, Spieltag ${i.matchday}** (${stamp(i.playAt)})\n` +
+            i.results
+              .map(
+                (r) =>
+                  `• ${r.a} – ${r.b}: ${r.winner ? `**${r.winner}** gewinnt` : 'Unentschieden'}` +
+                  (r.url ? ` · <${r.url}>` : ''),
+              )
+              .join('\n')
+          : `🏁 **Liga · Zyklus ${i.cycle} beendet**\n` +
+            i.rows
+              .map(
+                (r) =>
+                  `• ${r.name}: Division ${r.division}, Platz ${r.place}` +
+                  (r.movement === 'up'
+                    ? ' – Aufstieg ▲'
+                    : r.movement === 'down'
+                      ? ' – Abstieg ▼'
+                      : ''),
+              )
+              .join('\n'),
+      )
+      .join('\n\n') + `\n${n.url}`,
   errors: {
     no_team: 'Du bist in keinem Team. Gründe eins auf der Website.',
+    already_placed: 'Deine Platzierung ist abgeschlossen.',
+    no_opponent: 'Gerade ist kein passender Gegner da.',
     team_not_found: 'Kein Team mit diesem Kürzel gefunden.',
     invalid_lineup:
       'Die Aufstellung passt nicht – dein Team braucht genug Mitglieder mit Charakter.',
@@ -203,8 +266,69 @@ const en: typeof de = {
       ? '\n' + f.rewards.map((r) => `${r.name}: +${r.xp} XP, +${r.credits} credits`).join('\n')
       : ' No reward.') +
     `\nReplay: ${f.replayUrl}`,
+  league: (v) => {
+    const lines = [
+      v.rating === null
+        ? '**League** – no rating yet.'
+        : `**League** – rating **${v.rating}** from ${v.games} rated fights.`,
+    ];
+    if (v.fight) lines.push(en.fight(v.fight));
+    if (v.placementLeft > 0)
+      lines.push(`Placement: ${v.placementLeft} more rated fights until you get a division.`);
+    if (v.division)
+      lines.push(
+        `Division ${v.division.index} of ${v.division.count}: place ${v.division.place} of ${v.division.size}, ${v.division.points} points.`,
+      );
+    if (v.next)
+      lines.push(
+        `Matchday ${v.next.matchday}: ${stamp(v.next.playAt)}` +
+          (v.next.locked ? ' – locked, your state at the lock counts.' : ''),
+      );
+    else if (v.joined && v.placementLeft === 0)
+      lines.push("Signed up – you'll get a division in the next cycle.");
+    lines.push(v.url);
+    return lines.join('\n');
+  },
+  leagueButtons: {
+    placement: (left) => `Placement fight (${left} left)`,
+    join: 'Join the league',
+    leave: 'Leave',
+    notYours: "That's not your league view. Use `/tbca liga`.",
+  },
+  leagueChannel: (enabled) =>
+    enabled
+      ? 'League announcements now go to this channel.'
+      : 'This channel no longer gets league announcements.',
+  leagueNews: (n) =>
+    n.items
+      .map((i) =>
+        i.kind === 'matchday'
+          ? `⚔️ **League · cycle ${i.cycle}, matchday ${i.matchday}** (${stamp(i.playAt)})\n` +
+            i.results
+              .map(
+                (r) =>
+                  `• ${r.a} – ${r.b}: ${r.winner ? `**${r.winner}** wins` : 'draw'}` +
+                  (r.url ? ` · <${r.url}>` : ''),
+              )
+              .join('\n')
+          : `🏁 **League · cycle ${i.cycle} finished**\n` +
+            i.rows
+              .map(
+                (r) =>
+                  `• ${r.name}: division ${r.division}, place ${r.place}` +
+                  (r.movement === 'up'
+                    ? ' – promoted ▲'
+                    : r.movement === 'down'
+                      ? ' – relegated ▼'
+                      : ''),
+              )
+              .join('\n'),
+      )
+      .join('\n\n') + `\n${n.url}`,
   errors: {
     no_team: "You're not in a team. Found one on the website.",
+    already_placed: 'Your placement is complete.',
+    no_opponent: 'No suitable opponent right now.',
     team_not_found: 'No team with that tag found.',
     invalid_lineup: "The lineup doesn't fit – your team needs enough members with a character.",
     lineup_without_character: 'Someone in the lineup has no character.',
@@ -238,6 +362,11 @@ export function textsFor(locale: string | null | undefined): Texts {
 export function errorText(texts: Texts, code: string): string {
   if (code.startsWith('invalid_name')) return texts.errors.invalid_name;
   return (texts.errors as Record<string, string>)[code] ?? texts.errors.fallback;
+}
+
+/** Discord-Zeitstempel: zeigt jedem die eigene Ortszeit. */
+function stamp(iso: string): string {
+  return `<t:${Math.floor(Date.parse(iso) / 1000)}:f>`;
 }
 
 function className(id: string): string {

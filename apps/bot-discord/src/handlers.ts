@@ -1,6 +1,6 @@
-import type { DiscordDungeonView } from '@tbca/shared';
+import type { DiscordDungeonView, DiscordLeagueView } from '@tbca/shared';
 
-import type { ApiClient, DungeonAction } from './api-client.js';
+import type { ApiClient, DungeonAction, LeagueAction } from './api-client.js';
 import { fingerprint } from './activity.js';
 import { errorText, textsFor, type Texts } from './texts.js';
 
@@ -98,10 +98,40 @@ export function dungeonReply(
   return { content: t.dungeon(d), ephemeral: false, buttons };
 }
 
-/** Klick auf einen Dungeon-Button: Entscheidung an die API, Nachricht aktualisieren. */
+/** Liga-Stand mit Buttons: Platzierungskampf, Anmelden oder Abmelden. */
+export function leagueReply(t: Texts, v: DiscordLeagueView, ownerId: string): CommandReply {
+  const buttons: ButtonSpec[] = [];
+  if (v.placementLeft > 0)
+    buttons.push({
+      customId: `lg:placement:${ownerId}`,
+      label: t.leagueButtons.placement(v.placementLeft),
+      style: 'primary',
+    });
+  buttons.push(
+    v.joined
+      ? { customId: `lg:leave:${ownerId}`, label: t.leagueButtons.leave, style: 'secondary' }
+      : { customId: `lg:join:${ownerId}`, label: t.leagueButtons.join, style: 'success' },
+  );
+  return { content: t.league(v), ephemeral: true, buttons };
+}
+
+/** Klick auf einen Dungeon- oder Liga-Button: Entscheidung an die API, Nachricht aktualisieren. */
 export async function handleButton(api: ApiClient, input: ButtonInput): Promise<CommandReply> {
   const t = textsFor(input.locale);
   const [prefix, action, ownerId, inj, chip] = input.customId.split(':');
+  if (prefix === 'lg') {
+    const actions: LeagueAction[] = ['join', 'leave', 'placement'];
+    if (!actions.includes(action as LeagueAction) || !ownerId)
+      return { content: errorText(t, 'fallback'), ephemeral: true };
+    if (ownerId !== input.userId) return { content: t.leagueButtons.notYours, ephemeral: true };
+    const res = await api.league({
+      userId: input.userId,
+      displayName: input.displayName,
+      action: action as LeagueAction,
+    });
+    if (!res.ok) return { content: errorText(t, res.code), ephemeral: true };
+    return leagueReply(t, res.data, input.userId);
+  }
   const actions: DungeonAction[] = ['start', 'continue', 'heal', 'leave'];
   if (prefix !== 'dg' || !actions.includes(action as DungeonAction) || !ownerId)
     return { content: errorText(t, 'fallback'), ephemeral: true };
@@ -128,6 +158,13 @@ export async function handleCommand(api: ApiClient, input: CommandInput): Promis
         displayName: input.displayName,
       });
       return res.ok ? { content: t.setupDone(res.data.name), ephemeral: true } : fail(res.code);
+    }
+    if (input.subcommand === 'liga-kanal') {
+      const channel = input.options.channel('kanal');
+      const enabled = input.options.boolean('aktiv') ?? false;
+      if (!channel) return fail('fallback');
+      const res = await api.leagueChannel(input.guildId, channel.id, enabled);
+      return res.ok ? { content: t.leagueChannel(enabled), ephemeral: true } : fail(res.code);
     }
     if (input.subcommand === 'xp-kanal') {
       const channel = input.options.channel('kanal');
@@ -165,6 +202,14 @@ export async function handleCommand(api: ApiClient, input: CommandInput): Promis
           action: 'status',
         });
         return res.ok ? dungeonReply(t, res.data, input.userId, start) : fail(res.code);
+      }
+      case 'liga': {
+        const res = await api.league({
+          userId: input.userId,
+          displayName: input.displayName,
+          action: 'status',
+        });
+        return res.ok ? leagueReply(t, res.data, input.userId) : fail(res.code);
       }
       case 'team': {
         const res = await api.teams(input.userId);
@@ -221,4 +266,27 @@ export async function handleMessage(api: ApiClient, message: MessageInput): Prom
     length,
     hash,
   });
+}
+
+/**
+ * Liga-Ankündigungen abholen und in die Kanäle schicken. Die Sprache folgt der bevorzugten
+ * Sprache des Servers. Liefert die Zahl der gesendeten Nachrichten.
+ */
+export async function deliverLeagueNews(
+  api: ApiClient,
+  send: (target: { guildId: string; channelId: string }, content: string) => Promise<void>,
+  localeOf: (guildId: string) => string,
+): Promise<number> {
+  const res = await api.leagueNews();
+  if (!res.ok) return 0;
+  let sent = 0;
+  for (const news of res.data) {
+    try {
+      await send(news, textsFor(localeOf(news.guildId)).leagueNews(news).slice(0, 2000));
+      sent++;
+    } catch {
+      // Kanal gelöscht oder keine Rechte: die nächste Ankündigung versucht es wieder
+    }
+  }
+  return sent;
 }

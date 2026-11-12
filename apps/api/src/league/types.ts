@@ -84,6 +84,10 @@ export interface LeagueRepository {
   activeCycle(seasonId: string): Promise<CycleRecord | null>;
   lastCycle(seasonId: string): Promise<CycleRecord | null>;
   findCycle(id: string): Promise<CycleRecord | null>;
+  /** Die letzten Zyklen der Season, neueste zuerst. */
+  recentCycles(seasonId: string, limit: number): Promise<CycleRecord[]>;
+  /** Welche der Charaktere gehören zu Accounts mit dieser Heimat-Community? */
+  homeMembers(communityId: string, characterIds: readonly string[]): Promise<Set<string>>;
   createCycle(input: {
     seasonId: string;
     number: number;

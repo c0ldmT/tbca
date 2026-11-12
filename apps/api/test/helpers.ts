@@ -566,6 +566,41 @@ export class InMemoryDiscord implements DiscordRepository {
     this.xpChannels.set(guildId, set);
   }
 
+  readonly leagueNews = new Map<
+    string,
+    { guildId: string; communityId: string; announcedUntil: Date; enabled: boolean }
+  >();
+
+  async setLeagueChannel(guildId: string, channelId: string, enabled: boolean, from: Date) {
+    const g = this.guilds.get(guildId);
+    if (!g) throw new Error('Server ist keiner Community zugeordnet');
+    if (enabled)
+      for (const row of this.leagueNews.values()) if (row.guildId === guildId) row.enabled = false;
+    const prev = this.leagueNews.get(channelId);
+    this.leagueNews.set(channelId, {
+      guildId,
+      communityId: g.communityId,
+      enabled,
+      announcedUntil: enabled ? from : (prev?.announcedUntil ?? from),
+    });
+  }
+
+  async leagueChannels() {
+    return [...this.leagueNews.entries()]
+      .filter(([, r]) => r.enabled)
+      .map(([channelId, r]) => ({
+        guildId: r.guildId,
+        channelId,
+        communityId: r.communityId,
+        announcedUntil: r.announcedUntil,
+      }));
+  }
+
+  async markLeagueAnnounced(channelId: string, until: Date) {
+    const row = this.leagueNews.get(channelId);
+    if (row) row.announcedUntil = until;
+  }
+
   readonly roles = new Map<string, string>();
 
   async setRole(communityId: string, accountId: string, role: 'member' | 'moderator' | 'admin') {
@@ -1201,6 +1236,15 @@ export class InMemoryLeague implements LeagueRepository {
   readonly matchRows: MatchRecord[] = [];
   /** Heimat-Community je Account, für die Community-Rangliste. */
   readonly homes = new Map<string, string>();
+  /** Mitgliedschaften aus dem Discord-Fake, falls gesetzt. */
+  discord: InMemoryDiscord | null = null;
+
+  private homeOf(accountId: string): string | undefined {
+    return (
+      this.homes.get(accountId) ??
+      this.discord?.members.get(accountId)?.find((m) => m.isHome)?.communityId
+    );
+  }
 
   constructor(private readonly characters: InMemoryCharacters) {}
 
@@ -1258,13 +1302,13 @@ export class InMemoryLeague implements LeagueRepository {
     seasonId: string,
     options: { minGames: number; limit: number; homeOfAccount: string | null },
   ) {
-    const home = options.homeOfAccount ? this.homes.get(options.homeOfAccount) : null;
+    const home = options.homeOfAccount ? this.homeOf(options.homeOfAccount) : null;
     return [...this.ratingRows.values()]
       .filter((r) => r.seasonId === seasonId && r.games >= options.minGames)
       .map((r) => ({ r, c: this.characters.records.find((c) => c.id === r.characterId)! }))
       .filter(
         ({ c }) =>
-          c && (options.homeOfAccount === null || (home && this.homes.get(c.accountId) === home)),
+          c && (options.homeOfAccount === null || (home && this.homeOf(c.accountId) === home)),
       )
       .sort((a, b) => b.r.rating - a.r.rating)
       .slice(0, options.limit)
@@ -1290,6 +1334,22 @@ export class InMemoryLeague implements LeagueRepository {
 
   async findCycle(id: string) {
     return this.cycles.find((c) => c.id === id) ?? null;
+  }
+
+  async recentCycles(seasonId: string, limit: number) {
+    return this.cycles
+      .filter((c) => c.seasonId === seasonId)
+      .sort((a, b) => b.number - a.number)
+      .slice(0, limit);
+  }
+
+  async homeMembers(communityId: string, characterIds: readonly string[]) {
+    return new Set(
+      characterIds.filter((id) => {
+        const c = this.characters.records.find((x) => x.id === id);
+        return c !== undefined && this.homeOf(c.accountId) === communityId;
+      }),
+    );
   }
 
   async createCycle(input: Parameters<LeagueRepository['createCycle']>[0]) {
@@ -1430,6 +1490,7 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
   const bots = new InMemoryBots(characters);
   const accountData = new InMemoryAccountData(accounts, characters, sessions, fights);
   const league = new InMemoryLeague(characters);
+  league.discord = guilds;
   // 12.11.2026, 12:00 Uhr in Berlin
   const time = new ManualTimeSource(Date.UTC(2026, 10, 12, 11, 0));
   const dbUp = { value: true };

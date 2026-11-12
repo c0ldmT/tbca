@@ -1,0 +1,2 @@
+ALTER TABLE "community_channel" ADD COLUMN "league_news" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+ALTER TABLE "community_channel" ADD COLUMN "league_announced_until" timestamp with time zone;

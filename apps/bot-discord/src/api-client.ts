@@ -2,12 +2,15 @@ import type {
   DiscordActivityResult,
   DiscordDungeonView,
   DiscordFightSummary,
+  DiscordLeagueNews,
+  DiscordLeagueView,
   DiscordProfileView,
   DiscordTeamFightSummary,
   DiscordTeamView,
 } from '@tbca/shared';
 
 export type DungeonAction = 'status' | 'start' | 'continue' | 'heal' | 'leave';
+export type LeagueAction = 'status' | 'join' | 'leave' | 'placement';
 
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; code: string };
 
@@ -80,6 +83,19 @@ export class ApiClient {
     mode: 'rated' | 'friendly';
   }) {
     return this.call<DiscordTeamFightSummary>('POST', 'team-challenge', input);
+  }
+
+  leagueChannel(guildId: string, channelId: string, enabled: boolean) {
+    return this.call<{ name: string }>('POST', 'league-channel', { guildId, channelId, enabled });
+  }
+
+  league(input: { userId: string; displayName: string; action: LeagueAction }) {
+    return this.call<DiscordLeagueView>('POST', 'league', input);
+  }
+
+  /** Neue Ankündigungen abholen; danach gelten sie als angekündigt. */
+  leagueNews() {
+    return this.call<DiscordLeagueNews[]>('POST', 'league-news', {});
   }
 
   activity(input: {

@@ -12,9 +12,12 @@ import {
   type Clock,
 } from '@tbca/game-core';
 import type {
+  ChallengeResponse,
   DiscordActivityResult,
   DiscordDungeonView,
   DiscordFightSummary,
+  DiscordLeagueNews,
+  DiscordLeagueView,
   DiscordProfileView,
   DiscordTeamFightSummary,
   DiscordTeamView,
@@ -30,6 +33,7 @@ import type { Env } from '../config/env.js';
 import { dayKey } from '../fight/day.js';
 import { DungeonService } from '../dungeon/dungeon.service.js';
 import { FightService } from '../fight/fight.service.js';
+import { LeagueService } from '../league/league.service.js';
 import { TeamService } from '../team/team.service.js';
 import { SeasonService } from '../game/season.js';
 import type { RateLimiter } from '../limits/rate-limiter.js';
@@ -72,6 +76,7 @@ export class DiscordService {
     @Inject(ENV) private readonly env: Env,
     @Inject(DungeonService) private readonly dungeonService: DungeonService,
     @Inject(TeamService) private readonly teamService: TeamService,
+    @Inject(LeagueService) private readonly league: LeagueService,
   ) {}
 
   /** Dungeon über Discord: Status, Start oder Entscheidung; Antwort für Nachricht mit Buttons. */
@@ -283,6 +288,11 @@ export class DiscordService {
       opponentId: opponent.id,
       mode: input.mode,
     });
+    return this.summarize(result);
+  }
+
+  /** Kurzfassung eines Kampfes für eine Discord-Nachricht. */
+  private async summarize(result: ChallengeResponse): Promise<DiscordFightSummary> {
     const fight = await this.fights.get(result.fightId);
     const names = new Map(fight.teams.flat().map((c) => [c.id, c.name]));
     let bestHit: DiscordFightSummary['bestHit'] = null;
@@ -304,6 +314,75 @@ export class DiscordService {
       levelUp: result.level.after > result.level.before ? result.level.after : null,
       url: `${this.env.WEB_ORIGIN}/replay/${result.fightId}`,
     };
+  }
+
+  // --- Liga -------------------------------------------------------------------
+
+  /** Liga über Discord: eigener Stand, An-/Abmelden oder Platzierungskampf. */
+  async leagueAction(input: {
+    userId: string;
+    action: 'status' | 'join' | 'leave' | 'placement';
+  }): Promise<DiscordLeagueView> {
+    const accountId = await this.requireAccount(input.userId);
+    let fight: DiscordFightSummary | null = null;
+    if (input.action === 'join' || input.action === 'leave')
+      await this.league.join(accountId, input.action === 'join');
+    if (input.action === 'placement')
+      fight = await this.summarize(await this.league.placement(accountId));
+    const v = await this.league.view(accountId);
+    const mine = v.division?.table.find((r) => r.me);
+    return {
+      rating: v.rating?.rating ?? null,
+      games: v.rating?.games ?? 0,
+      placementLeft: v.rating?.placementLeft ?? v.rules.placementGames,
+      joined: v.joined,
+      division:
+        v.division && mine
+          ? {
+              index: v.division.index + 1,
+              count: v.division.count,
+              place: mine.place,
+              points: mine.points,
+              size: v.division.table.length,
+            }
+          : null,
+      next: v.next
+        ? { matchday: v.next.matchday, playAt: v.next.playAt, locked: v.next.locked }
+        : null,
+      fight,
+      url: `${this.env.WEB_ORIGIN}/fight/league`,
+    };
+  }
+
+  async setLeagueChannel(
+    guildId: string,
+    channelId: string,
+    enabled: boolean,
+  ): Promise<GuildCommunity> {
+    await this.guild(guildId);
+    await this.discord.setLeagueChannel(guildId, channelId, enabled, new Date(this.clock.now()));
+    return (await this.discord.communityForGuild(guildId))!;
+  }
+
+  /**
+   * Neue Liga-Ankündigungen je Kanal seit der letzten Abfrage (Spielzeit). Der Bot fragt
+   * regelmäßig; was hier geliefert wird, gilt als angekündigt.
+   */
+  async leagueNews(): Promise<DiscordLeagueNews[]> {
+    const until = this.clock.now();
+    const out: DiscordLeagueNews[] = [];
+    for (const ch of await this.discord.leagueChannels()) {
+      const items = await this.league.news(ch.communityId, ch.announcedUntil.getTime(), until);
+      await this.discord.markLeagueAnnounced(ch.channelId, new Date(until));
+      if (items.length)
+        out.push({
+          guildId: ch.guildId,
+          channelId: ch.channelId,
+          items,
+          url: `${this.env.WEB_ORIGIN}/fight/league`,
+        });
+    }
+    return out;
   }
 
   /**

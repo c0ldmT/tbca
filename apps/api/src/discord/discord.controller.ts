@@ -4,6 +4,8 @@ import {
   discordChallengeSchema,
   discordChannelXpSchema,
   discordDungeonSchema,
+  discordLeagueChannelSchema,
+  discordLeagueSchema,
   discordRegisterSchema,
   discordSetupSchema,
   discordTeamChallengeSchema,
@@ -35,6 +37,27 @@ export class DiscordController {
   channelXp(@Body() body: unknown) {
     const { guildId, channelId, enabled } = parseBody(discordChannelXpSchema, body);
     return this.discord.setChannelXp(guildId, channelId, enabled);
+  }
+
+  @Post('league-channel')
+  @HttpCode(200)
+  leagueChannel(@Body() body: unknown) {
+    const { guildId, channelId, enabled } = parseBody(discordLeagueChannelSchema, body);
+    return this.discord.setLeagueChannel(guildId, channelId, enabled);
+  }
+
+  /** Eigener Liga-Stand, An-/Abmelden oder Platzierungskampf. */
+  @Post('league')
+  @HttpCode(200)
+  league(@Body() body: unknown) {
+    return this.discord.leagueAction(parseBody(discordLeagueSchema, body));
+  }
+
+  /** Neue Spieltags- und Zyklus-Ankündigungen je Kanal; gilt danach als angekündigt. */
+  @Post('league-news')
+  @HttpCode(200)
+  leagueNews() {
+    return this.discord.leagueNews();
   }
 
   @Post('register')

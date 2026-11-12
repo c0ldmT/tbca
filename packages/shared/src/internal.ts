@@ -155,3 +155,55 @@ export interface DiscordFightSummary {
   levelUp: number | null;
   url: string;
 }
+
+// --- Liga über Discord ------------------------------------------------------------
+
+/** Kanal für Liga-Ankündigungen setzen oder abschalten (höchstens einer je Server). */
+export const discordLeagueChannelSchema = discordChannelXpSchema;
+
+/** Liga über den Bot: Stand, An-/Abmelden oder Platzierungskampf. */
+export const discordLeagueSchema = discordUserSchema.extend({
+  action: z.enum(['status', 'join', 'leave', 'placement']),
+});
+
+export interface DiscordLeagueView {
+  rating: number | null;
+  games: number;
+  placementLeft: number;
+  joined: boolean;
+  division: { index: number; count: number; place: number; points: number; size: number } | null;
+  next: { matchday: number; playAt: string; locked: boolean } | null;
+  /** Nur bei `placement`: der gespielte Platzierungskampf. */
+  fight: DiscordFightSummary | null;
+  url: string;
+}
+
+export interface DiscordLeagueMatchResult {
+  a: string;
+  b: string;
+  /** Name des Siegers, null bei Unentschieden. */
+  winner: string | null;
+  url: string | null;
+}
+
+export type DiscordLeagueNewsItem =
+  | {
+      kind: 'matchday';
+      cycle: number;
+      matchday: number;
+      playAt: string;
+      results: DiscordLeagueMatchResult[];
+    }
+  | {
+      kind: 'cycle_end';
+      cycle: number;
+      rows: { name: string; division: number; place: number; movement: 'up' | 'down' | 'stay' }[];
+    };
+
+/** Ankündigungen je Kanal, nur mit Spielern der Heimat-Community des Servers. */
+export interface DiscordLeagueNews {
+  guildId: string;
+  channelId: string;
+  items: DiscordLeagueNewsItem[];
+  url: string;
+}

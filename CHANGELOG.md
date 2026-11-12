@@ -8,6 +8,12 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ### Hinzugefügt
 
+- Liga im Discord-Bot: `/tbca liga` zeigt Rating, Platzierung, Division und nächsten Spieltag
+  mit Buttons für Platzierungskampf und An-/Abmelden. `/tbca-admin liga-kanal` legt einen
+  Kanal für Ankündigungen fest (einer je Server): Der Bot holt jede Minute neue Ergebnisse ab
+  (`POST /api/internal/discord/league-news`) und meldet gespielte Spieltage und das Zyklusende
+  mit Platz und Auf-/Abstieg – nur für Spieler mit Heimat in der Community des Servers.
+  Migration 0015 (`community_channel.league_news`, `league_announced_until`).
 - Liga: jede Division des laufenden (oder zuletzt beendeten) Zyklus ist einsehbar
   (`GET /api/league/divisions/:index`); auf der Liga-Seite blättern Pfeile durch die
   Divisionen, ohne eigene Teilnahme zeigt sie die oberste.

@@ -10,8 +10,17 @@ import {
 
 import { ApiClient } from './api-client.js';
 import { loadBotEnv, type BotEnv } from './env.js';
-import { handleButton, handleCommand, handleMessage, type ButtonSpec } from './handlers.js';
+import {
+  deliverLeagueNews,
+  handleButton,
+  handleCommand,
+  handleMessage,
+  type ButtonSpec,
+} from './handlers.js';
 import { errorText, textsFor } from './texts.js';
+
+/** Abstand der Abfrage neuer Liga-Ankündigungen (Echtzeit). */
+const LEAGUE_NEWS_MS = 60_000;
 
 const STYLES: Record<ButtonSpec['style'], ButtonStyle> = {
   primary: ButtonStyle.Primary,
@@ -58,7 +67,21 @@ export async function startBot(env: BotEnv = loadBotEnv()): Promise<Client | nul
     ],
   });
 
-  client.once(Events.ClientReady, (c) => console.info(`Discord-Bot angemeldet als ${c.user.tag}`));
+  client.once(Events.ClientReady, (c) => {
+    console.info(`Discord-Bot angemeldet als ${c.user.tag}`);
+    // Liga-Ankündigungen: jede Minute neue Spieltage und Zyklus-Enden abholen
+    const timer = setInterval(() => {
+      void deliverLeagueNews(
+        api,
+        async (target, content) => {
+          const channel = await client.channels.fetch(target.channelId);
+          if (channel?.isSendable()) await channel.send({ content });
+        },
+        (guildId) => client.guilds.cache.get(guildId)?.preferredLocale ?? 'de',
+      ).catch(() => undefined);
+    }, LEAGUE_NEWS_MS);
+    timer.unref();
+  });
 
   client.on(Events.InteractionCreate, async (interaction) => {
     // Dungeon-Buttons: Besitzer aktualisiert die Nachricht, alle anderen bekommen einen Hinweis
@@ -90,7 +113,8 @@ export async function startBot(env: BotEnv = loadBotEnv()): Promise<Client | nul
     const i = interaction as ChatInputCommandInteraction<'cached' | 'raw'>;
     await i.deferReply({
       ephemeral:
-        i.commandName === 'tbca-admin' || ['profil', 'team'].includes(i.options.getSubcommand()),
+        i.commandName === 'tbca-admin' ||
+        ['profil', 'team', 'liga'].includes(i.options.getSubcommand()),
     });
     try {
       const reply = await handleCommand(api, {

@@ -43,6 +43,11 @@ export const playerCommand = new SlashCommandBuilder()
         o.setName('backup-chip').setDescription('Backup-Chip beim Start einsetzen'),
       ),
   )
+  .addSubcommand((s) =>
+    s
+      .setName('liga')
+      .setDescription('Rating, Platzierung und nächster Liga-Spieltag – mit Buttons'),
+  )
   .addSubcommand((s) => s.setName('team').setDescription('Deine Teams anzeigen'))
   .addSubcommand((s) =>
     s
@@ -110,6 +115,21 @@ export const adminCommand = new SlashCommandBuilder()
           .addChannelTypes(ChannelType.GuildText),
       )
       .addBooleanOption((o) => o.setName('aktiv').setDescription('XP geben?').setRequired(true)),
+  )
+  .addSubcommand((s) =>
+    s
+      .setName('liga-kanal')
+      .setDescription('Kanal für Liga-Ankündigungen (Spieltage, Zyklusende) festlegen')
+      .addChannelOption((o) =>
+        o
+          .setName('kanal')
+          .setDescription('Kanal')
+          .setRequired(true)
+          .addChannelTypes(ChannelType.GuildText),
+      )
+      .addBooleanOption((o) =>
+        o.setName('aktiv').setDescription('Ankündigungen senden?').setRequired(true),
+      ),
   );
 
 export const allCommands = [playerCommand.toJSON(), adminCommand.toJSON()];
