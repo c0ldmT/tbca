@@ -22,8 +22,8 @@ REST-API auf NestJS mit Fastify. Alle Routen liegen unter `/api`.
 | `PUT /api/admin/season/end`              | Season-Ende verschieben                                                                                 |
 | `POST /api/admin/season/reset`           | `progress` oder `wipe`, Bestätigung mit dem Season-Slug                                                 |
 | `POST /api/admin/config/drafts`          | Entwurf aus Version, veröffentlichter Version oder `defaults`                                           |
-| `POST /api/admin/simulations`            | Simulation einer Stufe (Matrix oder Dungeon)                                                            |
-| `POST /api/admin/simulations/report`     | Report über Level 3–80 mit Konfiguration (`tbca-sim-report/v1`)                                         |
+| `POST /api/admin/simulations`            | Simulation einer Stufe (Matrix, Dungeon oder Team-Aufstellungen 2v2/3v3)                                |
+| `POST /api/admin/simulations/report`     | Report über Level 3–80 mit Teams und Konfiguration (`tbca-sim-report/v1`)                               |
 | `GET /api/admin/export?days=&maxFights=` | Anonymisierter Datenexport (`tbca-data/v1`)                                                             |
 
 ## Discord-App einrichten (Entwicklung)

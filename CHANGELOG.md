@@ -8,6 +8,12 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ### Hinzugefügt
 
+- Team-Simulation für 2v2 und 3v3 (`simulateTeams` in game-core): Jede Aufstellung der vier
+  Klassen (Doppelungen erlaubt; 10 bzw. 20 Aufstellungen) kämpft gegen jede andere, je zur
+  Hälfte als erstes und zweites Team. Ergebnis: Rangliste mit schwerstem Gegner, Beitrag je
+  Klasse, gemischte gegen doppelte Aufstellungen. In der Admin-Simulation als dritte Auswertung
+  (höchstens 60 Kämpfe je Paarung) und im Balancing-Report (`teamFights`, Standard 8; 0 lässt
+  die Teams weg), jeweils mit CSV-Export.
 - Admin, Season-Steuerung (`/admin/season`): Kennzahlen des Spieltags, Tageslimits für alle
   oder einen Spieler zurücksetzen (Dungeon-Runs, belohnte Kämpfe, Chat-XP-Deckel), Hintergrund-
   Jobs sofort ausführen (Season-Kennzahlen, Chat-XP buchen, verwaiste Runs abschließen, alle

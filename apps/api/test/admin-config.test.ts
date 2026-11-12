@@ -128,6 +128,28 @@ describe('Balancing-Simulation', () => {
     expect(dungeon.dungeon.runs).toBe(8);
   });
 
+  it('simuliert Team-Aufstellungen und begrenzt deren Stichprobe', async () => {
+    const res = (
+      await call('POST', '/api/admin/simulations', {
+        kind: 'teams',
+        teamSize: 2,
+        level: 10,
+        gear: 'common',
+        samples: 2,
+      })
+    ).json();
+    expect(res.teams.size).toBe(2);
+    expect(res.teams.comps).toHaveLength(10);
+    expect(res.matchups).toBeNull();
+    const tooMany = await call('POST', '/api/admin/simulations', {
+      kind: 'teams',
+      level: 10,
+      gear: 'none',
+      samples: 100,
+    });
+    expect(tooMany.statusCode).toBe(400);
+  });
+
   it('begrenzt die Stichprobe und ist nur für Superadmins', async () => {
     const tooMany = await call('POST', '/api/admin/simulations', {
       kind: 'matchups',

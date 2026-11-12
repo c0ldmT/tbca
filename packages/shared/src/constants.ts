@@ -47,3 +47,6 @@ export const SEASON_JOB_IDS = [
   'bot-agents',
 ] as const;
 export type SeasonJobId = (typeof SEASON_JOB_IDS)[number];
+
+/** Obergrenze der Kämpfe je Paarung bei der Team-Simulation (3v3: 190 Paarungen). */
+export const SIM_TEAM_MAX_SAMPLES = 60;

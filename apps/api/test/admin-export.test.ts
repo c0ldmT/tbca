@@ -40,6 +40,7 @@ describe('Balancing-Report', () => {
     const res = await call(adminAuth, 'POST', '/api/admin/simulations/report', {
       fights: 10,
       runs: 4,
+      teamFights: 2,
     });
     expect(res.statusCode).toBe(200);
     const report = res.json();
@@ -47,6 +48,8 @@ describe('Balancing-Report', () => {
     expect(report.points.map((p: { level: number }) => p.level)).toEqual([3, 10, 20, 30, 50, 80]);
     expect(report.points[0].matchups.cells).toHaveLength(16);
     expect(report.points[0].dungeon.runs).toBe(16);
+    expect(report.points[0].teams2.comps).toHaveLength(10);
+    expect(report.points[0].teams3.comps).toHaveLength(20);
     expect(report.config.game.items.templates.length).toBeGreaterThan(0);
     expect((await call(alice, 'POST', '/api/admin/simulations/report', {})).statusCode).toBe(403);
   });

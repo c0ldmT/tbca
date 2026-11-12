@@ -2,7 +2,7 @@ import { simulateBattle } from '../battle/engine.js';
 import type { BattleRules, CombatantSnapshot } from '../battle/types.js';
 import { botBuild } from '../bots/bot-build.js';
 import { deriveSnapshot } from '../character/build.js';
-import { CLASS_IDS, type ClassId, type GameConfig } from '../content/types.js';
+import { CLASS_IDS, type ClassId, type GameConfig, type TargetSelector } from '../content/types.js';
 import { planFloor, regenerate } from '../dungeon/dungeon.js';
 import { rollItem, slotsFor, type Equipment } from '../items/items.js';
 import { EQUIP_SLOTS, type ItemTemplate } from '../items/types.js';
@@ -271,5 +271,218 @@ export function simulateDungeon(
     median: sorted.length ? sorted[sorted.length >> 1]! : 0,
     perClass,
     capped,
+  };
+}
+
+// --- Team-Kämpfe (2v2, 3v3) -----------------------------------------------------
+
+export type TeamSize = 2 | 3;
+
+export interface TeamSimInput {
+  readonly size: TeamSize;
+  readonly level: number;
+  /** Kämpfe je Paarung zweier Aufstellungen (je Seite die Hälfte). */
+  readonly fightsPerPair: number;
+  readonly gear: GearProfile;
+  readonly seed: string;
+  /** Team-Fokus beider Seiten (Standard: höchste Bedrohung wie bei neuen Teams). */
+  readonly focus?: TargetSelector;
+  /** Abweichung von 50 % (Promille), ab der eine Aufstellung als Ausreißer gilt. */
+  readonly outlierPermille?: number;
+  readonly configVersion?: number;
+}
+
+/** Ergebnis einer Aufstellung (Klassen sortiert, Doppelungen erlaubt) gegen alle anderen. */
+export interface TeamComp {
+  readonly classes: readonly ClassId[];
+  readonly wins: number;
+  readonly losses: number;
+  readonly draws: number;
+  /** Siegquote gegen alle anderen Aufstellungen in Promille; Unentschieden zählen halb. */
+  readonly winPermille: number;
+  readonly avgRounds: number;
+  /** Schwerster Gegner (niedrigste Quote dieser Aufstellung). */
+  readonly worst: { readonly classes: readonly ClassId[]; readonly winPermille: number } | null;
+}
+
+/** Paarung zweier Aufstellungen (Index in `comps`); Quote aus Sicht von `a`. */
+export interface TeamCell {
+  readonly a: number;
+  readonly b: number;
+  readonly winPermille: number;
+}
+
+export interface TeamSimResult {
+  readonly size: TeamSize;
+  readonly level: number;
+  readonly gear: GearProfile;
+  readonly fights: number;
+  /** Alle Aufstellungen, nach Siegquote absteigend. */
+  readonly comps: readonly TeamComp[];
+  /** Paarungen ohne Spiegel; `a` < `b` bezieht sich auf die Reihenfolge in `comps`. */
+  readonly cells: readonly TeamCell[];
+  /**
+   * Beitrag je Klasse: mittlere Siegquote der Aufstellungen mit dieser Klasse, gewichtet mit der
+   * Anzahl der Plätze, die sie dort belegt.
+   */
+  readonly perClass: Readonly<Record<ClassId, number>>;
+  /** Mittlere Quote der Aufstellungen ohne doppelte Klasse gegen die mit Doppelung. */
+  readonly mixedVsStacked: number | null;
+  readonly outliers: readonly TeamComp[];
+}
+
+/** Alle Aufstellungen der Größe (Kombinationen mit Wiederholung, in CLASS_IDS-Reihenfolge). */
+export function teamComps(size: TeamSize): ClassId[][] {
+  const out: ClassId[][] = [];
+  const walk = (from: number, acc: ClassId[]) => {
+    if (acc.length === size) {
+      out.push(acc);
+      return;
+    }
+    for (let i = from; i < CLASS_IDS.length; i++) walk(i, [...acc, CLASS_IDS[i]!]);
+  };
+  walk(0, []);
+  return out;
+}
+
+/**
+ * Gewinnraten der Team-Aufstellungen: Jede Aufstellung kämpft gegen jede andere, abwechselnd als
+ * erstes und zweites Team. Die Kämpfer sind typische Charaktere der Klasse (wie bei der Matrix),
+ * mit Standard-Taktik und gemeinsamem Team-Fokus.
+ */
+export function simulateTeams(
+  config: GameConfig,
+  rules: BattleRules,
+  input: TeamSimInput,
+): TeamSimResult {
+  const threshold = input.outlierPermille ?? 150;
+  const focus = input.focus ?? 'threat';
+  const comps = teamComps(input.size);
+  const n = comps.length;
+  const half = Math.max(1, Math.floor(input.fightsPerPair / 2));
+  // Ergebnisse aus Sicht von i gegen j (i < j); die Gegenrichtung ergibt sich daraus.
+  const score: number[][] = comps.map(() => comps.map(() => 0));
+  const played: number[][] = comps.map(() => comps.map(() => 0));
+  const wins = comps.map(() => 0);
+  const losses = comps.map(() => 0);
+  const draws = comps.map(() => 0);
+  const rounds = comps.map(() => 0);
+  let fights = 0;
+
+  const team = (classes: readonly ClassId[], side: string, seed: string) =>
+    classes.map((classId, slot) => ({
+      ...simCombatant(config, {
+        classId,
+        level: input.level,
+        gear: input.gear,
+        seed: `${seed}:${side}${slot}`,
+        id: `${side}${slot}`,
+      }),
+      focus,
+    }));
+
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      for (let k = 0; k < half * 2; k++) {
+        const seed = `${input.seed}:${input.size}:${i}:${j}:${k}`;
+        const a = team(comps[i]!, 'a', seed);
+        const b = team(comps[j]!, 'b', seed);
+        const first = k % 2 === 0;
+        const result = simulateBattle({
+          engineVersion: ENGINE_VERSION,
+          configVersion: input.configVersion ?? 0,
+          seed,
+          rules,
+          teams: first ? [a, b] : [b, a],
+        });
+        const mine = first ? 0 : 1;
+        let points: number;
+        if (result.winner === null) {
+          points = 1;
+          draws[i]!++;
+          draws[j]!++;
+        } else if (result.winner === mine) {
+          points = 2;
+          wins[i]!++;
+          losses[j]!++;
+        } else {
+          points = 0;
+          losses[i]!++;
+          wins[j]!++;
+        }
+        score[i]![j]! += points;
+        score[j]![i]! += 2 - points;
+        played[i]![j]!++;
+        played[j]![i]!++;
+        rounds[i]! += result.rounds;
+        rounds[j]! += result.rounds;
+        fights++;
+      }
+    }
+  }
+
+  const rate = (i: number, j: number) =>
+    played[i]![j]! ? Math.round((score[i]![j]! * 500) / played[i]![j]!) : 500;
+  const all = comps.map((classes, i): TeamComp => {
+    const total = wins[i]! + losses[i]! + draws[i]!;
+    let worst: TeamComp['worst'] = null;
+    for (let j = 0; j < n; j++) {
+      if (j === i) continue;
+      const r = rate(i, j);
+      if (!worst || r < worst.winPermille) worst = { classes: comps[j]!, winPermille: r };
+    }
+    return {
+      classes,
+      wins: wins[i]!,
+      losses: losses[i]!,
+      draws: draws[i]!,
+      winPermille: total ? Math.round(((wins[i]! + draws[i]! / 2) * 1000) / total) : 500,
+      avgRounds: total ? Math.round((rounds[i]! * 10) / total) / 10 : 0,
+      worst,
+    };
+  });
+  // Stabile Sortierung: Quote absteigend, bei Gleichstand die ursprüngliche Reihenfolge
+  const order = all
+    .map((_, i) => i)
+    .sort((x, y) => all[y]!.winPermille - all[x]!.winPermille || x - y);
+  const sorted = order.map((i) => all[i]!);
+  const cells: TeamCell[] = [];
+  for (let x = 0; x < n; x++)
+    for (let y = x + 1; y < n; y++)
+      cells.push({ a: x, b: y, winPermille: rate(order[x]!, order[y]!) });
+
+  const perClass = Object.fromEntries(
+    CLASS_IDS.map((c) => {
+      let sum = 0;
+      let weight = 0;
+      for (const comp of all) {
+        const copies = comp.classes.filter((x) => x === c).length;
+        sum += comp.winPermille * copies;
+        weight += copies;
+      }
+      return [c, weight ? Math.round(sum / weight) : 500];
+    }),
+  ) as Record<ClassId, number>;
+
+  const stacked = (classes: readonly ClassId[]) => new Set(classes).size < classes.length;
+  let mixScore = 0;
+  let mixPlayed = 0;
+  for (let i = 0; i < n; i++)
+    for (let j = 0; j < n; j++)
+      if (!stacked(comps[i]!) && stacked(comps[j]!)) {
+        mixScore += score[i]![j]!;
+        mixPlayed += played[i]![j]!;
+      }
+
+  return {
+    size: input.size,
+    level: input.level,
+    gear: input.gear,
+    fights,
+    comps: sorted,
+    cells,
+    perClass,
+    mixedVsStacked: mixPlayed ? Math.round((mixScore * 500) / mixPlayed) : null,
+    outliers: sorted.filter((c) => Math.abs(c.winPermille - 500) > threshold),
   };
 }

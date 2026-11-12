@@ -6,6 +6,7 @@ import {
   validateGameConfig,
   simulateDungeon,
   simulateMatchups,
+  simulateTeams,
   withDefaults,
   type BattleRules,
   type GameConfig,
@@ -16,7 +17,7 @@ import {
   type AdminConfigList,
   type AdminConfigVersion,
   type AdminSimulationReport,
-  type AdminSimulationRequest,
+  type AdminSimulationParams,
   type AdminSimulationResponse,
 } from '@tbca/shared';
 
@@ -169,7 +170,7 @@ export class ConfigService {
    * direkt in der API: 16 Paarungen × 400 Kämpfe dauern auf einem kleinen Server wenige
    * Sekunden; größere Läufe gehören in ein Skript.
    */
-  async simulate(req: AdminSimulationRequest): Promise<AdminSimulationResponse> {
+  async simulate(req: AdminSimulationParams): Promise<AdminSimulationResponse> {
     const list = await this.list();
     const version =
       req.version ?? list.versions.find((v) => v.status === 'published')?.version ?? 1;
@@ -199,7 +200,18 @@ export class ConfigService {
             configVersion: version,
           })
         : null;
-    return { version, status: v.status, seed, ms: Date.now() - started, matchups, dungeon };
+    const teams =
+      req.kind === 'teams'
+        ? simulateTeams(game, battle, {
+            size: req.teamSize,
+            level,
+            fightsPerPair: req.samples,
+            gear: req.gear,
+            seed,
+            configVersion: version,
+          })
+        : null;
+    return { version, status: v.status, seed, ms: Date.now() - started, matchups, dungeon, teams };
   }
 
   /**
@@ -210,6 +222,7 @@ export class ConfigService {
     version?: number | undefined;
     fights: number;
     runs: number;
+    teamFights: number;
     seed?: string | undefined;
   }): Promise<AdminSimulationReport> {
     const list = await this.list();
@@ -220,9 +233,22 @@ export class ConfigService {
     const battle = v.data.battle as unknown as BattleRules;
     const seed = req.seed ?? 'tbca-report';
     const started = Date.now();
+    const teams = (size: 2 | 3, p: (typeof SIM_REPORT_POINTS)[number]) =>
+      req.teamFights > 0
+        ? simulateTeams(game, battle, {
+            size,
+            level: p.level,
+            fightsPerPair: req.teamFights,
+            gear: p.gear,
+            seed: `${seed}:${p.level}`,
+            configVersion: version,
+          })
+        : null;
     const points = SIM_REPORT_POINTS.filter((p) => p.level <= game.maxLevel).map((p) => ({
       level: p.level,
       gear: p.gear,
+      teams2: teams(2, p),
+      teams3: teams(3, p),
       matchups: simulateMatchups(game, battle, {
         level: p.level,
         fightsPerPair: req.fights,
@@ -246,6 +272,7 @@ export class ConfigService {
       seed,
       fights: req.fights,
       runs: req.runs,
+      teamFights: req.teamFights,
       ms: Date.now() - started,
       points,
       config: v.data as unknown as Record<string, unknown>,

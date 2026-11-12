@@ -942,7 +942,8 @@
       "kind": "Analysis",
       "kinds": {
         "matchups": "Class × class",
-        "dungeon": "Dungeon depth"
+        "dungeon": "Dungeon depth",
+        "teams": "Team line-ups"
       },
       "version": "Version",
       "level": "Level",
@@ -987,12 +988,25 @@
       },
       "report": {
         "title": "Balancing report",
-        "intro": "Simulates levels 3 to 80 with typical gear (matrix and dungeon) and downloads the result together with the full configuration – for analysis or to hand over for rebalancing.",
+        "intro": "Simulates levels 3 to 80 with typical gear (matrix, team line-ups and dungeon) and downloads the result with the complete configuration as a file – to analyse or hand on for rebalancing. With teams the report takes considerably longer.",
         "run": "Create report",
         "caption": "Overall win rate per class and stage, plus average dungeon depth",
         "hint": "Computed in {{ ms }} ms. The file has been downloaded.",
-        "depth": "Avg. dungeon depth"
-      }
+        "depth": "Avg. dungeon depth",
+        "teamFights": "Team fights per pairing (0 = none)",
+        "teams": "Teams: contribution per class",
+        "teamsCaption": "Contribution per class in 2v2 and 3v3 per level, plus mixed against stacked line-ups"
+      },
+      "teamSize": "Team size",
+      "teamsTitle": "Line-ups {{ size }}v{{ size }} ({{ fights }} fights)",
+      "teamsHint": "Every line-up (duplicates allowed) fights every other, half of the time as the first and second team, with default tactics and the focus “highest threat”. Above: contribution per class – average rate of the line-ups containing it, weighted by slots. Yellow: more than 15 percentage points away from 50 %.",
+      "mixed": "Mixed vs. stacked",
+      "mixedTip": "Win rate of line-ups without a duplicate class against those with one",
+      "compsCaption": "Line-ups ranked by win rate",
+      "comp": "Line-up",
+      "winRate": "Win rate",
+      "rounds": "Avg. rounds",
+      "worst": "Toughest opponent"
     },
     "season": {
       "title": "Season controls",

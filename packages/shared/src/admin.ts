@@ -1,7 +1,7 @@
-import type { DungeonSimResult, MatchupResult } from '@tbca/game-core';
+import type { DungeonSimResult, MatchupResult, TeamSimResult } from '@tbca/game-core';
 import { z } from 'zod';
 
-import { DAILY_LIMIT_KINDS, type SeasonJobId } from './constants.js';
+import { DAILY_LIMIT_KINDS, SIM_TEAM_MAX_SAMPLES, type SeasonJobId } from './constants.js';
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -114,17 +114,26 @@ export interface BotRunResult {
 }
 
 /** POST /api/admin/simulations – Balancing-Simulation gegen eine Konfigurationsversion. */
-export const adminSimulationSchema = z.object({
-  kind: z.enum(['matchups', 'dungeon']),
-  /** Konfigurationsversion; fehlt sie, gilt die veröffentlichte. */
-  version: z.number().int().min(1).optional(),
-  level: z.number().int().min(1).max(200),
-  gear: z.enum(['none', 'common', 'rare', 'epic']),
-  /** Kämpfe je Paarung (Matrix) bzw. Runs je Klasse (Dungeon). */
-  samples: z.number().int().min(2).max(400),
-  seed: z.string().min(1).max(40).optional(),
-});
-export type AdminSimulationRequest = z.infer<typeof adminSimulationSchema>;
+export const adminSimulationSchema = z
+  .object({
+    kind: z.enum(['matchups', 'dungeon', 'teams']),
+    /** Konfigurationsversion; fehlt sie, gilt die veröffentlichte. */
+    version: z.number().int().min(1).optional(),
+    level: z.number().int().min(1).max(200),
+    gear: z.enum(['none', 'common', 'rare', 'epic']),
+    /** Kämpfe je Paarung (Matrix, Teams) bzw. Runs je Klasse (Dungeon). */
+    samples: z.number().int().min(2).max(400),
+    /** Nur bei kind = teams: 2v2 oder 3v3. */
+    teamSize: z.union([z.literal(2), z.literal(3)]).default(3),
+    seed: z.string().min(1).max(40).optional(),
+  })
+  // 3v3 hat 190 Paarungen von Aufstellungen; mehr als 60 Kämpfe je Paarung gehören in ein Skript
+  .refine((r) => r.kind !== 'teams' || r.samples <= SIM_TEAM_MAX_SAMPLES, {
+    path: ['samples'],
+    message: `Team-Simulation: höchstens ${SIM_TEAM_MAX_SAMPLES} Kämpfe je Paarung`,
+  });
+export type AdminSimulationRequest = z.input<typeof adminSimulationSchema>;
+export type AdminSimulationParams = z.output<typeof adminSimulationSchema>;
 
 /** POST /api/admin/simulations/report – Balancing-Report über mehrere Stufen zum Export. */
 export const adminSimulationReportSchema = z.object({
@@ -133,6 +142,8 @@ export const adminSimulationReportSchema = z.object({
   fights: z.number().int().min(10).max(200).default(60),
   /** Dungeon-Runs je Klasse und Stufe. */
   runs: z.number().int().min(4).max(100).default(20),
+  /** Kämpfe je Paarung zweier Team-Aufstellungen (2v2 und 3v3); 0 lässt die Teams weg. */
+  teamFights: z.number().int().min(0).max(40).default(8),
   seed: z.string().min(1).max(40).optional(),
 });
 export type AdminSimulationReportRequest = z.input<typeof adminSimulationReportSchema>;
@@ -157,8 +168,17 @@ export interface AdminSimulationReport {
   seed: string;
   fights: number;
   runs: number;
+  teamFights: number;
   ms: number;
-  points: { level: number; gear: string; matchups: MatchupResult; dungeon: DungeonSimResult }[];
+  points: {
+    level: number;
+    gear: string;
+    matchups: MatchupResult;
+    dungeon: DungeonSimResult;
+    /** Team-Aufstellungen 2v2 und 3v3; fehlen bei teamFights = 0. */
+    teams2: TeamSimResult | null;
+    teams3: TeamSimResult | null;
+  }[];
   /** Vollständige Konfiguration der Version, damit der Report für sich steht. */
   config: Record<string, unknown>;
 }
@@ -172,6 +192,8 @@ export interface AdminSimulationResponse {
   matchups: MatchupResult | null;
   /** Gesetzt bei kind = dungeon. */
   dungeon: DungeonSimResult | null;
+  /** Gesetzt bei kind = teams. */
+  teams: TeamSimResult | null;
 }
 
 // --- Season-Steuerung -----------------------------------------------------------

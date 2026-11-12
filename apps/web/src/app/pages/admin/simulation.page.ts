@@ -1,14 +1,15 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
-import { CLASS_IDS, type ClassId, type MatchupCell } from '@tbca/game-core';
+import { CLASS_IDS, type ClassId, type MatchupCell, type TeamSimResult } from '@tbca/game-core';
 import type { AdminConfigList, AdminSimulationReport, AdminSimulationResponse } from '@tbca/shared';
+import { SIM_TEAM_MAX_SAMPLES } from '@tbca/shared/constants';
 
 import { AdminService } from '../../core/admin.service';
 import { ApiFailure } from '../../core/api-failure';
 import { downloadJson, downloadText, toCsv } from '../../core/download';
 
-type Kind = 'matchups' | 'dungeon';
+type Kind = 'matchups' | 'dungeon' | 'teams';
 type Gear = 'none' | 'common' | 'rare' | 'epic';
 
 /** Divergierende Skala um 50 %: Pole und neutrale Mitte (gegen die dunkle Fläche geprüft). */
@@ -16,9 +17,23 @@ const WIN = '#1A9FB0';
 const LOSS = '#E8336F';
 const MID = '#3B4054';
 
+const TEAM_HEADER = [
+  'size',
+  'level',
+  'gear',
+  'comp',
+  'wins',
+  'losses',
+  'draws',
+  'winPermille',
+  'avgRounds',
+  'worstOpponent',
+  'worstPermille',
+];
+
 /**
- * Balancing-Simulation (Spezifikation, Abschnitt 14): Gewinnraten-Matrix Klasse × Klasse und
- * Verteilung der Dungeon-Tiefe gegen eine Konfigurationsversion – optional im Vergleich zur
+ * Balancing-Simulation (Spezifikation, Abschnitt 14): Gewinnraten-Matrix Klasse × Klasse,
+ * Team-Aufstellungen (2v2, 3v3) und Verteilung der Dungeon-Tiefe gegen eine Konfigurationsversion – optional im Vergleich zur
  * veröffentlichten, damit ein Entwurf vor dem Veröffentlichen geprüft werden kann.
  */
 @Component({
@@ -38,6 +53,8 @@ export class SimulationPage {
   protected readonly level = signal(20);
   protected readonly gear = signal<Gear>('common');
   protected readonly samples = signal(100);
+  protected readonly teamSize = signal<2 | 3>(3);
+  protected readonly teamMax = SIM_TEAM_MAX_SAMPLES;
   protected readonly compare = signal(true);
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
@@ -45,6 +62,7 @@ export class SimulationPage {
   protected readonly baseline = signal<AdminSimulationResponse | null>(null);
   protected readonly reportFights = signal(60);
   protected readonly reportRuns = signal(20);
+  protected readonly reportTeamFights = signal(8);
   protected readonly report = signal<AdminSimulationReport | null>(null);
   protected readonly reportBusy = signal(false);
 
@@ -61,8 +79,19 @@ export class SimulationPage {
     Math.max(1, ...(this.result()?.dungeon?.histogram ?? [0])),
   );
 
+  /** Obergrenze der Stichprobe für die gewählte Art. */
+  protected readonly samplesMax = computed(() =>
+    this.kind() === 'teams' ? SIM_TEAM_MAX_SAMPLES : 400,
+  );
+
   constructor() {
     void this.load();
+  }
+
+  protected setKind(kind: Kind): void {
+    this.kind.set(kind);
+    // Team-Läufe sind teurer: Stichprobe beim Wechsel auf die Obergrenze kürzen
+    if (this.samples() > this.samplesMax()) this.samples.set(Math.min(20, this.samplesMax()));
   }
 
   private async load(): Promise<void> {
@@ -83,7 +112,8 @@ export class SimulationPage {
       kind: this.kind(),
       level: this.level(),
       gear: this.gear(),
-      samples: this.samples(),
+      samples: Math.min(this.samples(), this.samplesMax()),
+      teamSize: this.teamSize(),
       ...(this.version() ? { version: this.version()! } : {}),
     };
     try {
@@ -107,7 +137,7 @@ export class SimulationPage {
     const r = this.result();
     if (!r) return;
     downloadJson(
-      `tbca-sim-${r.matchups ? 'matrix' : 'dungeon'}-v${r.version}-L${this.level()}.json`,
+      `tbca-sim-${r.matchups ? 'matrix' : r.teams ? `teams${r.teams.size}` : 'dungeon'}-v${r.version}-L${this.level()}.json`,
       {
         format: 'tbca-sim/v1',
         request: {
@@ -115,6 +145,7 @@ export class SimulationPage {
           level: this.level(),
           gear: this.gear(),
           samples: this.samples(),
+          ...(r.teams ? { teamSize: r.teams.size } : {}),
         },
         result: r,
         baseline: this.baseline(),
@@ -154,6 +185,8 @@ export class SimulationPage {
       rows.push([]);
       rows.push(['floor', 'runs']);
       r.dungeon.histogram.forEach((n, floor) => rows.push([floor, n]));
+    } else if (r.teams) {
+      rows.push(...this.teamRows(r.teams, null));
     }
     downloadText(`tbca-sim-v${r.version}-L${this.level()}.csv`, toCsv(rows), 'text/csv');
   }
@@ -166,6 +199,7 @@ export class SimulationPage {
       const report = await this.api.simulationReport({
         fights: this.reportFights(),
         runs: this.reportRuns(),
+        teamFights: this.reportTeamFights(),
         ...(this.version() ? { version: this.version()! } : {}),
       });
       this.report.set(report);
@@ -213,7 +247,59 @@ export class SimulationPage {
           p.dungeon.perClass[c].average,
           p.dungeon.perClass[c].best,
         ]);
+    const teams = report.points.flatMap((p) => [p.teams2, p.teams3]).filter((x) => x !== null);
+    if (teams.length) {
+      rows.push([]);
+      rows.push(['version', ...TEAM_HEADER]);
+      for (const sim of teams)
+        for (const row of this.teamRows(sim, report.version).slice(1)) rows.push(row);
+    }
     downloadText(`tbca-sim-report-v${report.version}.csv`, toCsv(rows), 'text/csv');
+  }
+
+  /** CSV-Zeilen einer Team-Simulation (mit Kopfzeile); optional mit Version vorne. */
+  private teamRows(sim: TeamSimResult, version: number | null): (string | number | null)[][] {
+    const head = version === null ? [] : [version];
+    return [
+      [...(version === null ? [] : ['version']), ...TEAM_HEADER],
+      ...sim.comps.map((c) => [
+        ...head,
+        sim.size,
+        sim.level,
+        sim.gear,
+        c.classes.join('+'),
+        c.wins,
+        c.losses,
+        c.draws,
+        c.winPermille,
+        c.avgRounds,
+        c.worst?.classes.join('+') ?? null,
+        c.worst?.winPermille ?? null,
+      ]),
+    ];
+  }
+
+  /** Ausreißer kommen als eigene Objekte aus dem JSON – Vergleich über die Klassen. */
+  protected isOutlier(sim: TeamSimResult, classes: readonly ClassId[]): boolean {
+    const key = classes.join('+');
+    return sim.outliers.some((o) => o.classes.join('+') === key);
+  }
+
+  /** Übersetzer für Klassennamen aus dem Template-Kontext. */
+  protected className(t: (key: string) => string): (c: ClassId) => string {
+    return (c) => t('classes.' + c);
+  }
+
+  /** Klassen einer Aufstellung als lesbarer Text, z. B. „Bruiser + Medtech“. */
+  protected compLabel(classes: readonly ClassId[], name: (c: ClassId) => string): string {
+    return classes.map(name).join(' + ');
+  }
+
+  /** Veränderung des Team-Beitrags je Klasse gegenüber der veröffentlichten Version. */
+  protected teamDelta(classId: ClassId): number | null {
+    const now = this.result()?.teams?.perClass[classId];
+    const before = this.baseline()?.teams?.perClass[classId];
+    return now === undefined || before === undefined ? null : Math.round((now - before) / 10);
   }
 
   protected cell(a: ClassId, b: ClassId): MatchupCell | undefined {

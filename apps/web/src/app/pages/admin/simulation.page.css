@@ -230,3 +230,20 @@ h3 {
   min-width: 72px;
   height: 40px;
 }
+
+/* ----- Team-Aufstellungen ----- */
+
+.comps td,
+.comps th {
+  padding-right: 20px;
+  white-space: nowrap;
+}
+
+.comps td:nth-child(3) {
+  padding-left: 8px;
+  color: #fff;
+}
+
+.comps tr.flag th {
+  color: var(--tbca-neon-yellow);
+}

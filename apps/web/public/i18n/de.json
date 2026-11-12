@@ -942,7 +942,8 @@
       "kind": "Auswertung",
       "kinds": {
         "matchups": "Klasse × Klasse",
-        "dungeon": "Dungeon-Tiefe"
+        "dungeon": "Dungeon-Tiefe",
+        "teams": "Team-Aufstellungen"
       },
       "version": "Version",
       "level": "Level",
@@ -987,12 +988,25 @@
       },
       "report": {
         "title": "Balancing-Report",
-        "intro": "Simuliert Level 3 bis 80 mit typischer Ausrüstung (Matrix und Dungeon) und lädt das Ergebnis samt vollständiger Konfiguration als Datei herunter – zum Auswerten oder Weitergeben fürs Rebalancing.",
+        "intro": "Simuliert Level 3 bis 80 mit typischer Ausrüstung (Matrix, Team-Aufstellungen und Dungeon) und lädt das Ergebnis samt vollständiger Konfiguration als Datei herunter – zum Auswerten oder Weitergeben fürs Rebalancing. Mit Teams dauert der Report deutlich länger.",
         "run": "Report erstellen",
         "caption": "Gesamt-Siegquote je Klasse und Stufe, dazu mittlere Dungeon-Tiefe",
         "hint": "Berechnet in {{ ms }} ms. Die Datei wurde heruntergeladen.",
-        "depth": "Ø Dungeon-Tiefe"
-      }
+        "depth": "Ø Dungeon-Tiefe",
+        "teamFights": "Team-Kämpfe je Paarung (0 = ohne)",
+        "teams": "Teams: Beitrag je Klasse",
+        "teamsCaption": "Beitrag je Klasse in 2v2 und 3v3 je Stufe, dazu gemischte gegen doppelte Aufstellungen"
+      },
+      "teamSize": "Teamgröße",
+      "teamsTitle": "Aufstellungen {{ size }}v{{ size }} ({{ fights }} Kämpfe)",
+      "teamsHint": "Jede Aufstellung (Doppelungen erlaubt) kämpft gegen jede andere, je zur Hälfte als erstes und zweites Team, mit Standard-Taktik und Fokus „höchste Bedrohung“. Oben der Beitrag je Klasse: mittlere Quote der Aufstellungen mit dieser Klasse, gewichtet nach Plätzen. Gelb markiert: mehr als 15 Prozentpunkte von 50 % entfernt.",
+      "mixed": "Gemischt vs. doppelt",
+      "mixedTip": "Quote der Aufstellungen ohne doppelte Klasse gegen die mit Doppelung",
+      "compsCaption": "Rangliste der Aufstellungen nach Gewinnquote",
+      "comp": "Aufstellung",
+      "winRate": "Quote",
+      "rounds": "Ø Runden",
+      "worst": "Schwerster Gegner"
     },
     "season": {
       "title": "Season-Steuerung",

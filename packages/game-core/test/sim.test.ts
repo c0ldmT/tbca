@@ -7,6 +7,8 @@ import {
   simEquipment,
   simulateDungeon,
   simulateMatchups,
+  simulateTeams,
+  teamComps,
 } from '../src/index.js';
 
 describe('Balancing-Simulation', () => {
@@ -60,5 +62,37 @@ describe('Balancing-Simulation', () => {
     expect(r.histogram.reduce((s, x) => s + x, 0)).toBe(r.runs);
     expect(r.average).toBeGreaterThan(0);
     expect(r.median).toBeLessThanOrEqual(30);
+  });
+
+  it('zählt alle Team-Aufstellungen mit Wiederholung', () => {
+    expect(teamComps(2)).toHaveLength(10);
+    expect(teamComps(3)).toHaveLength(20);
+    expect(teamComps(3)).toContainEqual(['medtech', 'medtech', 'medtech']);
+  });
+
+  it('simuliert Team-Kämpfe vollständig und reproduzierbar', () => {
+    const input = {
+      size: 2 as const,
+      level: 10,
+      fightsPerPair: 2,
+      gear: 'common' as const,
+      seed: 't',
+    };
+    const a = simulateTeams(DEFAULT_GAME_CONFIG, DEFAULT_BATTLE_RULES, input);
+    expect(a).toEqual(simulateTeams(DEFAULT_GAME_CONFIG, DEFAULT_BATTLE_RULES, input));
+    expect(a.comps).toHaveLength(10);
+    expect(a.cells).toHaveLength(45);
+    expect(a.fights).toBe(45 * 2);
+    // Jede Aufstellung spielt 9 Paarungen × 2 Kämpfe
+    for (const c of a.comps) expect(c.wins + c.losses + c.draws).toBe(18);
+    // absteigend sortiert
+    for (let i = 1; i < a.comps.length; i++)
+      expect(a.comps[i - 1]!.winPermille).toBeGreaterThanOrEqual(a.comps[i]!.winPermille);
+    // Siege und Niederlagen gleichen sich über alle Aufstellungen aus
+    const w = a.comps.reduce((s, c) => s + c.wins, 0);
+    const l = a.comps.reduce((s, c) => s + c.losses, 0);
+    expect(w).toBe(l);
+    expect(Object.keys(a.perClass).sort()).toEqual([...CLASS_IDS].sort());
+    expect(a.mixedVsStacked).not.toBeNull();
   });
 });

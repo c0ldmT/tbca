@@ -19,19 +19,35 @@
           <button
             type="button"
             [attr.aria-pressed]="kind() === 'matchups'"
-            (click)="kind.set('matchups')"
+            (click)="setKind('matchups')"
           >
             {{ t('admin.sim.kinds.matchups') }}
+          </button>
+          <button type="button" [attr.aria-pressed]="kind() === 'teams'" (click)="setKind('teams')">
+            {{ t('admin.sim.kinds.teams') }}
           </button>
           <button
             type="button"
             [attr.aria-pressed]="kind() === 'dungeon'"
-            (click)="kind.set('dungeon')"
+            (click)="setKind('dungeon')"
           >
             {{ t('admin.sim.kinds.dungeon') }}
           </button>
         </span>
       </div>
+      @if (kind() === 'teams') {
+        <div class="field">
+          <span class="tbca-label-mono" id="sim-size">{{ t('admin.sim.teamSize') }}</span>
+          <span class="tbca-seg" role="group" aria-labelledby="sim-size">
+            <button type="button" [attr.aria-pressed]="teamSize() === 2" (click)="teamSize.set(2)">
+              2v2
+            </button>
+            <button type="button" [attr.aria-pressed]="teamSize() === 3" (click)="teamSize.set(3)">
+              3v3
+            </button>
+          </span>
+        </div>
+      }
       <label class="field">
         <span class="tbca-label-mono">{{ t('admin.sim.version') }}</span>
         <select class="tbca-select" (change)="version.set(+$any($event.target).value)">
@@ -63,15 +79,15 @@
       </label>
       <label class="field">
         <span class="tbca-label-mono">{{
-          t(kind() === 'matchups' ? 'admin.sim.samplesFights' : 'admin.sim.samplesRuns')
+          t(kind() === 'dungeon' ? 'admin.sim.samplesRuns' : 'admin.sim.samplesFights')
         }}</span>
         <input
           class="tbca-input"
           type="number"
           min="2"
-          max="400"
+          [max]="samplesMax()"
           [value]="samples()"
-          (change)="samples.set(numberInput($event.target, 2, 400))"
+          (change)="samples.set(numberInput($event.target, 2, samplesMax()))"
         />
       </label>
       @if (canCompare()) {
@@ -110,6 +126,17 @@
           max="100"
           [value]="reportRuns()"
           (change)="reportRuns.set(numberInput($event.target, 4, 100))"
+        />
+      </label>
+      <label class="field">
+        <span class="tbca-label-mono">{{ t('admin.sim.report.teamFights') }}</span>
+        <input
+          class="tbca-input"
+          type="number"
+          min="0"
+          max="40"
+          [value]="reportTeamFights()"
+          (change)="reportTeamFights.set(numberInput($event.target, 0, 40))"
         />
       </label>
       <button type="button" class="tbca-button" [disabled]="reportBusy()" (click)="runReport()">
@@ -153,6 +180,46 @@
           </tbody>
         </table>
       </div>
+      @if (rep.teamFights > 0) {
+        <h3>{{ t('admin.sim.report.teams') }}</h3>
+        <div class="matrix-wrap">
+          <table class="matrix report">
+            <caption class="visually-hidden">
+              {{
+                t('admin.sim.report.teamsCaption')
+              }}
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">{{ t('admin.sim.level') }}</th>
+                @for (c of classes; track c) {
+                  <th scope="col">{{ t('classes.' + c) }}</th>
+                }
+                <th scope="col">{{ t('admin.sim.mixed') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of rep.points; track p.level) {
+                @for (sim of [p.teams2, p.teams3]; track $index) {
+                  @if (sim) {
+                    <tr>
+                      <th scope="row">L{{ p.level }} · {{ sim.size }}v{{ sim.size }}</th>
+                      @for (c of classes; track c) {
+                        <td [style.background]="fill(sim.perClass[c])">
+                          {{ percent(sim.perClass[c]) }}
+                        </td>
+                      }
+                      <td class="overall">
+                        {{ sim.mixedVsStacked === null ? '–' : percent(sim.mixedVsStacked) }}
+                      </td>
+                    </tr>
+                  }
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+      }
       <p class="tbca-hint">{{ t('admin.sim.report.hint', { ms: rep.ms }) }}</p>
     }
   </section>
@@ -259,6 +326,67 @@
         } @else {
           <p class="tbca-hint">{{ t('admin.sim.noOutliers') }}</p>
         }
+      </section>
+    }
+
+    @if (r.teams; as tm) {
+      <section class="tbca-panel editor" aria-labelledby="sim-teams">
+        <h2 id="sim-teams">
+          {{ t('admin.sim.teamsTitle', { size: tm.size, fights: tm.fights }) }}
+        </h2>
+        <p class="tbca-hint">{{ t('admin.sim.teamsHint') }}</p>
+        <div class="tiles">
+          @for (c of classes; track c) {
+            <div class="tile">
+              <span class="tbca-label-mono">{{ t('classes.' + c) }}</span>
+              <b>{{ percent(tm.perClass[c]) }}</b>
+              @if (teamDelta(c); as d) {
+                <small [class.up]="d > 0" [class.down]="d < 0"
+                  >{{ signed(d) }} {{ t('admin.sim.pp') }}</small
+                >
+              }
+            </div>
+          }
+          @if (tm.mixedVsStacked !== null) {
+            <div class="tile" [title]="t('admin.sim.mixedTip')">
+              <span class="tbca-label-mono">{{ t('admin.sim.mixed') }}</span>
+              <b>{{ percent(tm.mixedVsStacked) }}</b>
+            </div>
+          }
+        </div>
+        <div class="matrix-wrap">
+          <table class="perclass comps">
+            <caption class="visually-hidden">
+              {{
+                t('admin.sim.compsCaption')
+              }}
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">{{ t('admin.sim.comp') }}</th>
+                <th scope="col">{{ t('admin.sim.winRate') }}</th>
+                <th scope="col">{{ t('admin.sim.rounds') }}</th>
+                <th scope="col">{{ t('admin.sim.worst') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (c of tm.comps; track $index; let i = $index) {
+                <tr [class.flag]="isOutlier(tm, c.classes)">
+                  <td>{{ i + 1 }}</td>
+                  <th scope="row">{{ compLabel(c.classes, className(t)) }}</th>
+                  <td [style.background]="fill(c.winPermille)">{{ percent(c.winPermille) }}</td>
+                  <td>{{ c.avgRounds }}</td>
+                  <td>
+                    @if (c.worst; as w) {
+                      {{ compLabel(w.classes, className(t)) }} ({{ percent(w.winPermille) }})
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
       </section>
     }
 
