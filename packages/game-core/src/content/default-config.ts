@@ -433,6 +433,15 @@ export const DEFAULT_GAME_CONFIG: GameConfig = {
     winXp: { base: 40, perOpponentLevel: 20 },
     lossXpPermille: 250,
     winCredits: { base: 10, perOpponentLevel: 2 },
+    // Vorkalibrierung: etwas unter dem typischen Stand eines Spielers gleichen Levels
+    // (Balancing-Profile: gewöhnlich bis L20, selten L30–50, episch L80)
+    botGear: [
+      { fromLevel: 1, rarity: 2 },
+      { fromLevel: 10, rarity: 3 },
+      { fromLevel: 30, rarity: 5 },
+      { fromLevel: 50, rarity: 7 },
+      { fromLevel: 80, rarity: 9 },
+    ],
   },
   items,
   loot: {

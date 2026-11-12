@@ -153,6 +153,7 @@ export type {
   CombatantSnapshot,
 } from './battle/types.js';
 export {
+  botEquipment,
   GEAR_PROFILES,
   simCombatant,
   simEquipment,
@@ -160,6 +161,7 @@ export {
   simulateMatchups,
   simulateTeams,
   teamComps,
+  typicalEquipment,
   type DungeonSimInput,
   type DungeonSimResult,
   type GearProfile,

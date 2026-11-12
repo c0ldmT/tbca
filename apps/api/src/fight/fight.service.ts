@@ -4,6 +4,7 @@ import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import {
   BOT_NAMES,
   botBuild,
+  botEquipment,
   deriveSnapshot,
   ENGINE_VERSION,
   levelFromXp,
@@ -195,16 +196,17 @@ export class FightService {
     }
     const seed = randomUUID();
     const name = BOT_NAMES[Number.parseInt(seed.slice(0, 8), 16) % BOT_NAMES.length]!;
-    const dummy = deriveSnapshot(
-      season.game,
-      botBuild(season.game, {
+    // Trainingsgegner tragen dieselbe Ausrüstung wie Bot-Spieler ihres Levels
+    const dummy = deriveSnapshot(season.game, {
+      ...botBuild(season.game, {
         id: `training-${seed}`,
         name,
         classId: req.classId,
         level: req.level,
         seed,
       }),
-    );
+      equipment: botEquipment(season.game, req.classId, req.level, `training:${seed}`),
+    });
     const teams: CombatantSnapshot[][] = [[snapshotOf(season, me)], [dummy]];
     const result = simulateBattle({
       engineVersion: ENGINE_VERSION,

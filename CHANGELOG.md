@@ -8,6 +8,11 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ### Hinzugefügt
 
+- Bot-Gegner tragen Ausrüstung: Für jeden leeren Platz bekommen Bot-Spieler ein Item passend zu
+  Klasse und Level, fest je Bot und Level (PvP, Team-Kämpfe, Dungeon). Trainingsgegner tragen
+  dieselbe Ausrüstung. Die Rarität je Level-Stufe steht in der Konfiguration (`pvp.botGear`;
+  Vorkalibrierung ★2 ab L1, ★3 ab L10, ★5 ab L30, ★7 ab L50, ★9 ab L80 – etwas unter den
+  Balancing-Profilen). Gespeicherte Versionen erhalten das Feld automatisch.
 - Team-Simulation für 2v2 und 3v3 (`simulateTeams` in game-core): Jede Aufstellung der vier
   Klassen (Doppelungen erlaubt; 10 bzw. 20 Aufstellungen) kämpft gegen jede andere, je zur
   Hälfte als erstes und zweites Team. Ergebnis: Rangliste mit schwerstem Gegner, Beitrag je

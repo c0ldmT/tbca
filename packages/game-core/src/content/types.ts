@@ -172,6 +172,11 @@ export interface PvpRules {
   readonly lossXpPermille: number;
   /** Credits für einen Sieg: base + perOpponentLevel · Gegner-Level; Niederlage wie bei XP. */
   readonly winCredits: { readonly base: number; readonly perOpponentLevel: number };
+  /**
+   * Ausrüstung computergesteuerter Gegner (Bot-Spieler, Trainingsgegner): Rarität aller Items ab
+   * dem jeweiligen Level, aufsteigend nach `fromLevel`. Leer = Bots kämpfen ohne Items.
+   */
+  readonly botGear: readonly { readonly fromLevel: number; readonly rarity: number }[];
 }
 
 export interface GameConfig {

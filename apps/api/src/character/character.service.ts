@@ -1,6 +1,7 @@
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import {
   ATTRIBUTES,
+  botEquipment,
   BuildError,
   defaultLoadout,
   deriveSnapshot,
@@ -14,6 +15,10 @@ import {
   type ClassId,
   type CombatantSnapshot,
   type Clock,
+  type EquipSlot,
+  type Equipment,
+  type GameConfig,
+  type ItemData,
 } from '@tbca/game-core';
 import {
   checkName,
@@ -306,7 +311,26 @@ export function usableLoadout(
   return defaultLoadout(season.game, record.classId, record.level);
 }
 
-/** Kampf-Momentaufnahme eines gespeicherten Charakters. */
+/**
+ * Kampf-Momentaufnahme eines gespeicherten Charakters. Bot-Spieler bekommen für leere Plätze
+ * Ausrüstung nach `pvp.botGear` – fest je Bot und Level, damit sie nicht schwächer sind als
+ * Spieler gleichen Levels mit Items.
+ */
 export function snapshotOf(season: CurrentSeason, record: CharacterRecord): CombatantSnapshot {
-  return deriveSnapshot(season.game, toBuild(record, usableLoadout(season, record)));
+  const build = toBuild(record, usableLoadout(season, record));
+  return deriveSnapshot(
+    season.game,
+    record.isBot ? { ...build, equipment: withBotGear(season.game, record) } : build,
+  );
+}
+
+/** Eigene Items des Bots plus erzeugte Items für alle leeren Plätze. */
+export function withBotGear(game: GameConfig, record: CharacterRecord): Equipment {
+  const own = record.equipment ?? {};
+  const merged: Partial<Record<EquipSlot, ItemData>> = {
+    ...botEquipment(game, record.classId, record.level, `bot:${record.id}:${record.level}`),
+    ...own,
+  };
+  if (merged.main_hand?.category === 'weapon_2h') delete merged.off_hand;
+  return merged;
 }

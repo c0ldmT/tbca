@@ -68,11 +68,7 @@ export function simCombatant(
   });
 }
 
-/**
- * Füllt jeden Platz mit einer passenden Vorlage. Die Waffe skaliert möglichst mit dem
- * Hauptattribut der Klasse, sonst nimmt sie die erste passende; Nebenhand bleibt leer, wenn
- * die Waffe zweihändig ist.
- */
+/** Ausrüstung nach Balancing-Profil (siehe GEAR_PROFILES). */
 export function simEquipment(
   config: GameConfig,
   classId: ClassId,
@@ -80,7 +76,36 @@ export function simEquipment(
   gear: GearProfile,
   seed: string,
 ): Equipment {
-  const rarity = GEAR_PROFILES[gear];
+  return typicalEquipment(config, classId, level, GEAR_PROFILES[gear], seed);
+}
+
+/**
+ * Ausrüstung eines computergesteuerten Gegners nach `pvp.botGear`: die Rarität der höchsten
+ * Stufe, deren Level erreicht ist. Gleicher Seed, gleiche Items.
+ */
+export function botEquipment(
+  config: GameConfig,
+  classId: ClassId,
+  level: number,
+  seed: string,
+): Equipment {
+  let rarity = 0;
+  for (const step of config.pvp.botGear ?? []) if (level >= step.fromLevel) rarity = step.rarity;
+  return typicalEquipment(config, classId, level, rarity, seed);
+}
+
+/**
+ * Füllt jeden Platz mit einer passenden Vorlage der Rarität (0 = keine Items). Die Waffe skaliert
+ * möglichst mit dem Hauptattribut der Klasse, sonst nimmt sie die erste passende; Nebenhand
+ * bleibt leer, wenn die Waffe zweihändig ist.
+ */
+export function typicalEquipment(
+  config: GameConfig,
+  classId: ClassId,
+  level: number,
+  rarity: number,
+  seed: string,
+): Equipment {
   if (rarity === 0) return {};
   const primary = config.classes[classId].primary;
   const templates = config.items.templates;

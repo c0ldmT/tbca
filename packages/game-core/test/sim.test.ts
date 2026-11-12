@@ -4,7 +4,9 @@ import {
   CLASS_IDS,
   DEFAULT_BATTLE_RULES,
   DEFAULT_GAME_CONFIG,
+  botEquipment,
   simEquipment,
+  validateGameConfig,
   simulateDungeon,
   simulateMatchups,
   simulateTeams,
@@ -94,5 +96,32 @@ describe('Balancing-Simulation', () => {
     expect(w).toBe(l);
     expect(Object.keys(a.perClass).sort()).toEqual([...CLASS_IDS].sort());
     expect(a.mixedVsStacked).not.toBeNull();
+  });
+
+  it('rüstet Bots nach Level-Stufen aus', () => {
+    const c = DEFAULT_GAME_CONFIG;
+    const at = (level: number) => botEquipment(c, 'bruiser', level, 'b').torso?.rarity;
+    expect(at(1)).toBe(2);
+    expect(at(29)).toBe(3);
+    expect(at(30)).toBe(5);
+    expect(at(80)).toBe(9);
+    expect(botEquipment(c, 'bruiser', 30, 'b')).toEqual(botEquipment(c, 'bruiser', 30, 'b'));
+    expect(botEquipment({ ...c, pvp: { ...c.pvp, botGear: [] } }, 'bruiser', 30, 'b')).toEqual({});
+  });
+
+  it('prüft die Bot-Ausrüstung in der Konfiguration', () => {
+    const c = DEFAULT_GAME_CONFIG;
+    const bad = {
+      ...c,
+      pvp: {
+        ...c.pvp,
+        botGear: [
+          { fromLevel: 10, rarity: 3 },
+          { fromLevel: 5, rarity: 17 },
+        ],
+      },
+    };
+    expect(validateGameConfig(bad).join(' ')).toContain('Bot-Ausrüstung');
+    expect(validateGameConfig(c)).toEqual([]);
   });
 });

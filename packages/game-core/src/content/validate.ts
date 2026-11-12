@@ -90,6 +90,17 @@ export function validateGameConfig(config: GameConfig): string[] {
       add('Shop: Umbenennen braucht ganze Zahlen ≥ 0');
   }
 
+  // Bot-Ausrüstung
+  const botGear = config.pvp?.botGear;
+  if (!Array.isArray(botGear)) add('PvP: Bot-Ausrüstung muss eine Liste sein');
+  else
+    botGear.forEach((g, i) => {
+      if (!isInt(g?.fromLevel, 1) || !isInt(g?.rarity, 1) || g.rarity > 16)
+        add(`PvP: Bot-Ausrüstung ${i + 1} braucht Level ≥ 1 und Rarität 1–16`);
+      else if (i > 0 && g.fromLevel <= botGear[i - 1]!.fromLevel)
+        add('PvP: Bot-Ausrüstung muss nach Level aufsteigend sortiert sein');
+    });
+
   // Aufholbonus
   if (!isInt(config.catchUp?.levelGap, 0) || !isInt(config.catchUp?.bonusPermille, 0))
     add('Aufholbonus: Level-Abstand und Zuschlag müssen ganze Zahlen ≥ 0 sein');

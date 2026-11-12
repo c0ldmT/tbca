@@ -171,6 +171,22 @@ describe('Bots und Training', () => {
     expect((await challenge('rated', botId)).json().reward.rewarded).toBe(true);
   });
 
+  it('rüstet Bots für leere Plätze nach Level aus', async () => {
+    const botId = addBot('Echo', 12);
+    const fightId = (await challenge('friendly', botId)).json().fightId;
+    const stored = t.fights.fights.find((f) => f.id === fightId)!;
+    const bot = stored.input.teams[1]![0]!;
+    // Level 12: Rarität 3 laut pvp.botGear, Waffe skaliert mit INT (Netrunner)
+    const me = stored.input.teams[0]![0]!;
+    expect(bot.stats.armor).toBeGreaterThan(me.stats.armor);
+    expect(bot.attack.base).toBeGreaterThan(0);
+    // fest je Bot und Level: zweiter Kampf, gleiche Werte
+    const again = (await challenge('friendly', botId)).json().fightId;
+    expect(t.fights.fights.find((f) => f.id === again)!.input.teams[1]![0]!.stats).toEqual(
+      bot.stats,
+    );
+  });
+
   it('belohnt Bots nicht in echten Seasons', async () => {
     t.seasons.current = { ...t.seasons.current!, isTest: false };
     const botId = addBot('Echo', 1);
