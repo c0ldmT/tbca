@@ -62,6 +62,22 @@ export class PvpPage {
     }
   }
 
+  /** Neue Tagesgegner gegen Credits; danach Stand und Credits auffrischen. */
+  protected async reroll(): Promise<void> {
+    this.sound.play('click');
+    this.busy.set('reroll');
+    this.error.set(null);
+    try {
+      this.opponents.set(await this.pvp.reroll());
+      this.status.set(await this.pvp.status());
+      void this.characters.refresh().catch(() => undefined);
+    } catch (error) {
+      this.error.set(error instanceof ApiFailure ? error.code : 'unknown');
+    } finally {
+      this.busy.set(null);
+    }
+  }
+
   protected async challenge(opponent: OpponentView, mode: 'rated' | 'friendly'): Promise<void> {
     this.sound.play('click');
     this.busy.set(`${opponent.id}:${mode}`);

@@ -21,6 +21,8 @@ export function pickDailyOpponents(
     candidates: readonly OpponentCandidate[];
     seed: Seed;
     testSeason: boolean;
+    /** Möglichst nicht wieder wählen (z. B. die bisherige Auswahl beim Neuwürfeln). */
+    exclude?: readonly string[];
   },
 ): string[] {
   const rng = Xoshiro128ss.fromSeed(input.seed);
@@ -45,5 +47,13 @@ export function pickDailyOpponents(
     ...shuffle(inWindow.filter((c) => !preferred(c))),
     ...rest.filter((c) => !preferred(c)),
   ];
-  return ordered.slice(0, count).map((c) => c.id);
+  const avoid = new Set(input.exclude ?? []);
+  return [...ordered.filter((c) => !avoid.has(c.id)), ...ordered.filter((c) => avoid.has(c.id))]
+    .slice(0, count)
+    .map((c) => c.id);
+}
+
+/** Kosten fürs Neuwürfeln der Tagesgegner in Credits. */
+export function opponentRerollCost(rules: PvpRules, level: number): number {
+  return rules.opponentReroll.base + rules.opponentReroll.perLevel * level;
 }

@@ -1,0 +1,1 @@
+ALTER TABLE "daily_opponent" ADD COLUMN "rerolled" boolean DEFAULT false NOT NULL;

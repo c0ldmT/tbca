@@ -90,6 +90,41 @@ describe('PvP-Herausforderungen', () => {
     expect(t.pvp.daily.size).toBe(2);
   });
 
+  it('würfelt die Tagesgegner einmal am Tag gegen Credits neu', async () => {
+    for (let i = 0; i < 12; i++)
+      t.characters.records.push({
+        id: `01933b5e-0000-7000-8000-0000000003${String(i).padStart(2, '0')}`,
+        accountId: `acc-r${i}`,
+        seasonId: t.seasons.current!.id,
+        name: `Reroll${i}`,
+        classId: 'netrunner',
+        level: 1,
+        xp: 0,
+        allocated: { str: 0, dex: 0, int: 3, con: 2 },
+        loadouts: {},
+      });
+    const first = (await call(alice, 'GET', '/api/pvp/opponents')).json();
+    const status = (await call(alice, 'GET', '/api/pvp/status')).json();
+    expect(status.reroll).toEqual({ cost: 23, available: true });
+    // Ohne Credits geht es nicht
+    expect((await call(alice, 'POST', '/api/pvp/opponents/reroll')).json().code).toBe(
+      'insufficient_credits',
+    );
+    const me = t.characters.records.find((c) => c.name === 'Alice')!;
+    t.characters.credit(me.seasonId, me.accountId, 100);
+    const res = await call(alice, 'POST', '/api/pvp/opponents/reroll');
+    expect(res.statusCode).toBe(200);
+    const next = res.json();
+    expect(next).toHaveLength(5);
+    const before = new Set(first.map((o: { id: string }) => o.id));
+    expect(next.filter((o: { id: string }) => before.has(o.id))).toEqual([]);
+    expect((await call(alice, 'GET', '/api/characters/me')).json().credits).toBe(77);
+    expect((await call(alice, 'POST', '/api/pvp/opponents/reroll')).json().code).toBe(
+      'already_rerolled',
+    );
+    expect((await call(alice, 'GET', '/api/pvp/status')).json().reroll.available).toBe(false);
+  });
+
   it('rechnet einen gewerteten Kampf, speichert ihn und vergibt XP', async () => {
     const res = await challenge();
     expect(res.statusCode).toBe(201);

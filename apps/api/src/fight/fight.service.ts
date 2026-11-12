@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { InsufficientCreditsError } from '@tbca/db';
 import {
   BOT_NAMES,
   botBuild,
@@ -8,6 +9,7 @@ import {
   deriveSnapshot,
   ENGINE_VERSION,
   levelFromXp,
+  opponentRerollCost,
   pickDailyOpponents,
   pvpReward,
   simulateBattle,
@@ -33,7 +35,7 @@ import { RatingService } from '../league/rating.service.js';
 import { ProgressionService } from '../progression/progression.service.js';
 import { CHARACTER_REPOSITORY, CLOCK, ENV, FIGHT_REPOSITORY, PVP_REPOSITORY } from '../tokens.js';
 import { dayKey } from './day.js';
-import type { FightRepository, PvpRepository, StoredFight } from './types.js';
+import type { DailyOpponents, FightRepository, PvpRepository, StoredFight } from './types.js';
 
 /**
  * Asynchrone PvP-Herausforderungen gegen die Momentaufnahme des Gegners (Abschnitt 9) und
@@ -56,7 +58,16 @@ export class FightService {
     const { season, me } = await this.mine(accountId);
     const day = this.today();
     const counts = await this.fights.rewardCounts(me.id, day);
-    return { day, rewardedToday: counts.today, dailyLimit: season.game.pvp.dailyRewardedFights };
+    const daily = await this.pvp.dailyOpponents(me.id, day);
+    return {
+      day,
+      rewardedToday: counts.today,
+      dailyLimit: season.game.pvp.dailyRewardedFights,
+      reroll: {
+        cost: opponentRerollCost(season.game.pvp, me.level),
+        available: !daily.rerolled,
+      },
+    };
   }
 
   /**
@@ -67,7 +78,7 @@ export class FightService {
   async opponents(accountId: string): Promise<OpponentView[]> {
     const { season, me } = await this.mine(accountId);
     const day = this.today();
-    const ids = await this.dailyOpponents(season, me, day);
+    const { ids } = await this.dailyOpponents(season, me, day);
     const counts = await this.fights.rewardCounts(me.id, day);
     const median = await this.progression.median(season.id);
     const rules = season.game.pvp;
@@ -106,17 +117,57 @@ export class FightService {
     season: CurrentSeason,
     me: CharacterRecord,
     day: string,
-  ): Promise<string[]> {
+  ): Promise<DailyOpponents> {
     const stored = await this.pvp.dailyOpponents(me.id, day);
-    if (stored.length > 0) return stored;
+    if (stored.ids.length > 0) return stored;
+    return this.pvp.saveDailyOpponents(me.id, day, await this.pick(season, me, day));
+  }
+
+  private async pick(
+    season: CurrentSeason,
+    me: CharacterRecord,
+    day: string,
+    exclude: readonly string[] = [],
+    salt = '',
+  ): Promise<string[]> {
     const candidates = await this.characters.search(season.id, '', me.accountId, me.level, 60);
-    const ids = pickDailyOpponents(season.game.pvp, {
+    return pickDailyOpponents(season.game.pvp, {
       level: me.level,
       candidates,
-      seed: `${me.id}:${day}`,
+      seed: `${me.id}:${day}${salt}`,
       testSeason: season.isTest,
+      exclude,
     });
-    return this.pvp.saveDailyOpponents(me.id, day, ids);
+  }
+
+  /** Tagesgegner einmal am Tag gegen Credits neu würfeln; andere Gegner werden bevorzugt. */
+  async rerollOpponents(accountId: string): Promise<OpponentView[]> {
+    const { season, me } = await this.mine(accountId);
+    const day = this.today();
+    const current = await this.dailyOpponents(season, me, day);
+    if (current.rerolled)
+      throw new ApiError(HttpStatus.CONFLICT, 'already_rerolled', 'Heute schon neu gewürfelt');
+    const ids = await this.pick(season, me, day, current.ids, ':reroll');
+    let done: boolean;
+    try {
+      done = await this.pvp.rerollDailyOpponents({
+        characterId: me.id,
+        day,
+        ids,
+        charge: {
+          seasonId: season.id,
+          accountId,
+          amount: opponentRerollCost(season.game.pvp, me.level),
+        },
+      });
+    } catch (error) {
+      if (error instanceof InsufficientCreditsError)
+        throw new ApiError(HttpStatus.CONFLICT, 'insufficient_credits', 'Nicht genug Credits');
+      throw error;
+    }
+    if (!done)
+      throw new ApiError(HttpStatus.CONFLICT, 'already_rerolled', 'Heute schon neu gewürfelt');
+    return this.opponents(accountId);
   }
 
   /**
@@ -142,7 +193,7 @@ export class FightService {
     }
     if (
       !options.direct &&
-      !(await this.dailyOpponents(season, me, this.today())).includes(opponent.id)
+      !(await this.dailyOpponents(season, me, this.today())).ids.includes(opponent.id)
     ) {
       throw new ApiError(
         HttpStatus.FORBIDDEN,

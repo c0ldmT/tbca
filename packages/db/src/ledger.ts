@@ -17,6 +17,7 @@ export type SystemAccount =
   | 'sink:shop'
   | 'sink:crafting'
   | 'sink:dungeon'
+  | 'sink:pvp'
   | 'sink:admin';
 
 export type LedgerLine =

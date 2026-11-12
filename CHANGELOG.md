@@ -147,6 +147,11 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ### Geändert
 
+- Tagesgegner lassen sich einmal am Tag gegen Credits neu würfeln (`POST
+/api/pvp/opponents/reroll`; Kosten `pvp.opponentReroll`, Vorkalibrierung 20 + 3 je Level,
+  Senke `sink:pvp`). Die neue Auswahl meidet die bisherige, solange genug Gegner da sind.
+  `GET /api/pvp/status` meldet Kosten und ob es heute noch geht; die Arena zeigt dafür einen
+  Knopf. Migration 0018 (`daily_opponent.rerolled`).
 - Angenommene Discord-Herausforderungen belohnen auch die angefragte Person – nach denselben
   Regeln wie den Herausforderer (Tageslimit, Abnahme gegen denselben Gegner, Underdog-Bonus,
   Aufholbonus); der Kampf zählt für beide als belohnter Kampf. Die Bot-Nachricht nennt beide

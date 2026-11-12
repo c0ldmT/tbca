@@ -417,11 +417,12 @@
     "already_placed": "Your placement is complete.",
     "no_opponent": "No suitable opponent right now.",
     "division_not_found": "That division doesn't exist.",
-    "not_daily_opponent": "On the website you can only challenge today's opponents."
+    "not_daily_opponent": "On the website you can only challenge today's opponents.",
+    "already_rerolled": "You already rerolled today."
   },
   "pvp": {
     "title": "Arena",
-    "intro": "Your opponents for today – a new selection close to your level every day. Each gives up to two rewarded fights; together that covers your daily limit. You fight their snapshot, nobody needs to be online.",
+    "intro": "Your opponents for today – a new selection close to your level every day, rerollable once a day for credits. Each gives up to two rewarded fights; together that covers your daily limit. You fight their snapshot, nobody needs to be online.",
     "loginFirst": "Sign in to fight in the arena.",
     "characterFirst": "Create a character first.",
     "rewardedToday": "rewarded fights today",
@@ -456,7 +457,9 @@
     },
     "newDaily": "New selection daily",
     "rewardsLeft": "{{ n }}× rewarded left",
-    "direct": "Want to challenge someone specific? Use /tbca kampf on Discord – the fight runs once the other person accepts."
+    "direct": "Want to challenge someone specific? Use /tbca kampf on Discord – the fight runs once the other person accepts.",
+    "reroll": "Reroll · {{ cost }} CR",
+    "rerolled": "Already rerolled today"
   },
   "replay": {
     "loading": "Loading fight …",

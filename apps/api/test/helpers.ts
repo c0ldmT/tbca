@@ -1650,14 +1650,37 @@ export class InMemoryPvp implements PvpRepository {
   readonly daily = new Map<string, string[]>();
   readonly requests: ChallengeRequestRecord[] = [];
 
+  readonly rerolled = new Set<string>();
+  /** Für Credit-Buchungen beim Neuwürfeln. */
+  characters: InMemoryCharacters | null = null;
+
   async dailyOpponents(characterId: string, day: string) {
-    return [...(this.daily.get(`${characterId}:${day}`) ?? [])];
+    const key = `${characterId}:${day}`;
+    return { ids: [...(this.daily.get(key) ?? [])], rerolled: this.rerolled.has(key) };
   }
 
   async saveDailyOpponents(characterId: string, day: string, ids: readonly string[]) {
     const key = `${characterId}:${day}`;
     if (!this.daily.get(key)?.length && ids.length) this.daily.set(key, [...ids]);
     return this.dailyOpponents(characterId, day);
+  }
+
+  async rerollDailyOpponents(input: {
+    characterId: string;
+    day: string;
+    ids: readonly string[];
+    charge: { seasonId: string; accountId: string; amount: number };
+  }) {
+    const key = `${input.characterId}:${input.day}`;
+    if (this.rerolled.has(key)) return false;
+    if (this.characters) {
+      const balance = await this.characters.balance(input.charge.accountId, input.charge.seasonId);
+      if (balance < input.charge.amount) throw new InsufficientCreditsError();
+      this.characters.credit(input.charge.seasonId, input.charge.accountId, -input.charge.amount);
+    }
+    this.daily.set(key, [...input.ids]);
+    this.rerolled.add(key);
+    return true;
   }
 
   async createRequest(
@@ -1753,6 +1776,7 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
   const teamLeague = new InMemoryTeamLeague();
   teamLeague.teams = teams;
   const pvp = new InMemoryPvp();
+  pvp.characters = characters;
   // 12.11.2026, 12:00 Uhr in Berlin
   const time = new ManualTimeSource(Date.UTC(2026, 10, 12, 11, 0));
   const dbUp = { value: true };

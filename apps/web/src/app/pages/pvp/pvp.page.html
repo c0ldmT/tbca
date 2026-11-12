@@ -7,7 +7,20 @@
       <i class="tbca-gx" aria-hidden="true"></i>
       <div class="tbca-ph">
         <h2 id="opp-t">{{ t('pvp.opponents') }}</h2>
-        <span class="tbca-idx">{{ t('pvp.newDaily') }}</span>
+        @if (status(); as s) {
+          @if (s.reroll.available) {
+            <button
+              type="button"
+              class="tbca-button tbca-button--ghost reroll"
+              [disabled]="busy() !== null"
+              (click)="reroll()"
+            >
+              {{ t('pvp.reroll', { cost: s.reroll.cost }) }}
+            </button>
+          } @else {
+            <span class="tbca-idx">{{ t('pvp.rerolled') }}</span>
+          }
+        }
       </div>
       <p class="intro tbca-hint">{{ t('pvp.intro') }}</p>
       @if (opponents(); as list) {

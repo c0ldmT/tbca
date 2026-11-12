@@ -83,12 +83,31 @@ export interface ChallengeRequestRecord {
   createdAt: Date;
 }
 
+export interface DailyOpponents {
+  ids: string[];
+  rerolled: boolean;
+}
+
 /** Tagesgegner und Herausforderungen mit Annahme. */
 export interface PvpRepository {
   /** Auswahl des Tages in fester Reihenfolge; leer, wenn es noch keine gibt. */
-  dailyOpponents(characterId: string, day: string): Promise<string[]>;
+  dailyOpponents(characterId: string, day: string): Promise<DailyOpponents>;
   /** Speichert die Auswahl, falls es für den Tag noch keine gibt, und liefert die gültige. */
-  saveDailyOpponents(characterId: string, day: string, ids: readonly string[]): Promise<string[]>;
+  saveDailyOpponents(
+    characterId: string,
+    day: string,
+    ids: readonly string[],
+  ): Promise<DailyOpponents>;
+  /**
+   * Ersetzt die Auswahl gegen Credits (einmal am Tag) in einer Transaktion. False, wenn heute
+   * schon neu gewürfelt wurde; wirft InsufficientCreditsError ohne genug Credits.
+   */
+  rerollDailyOpponents(input: {
+    characterId: string;
+    day: string;
+    ids: readonly string[];
+    charge: { seasonId: string; accountId: string; amount: number };
+  }): Promise<boolean>;
   createRequest(
     input: Pick<
       ChallengeRequestRecord,

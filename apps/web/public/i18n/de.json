@@ -417,11 +417,12 @@
     "already_placed": "Deine Platzierung ist abgeschlossen.",
     "no_opponent": "Gerade ist kein passender Gegner da.",
     "division_not_found": "Diese Division gibt es nicht.",
-    "not_daily_opponent": "Auf der Website forderst du nur deine Tagesgegner heraus."
+    "not_daily_opponent": "Auf der Website forderst du nur deine Tagesgegner heraus.",
+    "already_rerolled": "Du hast heute schon neu gewürfelt."
   },
   "pvp": {
     "title": "Arena",
-    "intro": "Deine Gegner für heute – jeden Tag eine neue Auswahl nahe an deinem Level. Gegen jeden gibt es bis zu zwei belohnte Kämpfe; zusammen reicht das für dein Tageslimit. Gekämpft wird gegen ihre Momentaufnahme, niemand muss online sein.",
+    "intro": "Deine Gegner für heute – jeden Tag eine neue Auswahl nahe an deinem Level, einmal am Tag gegen Credits neu würfelbar. Gegen jeden gibt es bis zu zwei belohnte Kämpfe; zusammen reicht das für dein Tageslimit. Gekämpft wird gegen ihre Momentaufnahme, niemand muss online sein.",
     "loginFirst": "Melde dich an, um in der Arena zu kämpfen.",
     "characterFirst": "Erstelle zuerst einen Charakter.",
     "rewardedToday": "belohnte Kämpfe heute",
@@ -456,7 +457,9 @@
     },
     "newDaily": "Neue Auswahl täglich",
     "rewardsLeft": "noch {{ n }}× belohnt",
-    "direct": "Jemand Bestimmtes herausfordern? Das geht im Discord mit /tbca kampf – der Kampf läuft, sobald die andere Person annimmt."
+    "direct": "Jemand Bestimmtes herausfordern? Das geht im Discord mit /tbca kampf – der Kampf läuft, sobald die andere Person annimmt.",
+    "reroll": "Neu würfeln · {{ cost }} CR",
+    "rerolled": "Heute schon neu gewürfelt"
   },
   "replay": {
     "loading": "Lade Kampf …",

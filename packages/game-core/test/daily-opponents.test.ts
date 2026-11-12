@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { DEFAULT_GAME_CONFIG, pickDailyOpponents, validateGameConfig } from '../src/index.js';
+import {
+  DEFAULT_GAME_CONFIG,
+  opponentRerollCost,
+  pickDailyOpponents,
+  validateGameConfig,
+} from '../src/index.js';
 
 const rules = DEFAULT_GAME_CONFIG.pvp;
 const pool = [
@@ -62,5 +67,23 @@ describe('Tagesgegner', () => {
       'PvP: Mit den Tagesgegnern ist das Tageslimit belohnter Kämpfe nicht erreichbar',
     );
     expect(validateGameConfig(c)).toEqual([]);
+  });
+
+  it('meidet beim Neuwürfeln die bisherige Auswahl, solange es reicht', () => {
+    const first = pickDailyOpponents(rules, {
+      level: 21,
+      candidates: pool,
+      seed: 's',
+      testSeason: true,
+    });
+    const again = pickDailyOpponents(rules, {
+      level: 21,
+      candidates: pool,
+      seed: 's:reroll',
+      testSeason: true,
+      exclude: first,
+    });
+    expect(again.filter((id) => first.includes(id))).toEqual([]);
+    expect(opponentRerollCost(rules, 10)).toBe(50);
   });
 });

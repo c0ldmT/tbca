@@ -29,6 +29,14 @@ export class PvpService {
     return this.read(this.http.get<OpponentView[]>('/api/pvp/opponents'));
   }
 
+  /** Tagesgegner einmal am Tag gegen Credits neu würfeln. */
+  reroll(): Promise<OpponentView[]> {
+    const headers = { [CSRF_HEADER]: this.auth.user()?.csrfToken ?? '' };
+    return this.read(
+      this.http.post<OpponentView[]>('/api/pvp/opponents/reroll', null, { headers }),
+    );
+  }
+
   challenge(req: ChallengeRequest): Promise<ChallengeResponse> {
     const headers = { [CSRF_HEADER]: this.auth.user()?.csrfToken ?? '' };
     return this.read(this.http.post<ChallengeResponse>('/api/pvp/challenges', req, { headers }));

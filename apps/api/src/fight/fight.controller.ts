@@ -41,6 +41,13 @@ export class PvpController {
     return this.fights.opponents(req.auth!.accountId);
   }
 
+  /** Tagesgegner einmal am Tag gegen Credits neu würfeln. */
+  @Post('opponents/reroll')
+  @HttpCode(200)
+  reroll(@Req() req: FastifyRequest): Promise<OpponentView[]> {
+    return this.fights.rerollOpponents(req.auth!.accountId);
+  }
+
   @Post('challenges')
   @HttpCode(201)
   challenge(@Req() req: FastifyRequest, @Body() body: unknown): Promise<ChallengeResponse> {

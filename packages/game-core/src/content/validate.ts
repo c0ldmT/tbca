@@ -105,6 +105,9 @@ export function validateGameConfig(config: GameConfig): string[] {
   )
     add('PvP: Mit den Tagesgegnern ist das Tageslimit belohnter Kämpfe nicht erreichbar');
 
+  if (!isInt(pvp?.opponentReroll?.base) || !isInt(pvp?.opponentReroll?.perLevel))
+    add('PvP: Kosten fürs Neuwürfeln der Tagesgegner müssen ganze Zahlen ≥ 0 sein');
+
   // Bot-Ausrüstung
   const botGear = config.pvp?.botGear;
   if (!Array.isArray(botGear)) add('PvP: Bot-Ausrüstung muss eine Liste sein');

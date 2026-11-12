@@ -9,10 +9,12 @@ import {
   creditBalance,
   season,
   createDb,
+  InsufficientCreditsError,
   InsufficientMaterialsError,
   identity,
   runMigrations,
   seedDevelopment,
+  transferCredits,
   type DbConnection,
 } from '@tbca/db';
 import {
@@ -882,7 +884,7 @@ describe.skipIf(!url)('Drizzle-Repositories (Integration)', () => {
       return teams.create({
         communityId: guild.communityId,
         name: `Liga${suffix}`,
-        tag: `L${suffix.slice(-3)}`,
+        tag: `L${randomUUID().slice(0, 4)}`,
         logo: 'wolf',
         captainAccountId: acc!.id,
         joinCode: `TL${suffix}`,
@@ -970,11 +972,46 @@ describe.skipIf(!url)('Drizzle-Repositories (Integration)', () => {
     };
     const [me, a, b] = [await make('Dm'), await make('Da'), await make('Db')];
     const repo = new DrizzlePvpRepository(conn.db);
-    expect(await repo.dailyOpponents(me.id, '2026-11-12')).toEqual([]);
-    expect(await repo.saveDailyOpponents(me.id, '2026-11-12', [b.id, a.id])).toEqual([b.id, a.id]);
+    expect(await repo.dailyOpponents(me.id, '2026-11-12')).toEqual({ ids: [], rerolled: false });
+    expect((await repo.saveDailyOpponents(me.id, '2026-11-12', [b.id, a.id])).ids).toEqual([
+      b.id,
+      a.id,
+    ]);
     // Ein zweiter, gleichzeitiger Erstabruf überschreibt nicht
-    expect(await repo.saveDailyOpponents(me.id, '2026-11-12', [a.id])).toEqual([b.id, a.id]);
-    expect(await repo.dailyOpponents(me.id, '2026-11-13')).toEqual([]);
+    expect((await repo.saveDailyOpponents(me.id, '2026-11-12', [a.id])).ids).toEqual([b.id, a.id]);
+    expect((await repo.dailyOpponents(me.id, '2026-11-13')).ids).toEqual([]);
+
+    // Neuwürfeln kostet Credits, nur einmal am Tag
+    const charge = { seasonId: season.id, accountId: me.accountId, amount: 30 };
+    await expect(
+      repo.rerollDailyOpponents({ characterId: me.id, day: '2026-11-12', ids: [a.id], charge }),
+    ).rejects.toThrow(InsufficientCreditsError);
+    await transferCredits(conn.db, {
+      seasonId: season.id,
+      kind: 'test',
+      lines: [
+        { accountId: me.accountId, amount: 50 },
+        { system: 'source:admin', amount: -50 },
+      ],
+    });
+    expect(
+      await repo.rerollDailyOpponents({
+        characterId: me.id,
+        day: '2026-11-12',
+        ids: [a.id],
+        charge,
+      }),
+    ).toBe(true);
+    expect(await repo.dailyOpponents(me.id, '2026-11-12')).toEqual({ ids: [a.id], rerolled: true });
+    expect(await creditBalance(conn.db, season.id, me.accountId)).toBe(20);
+    expect(
+      await repo.rerollDailyOpponents({
+        characterId: me.id,
+        day: '2026-11-12',
+        ids: [b.id],
+        charge,
+      }),
+    ).toBe(false);
 
     const request = await repo.createRequest({
       seasonId: season.id,

@@ -976,6 +976,8 @@ export const dailyOpponent = pgTable(
     opponentId: uuid('opponent_id')
       .notNull()
       .references(() => character.id, { onDelete: 'cascade' }),
+    /** Die Auswahl wurde heute gegen Credits neu gewürfelt (einmal am Tag). */
+    rerolled: boolean('rerolled').notNull().default(false),
   },
   (t) => [primaryKey({ columns: [t.characterId, t.day, t.slot] })],
 );

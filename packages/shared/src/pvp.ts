@@ -37,6 +37,8 @@ export interface PvpStatus {
   day: string;
   rewardedToday: number;
   dailyLimit: number;
+  /** Tagesgegner neu würfeln: Kosten in Credits, heute noch möglich? */
+  reroll: { cost: number; available: boolean };
 }
 
 export interface OpponentView {

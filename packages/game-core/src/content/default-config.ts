@@ -489,6 +489,8 @@ export const DEFAULT_GAME_CONFIG: GameConfig = {
     winCredits: { base: 10, perOpponentLevel: 2 },
     // 5 Gegner × 2 belohnte Kämpfe (100 %, 50 %) = 10 belohnte Kämpfe am Tag
     dailyOpponents: 5,
+    // Etwa ein bis zwei gewonnene Kämpfe wert
+    opponentReroll: { base: 20, perLevel: 3 },
     // Vorkalibrierung: etwas unter dem typischen Stand eines Spielers gleichen Levels
     // (Balancing-Profile: gewöhnlich bis L20, selten L30–50, episch L80)
     botGear: [

@@ -125,3 +125,9 @@
 .discord {
   border-top: 1px solid rgb(255 255 255 / 0.05);
 }
+
+.reroll {
+  min-height: 34px;
+  padding: 0 14px;
+  font-size: 0.75rem;
+}

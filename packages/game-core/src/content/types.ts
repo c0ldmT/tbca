@@ -183,6 +183,8 @@ export interface PvpRules {
    * Abnahme gegen denselben Gegner muss das Tageslimit erreichbar sein.
    */
   readonly dailyOpponents: number;
+  /** Tagesgegner einmal am Tag neu würfeln: base + perLevel · Level Credits. */
+  readonly opponentReroll: { readonly base: number; readonly perLevel: number };
 }
 
 export interface GameConfig {
