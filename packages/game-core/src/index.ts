@@ -99,6 +99,12 @@ export {
   type PassiveCapResult,
   type PassiveXpRules,
 } from './progression/passive.js';
+export {
+  catchUpActive,
+  medianLevel,
+  withCatchUp,
+  type CatchUpRules,
+} from './progression/catch-up.js';
 export { BOT_NAMES, botBuild, type BotSpec } from './bots/bot-build.js';
 export { pvpReward, type PvpReward, type PvpRewardInput, type RewardLimit } from './pvp/rewards.js';
 

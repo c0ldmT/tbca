@@ -42,6 +42,15 @@ export class DrizzleCharacterRepository implements CharacterRepository {
     return row ? this.withLoadouts(row) : null;
   }
 
+  async levels(seasonId: string): Promise<number[]> {
+    const rows = await this.db
+      .select({ level: character.level })
+      .from(character)
+      .innerJoin(account, eq(account.id, character.accountId))
+      .where(and(eq(character.seasonId, seasonId), eq(account.isBot, false)));
+    return rows.map((r) => r.level);
+  }
+
   async search(
     seasonId: string,
     query: string,

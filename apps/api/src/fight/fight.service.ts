@@ -27,6 +27,7 @@ import type { CharacterRecord, CharacterRepository } from '../character/types.js
 import { ApiError } from '../common/api-error.js';
 import type { Env } from '../config/env.js';
 import { SeasonService, type CurrentSeason } from '../game/season.js';
+import { ProgressionService } from '../progression/progression.service.js';
 import { CHARACTER_REPOSITORY, CLOCK, ENV, FIGHT_REPOSITORY } from '../tokens.js';
 import { dayKey } from './day.js';
 import type { FightRepository, StoredFight } from './types.js';
@@ -43,6 +44,7 @@ export class FightService {
     @Inject(SeasonService) private readonly seasons: SeasonService,
     @Inject(CLOCK) private readonly clock: Clock,
     @Inject(ENV) private readonly env: Env,
+    @Inject(ProgressionService) private readonly progression: ProgressionService,
   ) {}
 
   async status(accountId: string): Promise<PvpStatus> {
@@ -58,8 +60,9 @@ export class FightService {
       this.characters.search(season.id, query.trim().slice(0, 20), accountId, me.level, 20),
       this.fights.rewardCounts(me.id, this.today()),
     ]);
+    const median = await this.progression.median(season.id);
     return list.map((o) => {
-      const reward = pvpReward(season.game, {
+      const base = pvpReward(season.game, {
         mode: 'rated',
         won: true,
         level: me.level,
@@ -69,6 +72,7 @@ export class FightService {
         opponentIsBot: o.isBot,
         testSeason: season.isTest,
       });
+      const reward = this.progression.boost(season.game, base, me.level, median);
       return {
         id: o.id,
         name: o.name,
@@ -106,10 +110,11 @@ export class FightService {
     });
     const won = result.winner === 0;
     const day = this.today();
+    const median = await this.progression.median(season.id);
 
     return this.fights.locked(me.id, async (tx) => {
       const counts = await tx.rewardCounts(me.id, day);
-      const reward = pvpReward(season.game, {
+      const base = pvpReward(season.game, {
         mode: req.mode,
         won,
         level: me.level,
@@ -119,6 +124,8 @@ export class FightService {
         opponentIsBot: opponent.isBot ?? false,
         testSeason: season.isTest,
       });
+      // Aufholbonus: mehr XP, wer weit unter dem Median der Season liegt
+      const reward = this.progression.boost(season.game, base, me.level, median);
       const fightId = await tx.insert({
         seasonId: season.id,
         kind: req.mode === 'rated' ? 'pvp_rated' : 'pvp_friendly',

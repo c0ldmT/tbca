@@ -145,6 +145,7 @@ describe.skipIf(!url)('Drizzle-Repositories (Integration)', () => {
       CharacterExistsError,
     );
     expect(await repo.isNameTaken(seasonId, name.toLowerCase())).toBe(true);
+    expect(await repo.levels(seasonId)).toContain(1);
 
     const gunnerLoadout = { abilities: ['gunner.double_tap'], tactics: [] };
     await repo.save({

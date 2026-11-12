@@ -295,6 +295,12 @@ export class InMemoryCharacters implements CharacterRepository {
     );
   }
 
+  async levels(seasonId: string): Promise<number[]> {
+    return this.records
+      .filter((c) => c.seasonId === seasonId && !(c as { isBot?: boolean }).isBot)
+      .map((c) => c.level);
+  }
+
   async findById(id: string): Promise<CharacterRecord | null> {
     const r = this.records.find((c) => c.id === id);
     return r ? this.withGear(r) : null;

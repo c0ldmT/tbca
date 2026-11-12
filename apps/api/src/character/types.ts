@@ -53,4 +53,6 @@ export interface CharacterRepository {
     nearLevel: number,
     limit: number,
   ): Promise<(Pick<CharacterRecord, 'id' | 'name' | 'level' | 'classId'> & { isBot: boolean })[]>;
+  /** Level aller Charaktere der Season ohne Bot-Spieler (für den Median). */
+  levels(seasonId: string): Promise<number[]>;
 }

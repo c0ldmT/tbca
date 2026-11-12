@@ -22,6 +22,7 @@ import type { Env } from '../config/env.js';
 import type { EconomyRepository } from '../economy/types.js';
 import { dayKey } from '../fight/day.js';
 import { SeasonService, type CurrentSeason } from '../game/season.js';
+import { ProgressionService } from '../progression/progression.service.js';
 import {
   CHARACTER_REPOSITORY,
   CLOCK,
@@ -46,6 +47,7 @@ export class DungeonService {
     @Inject(SeasonService) private readonly seasons: SeasonService,
     @Inject(CLOCK) private readonly clock: Clock,
     @Inject(ENV) private readonly env: Env,
+    @Inject(ProgressionService) private readonly progression: ProgressionService,
   ) {}
 
   async status(accountId: string): Promise<DungeonView> {
@@ -187,8 +189,14 @@ export class DungeonService {
       teams,
     });
     const won = result.winner === 0;
+    const median = await this.progression.median(season.id);
     const reward = won
-      ? floorReward(season.game, { plan, seed: `${run.seed}:${floor}:loot` })
+      ? this.progression.boost(
+          season.game,
+          floorReward(season.game, { plan, seed: `${run.seed}:${floor}:loot` }),
+          run.snapshot.level,
+          median,
+        )
       : null;
 
     const fightId = await tx.insertFight({

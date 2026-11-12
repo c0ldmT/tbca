@@ -67,6 +67,10 @@ export function validateGameConfig(config: GameConfig): string[] {
     }
   }
 
+  // Aufholbonus
+  if (!isInt(config.catchUp?.levelGap, 0) || !isInt(config.catchUp?.bonusPermille, 0))
+    add('Aufholbonus: Level-Abstand und Zuschlag müssen ganze Zahlen ≥ 0 sein');
+
   // Items
   const rules = config.items;
   if (!rules) add('Item-Regeln fehlen');

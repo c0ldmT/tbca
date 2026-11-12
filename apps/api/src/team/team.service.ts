@@ -26,6 +26,7 @@ import type { Env } from '../config/env.js';
 import { dayKey } from '../fight/day.js';
 import type { FightRepository } from '../fight/types.js';
 import { SeasonService, type CurrentSeason } from '../game/season.js';
+import { ProgressionService } from '../progression/progression.service.js';
 import {
   ADMIN_REPOSITORY,
   CHARACTER_REPOSITORY,
@@ -62,6 +63,7 @@ export class TeamService {
     @Inject(CLOCK) private readonly clock: Clock,
     @Inject(ENV) private readonly env: Env,
     @Inject(ADMIN_REPOSITORY) private readonly admin: AdminRepository,
+    @Inject(ProgressionService) private readonly progression: ProgressionService,
   ) {}
 
   communities(accountId: string): Promise<CommunityView[]> {
@@ -339,6 +341,7 @@ export class TeamService {
     const day = dayKey(this.clock.now(), this.env.GAME_TIMEZONE);
     const opponentLevel = Math.round(theirs.reduce((s, c) => s + c.level, 0) / theirs.length);
     const opponentIsBot = theirs.every((c) => c.isBot);
+    const median = await this.progression.median(season.id);
 
     return this.fights.lockedMany(
       ours.map((c) => c.id),
@@ -346,7 +349,7 @@ export class TeamService {
         const rewards = [];
         for (const c of ours) {
           const counts = await tx.rewardCounts(c.id, day);
-          const reward = pvpReward(season.game, {
+          const base = pvpReward(season.game, {
             mode: input.mode,
             won,
             level: c.level,
@@ -356,6 +359,7 @@ export class TeamService {
             opponentIsBot,
             testSeason: season.isTest,
           });
+          const reward = this.progression.boost(season.game, base, c.level, median);
           rewards.push({ c, reward });
         }
         const fightId = await tx.insert({

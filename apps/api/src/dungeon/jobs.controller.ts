@@ -5,6 +5,8 @@ import { lt } from 'drizzle-orm';
 
 import { ServiceTokenGuard } from '../discord/service-token.guard.js';
 import { DB_CONNECTION } from '../tokens.js';
+import { SeasonService } from '../game/season.js';
+import { ProgressionService } from '../progression/progression.service.js';
 import { DungeonService } from './dungeon.service.js';
 
 /**
@@ -17,7 +19,17 @@ export class JobsController {
   constructor(
     @Inject(DungeonService) private readonly dungeon: DungeonService,
     @Inject(DB_CONNECTION) private readonly conn: DbConnection,
+    @Inject(ProgressionService) private readonly progression: ProgressionService,
+    @Inject(SeasonService) private readonly seasons: SeasonService,
   ) {}
+
+  /** Season-Kennzahlen auffrischen (Median-Level für den Aufholbonus). */
+  @Post('season-stats')
+  @HttpCode(200)
+  async seasonStats(): Promise<{ medianLevel: number }> {
+    const season = await this.seasons.current();
+    return { medianLevel: await this.progression.refreshMedian(season.id) };
+  }
 
   @Post('expire-dungeon-runs')
   @HttpCode(200)

@@ -17,6 +17,7 @@ import { DungeonModule } from './dungeon/dungeon.module.js';
 import { EconomyModule } from './economy/economy.module.js';
 import { FightModule } from './fight/fight.module.js';
 import { GameModule } from './game/game.module.js';
+import { ProgressionModule } from './progression/progression.module.js';
 import { InventoryModule } from './inventory/inventory.module.js';
 import { HealthModule } from './health/health.module.js';
 
@@ -33,6 +34,7 @@ export class AppModule {
         HealthModule,
         AuthModule,
         GameModule,
+        ProgressionModule,
         CharacterModule,
         FightModule,
         InventoryModule,

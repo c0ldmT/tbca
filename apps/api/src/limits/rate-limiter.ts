@@ -13,6 +13,10 @@ export interface RateLimiter {
   acquire(key: string, ttlMs: number): Promise<boolean>;
   /** Setzt `value` und liefert den vorherigen Wert (z. B. Hash der letzten Nachricht). */
   swap(key: string, value: string, ttlMs: number): Promise<string | null>;
+  /** Legt einen kurzlebigen Wert ab (z. B. berechnete Season-Kennzahlen). */
+  remember(key: string, value: string, ttlMs: number): Promise<void>;
+  /** Liest einen mit `remember` abgelegten Wert; null, wenn keiner (mehr) da ist. */
+  recall(key: string): Promise<string | null>;
 }
 
 export class ValkeyRateLimiter implements RateLimiter, OnApplicationShutdown {
@@ -26,6 +30,14 @@ export class ValkeyRateLimiter implements RateLimiter, OnApplicationShutdown {
     const previous = await this.client.getset(key, value);
     await this.client.pexpire(key, ttlMs);
     return previous;
+  }
+
+  async remember(key: string, value: string, ttlMs: number): Promise<void> {
+    await this.client.set(key, value, 'PX', ttlMs);
+  }
+
+  recall(key: string): Promise<string | null> {
+    return this.client.get(key);
   }
 
   async onApplicationShutdown(): Promise<void> {
@@ -49,6 +61,15 @@ export class MemoryRateLimiter implements RateLimiter {
   async swap(key: string, value: string, ttlMs: number): Promise<string | null> {
     const current = this.entries.get(key);
     this.entries.set(key, { value, until: this.now() + ttlMs });
+    return current && current.until > this.now() ? current.value : null;
+  }
+
+  async remember(key: string, value: string, ttlMs: number): Promise<void> {
+    this.entries.set(key, { value, until: this.now() + ttlMs });
+  }
+
+  async recall(key: string): Promise<string | null> {
+    const current = this.entries.get(key);
     return current && current.until > this.now() ? current.value : null;
   }
 }

@@ -8,6 +8,10 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ### Hinzugefügt
 
+- Aufholbonus (Spezifikation, Abschnitt 11): Charaktere mehr als 5 Level unter dem Median der
+  Season bekommen +50 % XP aus Kämpfen, Team-Kämpfen und Dungeon (Konfiguration `catchUp`).
+  Der Worker frischt den Median alle 10 Minuten auf (`POST /api/internal/jobs/season-stats`,
+  Ablage in Valkey); passive XP bleiben unverändert gedeckelt.
 - Website, Design „Hologramm“: halbtransparente Glas-Panels mit Cyan-Kante und abgeschrägter
   HUD-Ecke, Scanlines und seltene, kurze Glitch-Verzerrungen (je Fläche eigene Periode,
   bei `prefers-reduced-motion` und Grafikstufe „Niedrig“ aus). Balken und Zähler sind abgekantete

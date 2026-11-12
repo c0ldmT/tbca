@@ -524,4 +524,6 @@ export const DEFAULT_GAME_CONFIG: GameConfig = {
       overSoftPermille: 500,
     },
   },
+  // Aufholbonus: mehr als 5 Level unter dem Median der Season → +50 % XP aus aktivem Spielen.
+  catchUp: { levelGap: 5, bonusPermille: 500 },
 };
