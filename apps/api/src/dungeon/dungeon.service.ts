@@ -4,6 +4,7 @@ import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InsufficientCreditsError, InsufficientMaterialsError } from '@tbca/db';
 import {
   dungeonFee,
+  dungeonFighter,
   ENGINE_VERSION,
   floorReward,
   levelFromXp,
@@ -121,7 +122,7 @@ export class DungeonService {
         },
         stacks: { heal_injector: -req.injectors, backup_chip: req.backupChip ? -1 : 0 },
       });
-      const snapshot = snapshotOf(season, me);
+      const snapshot = dungeonFighter(season.game.dungeon, snapshotOf(season, me));
       const run = await tx.saveRun({
         id: null,
         seasonId: season.id,

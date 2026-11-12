@@ -27,7 +27,9 @@ describe('Kurven-Abgleich', () => {
   });
 
   it('bewertet höhere Skalierung und kleine Affix-Pools', () => {
-    const club = templateCurve(config, find('club'), 30, 6);
+    const blade = find('blade');
+    const heavy: ItemTemplate = { ...blade, weapon: { ...blade.weapon!, scaling: 10_000 } };
+    const club = templateCurve(config, heavy, 30, 6);
     expect(club.parts.scaling).toBeGreaterThan(0);
     expect(club.ratioPermille).toBeGreaterThan(1050);
     const thin: ItemTemplate = { ...find('vest'), affixPool: ['con'] };
@@ -89,7 +91,7 @@ describe('Austauschformat tbca-items/v1', () => {
     const doc = exportItems(config, { configVersion: 4 });
     expect(doc.format).toBe(ITEM_EXCHANGE_FORMAT);
     const club = doc.templates.find((t) => t.id === 'club')!;
-    expect(club.weapon?.perPoint).toBe(1);
+    expect(club.weapon?.perPoint).toBe(0.925);
     expect(Object.keys(club.curve!)).toEqual(['L10★3', 'L30★6', 'L60★9']);
   });
 

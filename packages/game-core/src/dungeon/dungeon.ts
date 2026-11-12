@@ -18,6 +18,11 @@ export interface DungeonRules {
   readonly regenPermille: number;
   /** Heil-Injektor heilt diesen Anteil der maximalen HP (Promille). */
   readonly healPermille: number;
+  /**
+   * Wirksamkeit eigener Heilfähigkeiten im Dungeon (Promille; 1000 = wie im PvP). Der Abzug
+   * wirkt additiv zum Heil-Bonus der Klasse.
+   */
+  readonly healingPermille: number;
   readonly maxInjectors: number;
   readonly bossEvery: number;
   readonly boss: { readonly hpPermille: number; readonly damage: number };
@@ -77,6 +82,14 @@ export function maxRarityAt(rules: DungeonRules, floor: number): number {
  * Monster-Level, ab `modifiersFrom` mit Modifikatoren (Schild, Wut, Tempo). Boss-Etagen haben einen
  * einzelnen, deutlich stärkeren Gegner. Gleicher Seed, gleiche Etage.
  */
+/** Momentaufnahme des Charakters für einen Dungeon-Run (Heilung nach `healingPermille`). */
+export function dungeonFighter(rules: DungeonRules, s: CombatantSnapshot): CombatantSnapshot {
+  const permille = rules.healingPermille ?? 1000;
+  if (permille === 1000) return s;
+  const healing = (s.modifiers.healing ?? 0) + (permille - 1000) * 10;
+  return { ...s, modifiers: { ...s.modifiers, healing } };
+}
+
 export function planFloor(
   config: GameConfig,
   input: { characterLevel: number; floor: number; seed: Seed },

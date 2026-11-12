@@ -92,7 +92,7 @@ const abilities: AbilityDef[] = [
     energyCost: 30,
     cooldown: 2,
     unlockLevel: 1,
-    effects: [{ type: 'damage', multiplier: 21_000 }],
+    effects: [{ type: 'damage', multiplier: 22_000 }],
   },
   {
     id: 'bruiser.provoke',
@@ -116,7 +116,7 @@ const abilities: AbilityDef[] = [
     effects: [
       {
         type: 'shield',
-        amount: { base: 20, scalesWith: 'con', scaling: 15_000 },
+        amount: { base: 20, scalesWith: 'con', scaling: 14_000 },
         multiplier: 10_000,
         turns: 3,
       },
@@ -142,7 +142,7 @@ const abilities: AbilityDef[] = [
     energyCost: 25,
     cooldown: 1,
     unlockLevel: 1,
-    effects: [{ type: 'damage', multiplier: 8_500, hits: 2 }],
+    effects: [{ type: 'damage', multiplier: 8_750, hits: 2 }],
   },
   {
     id: 'gunner.aimed_shot',
@@ -232,7 +232,7 @@ const abilities: AbilityDef[] = [
       {
         type: 'heal',
         // Kleiner Grundwert: auf niedrigem Level heilt der Medtech sonst schneller, als Gegner treffen.
-        amount: { base: 12, scalesWith: 'int', scaling: 16_000 },
+        amount: { base: 10, scalesWith: 'int', scaling: 16_000 },
         multiplier: 10_000,
       },
     ],
@@ -352,7 +352,7 @@ const items: ItemRules = {
       id: 'club',
       names: { de: 'Schlagwaffe', en: 'Club' },
       category: 'weapon_1h',
-      weapon: { kind: 'physical', scalesWith: 'str', scaling: 10_000 },
+      weapon: { kind: 'physical', scalesWith: 'str', scaling: 9_250 },
       base: { weaponDamage: 1 },
       affixPool: WEAPON_AFFIXES,
     },
@@ -384,7 +384,7 @@ const items: ItemRules = {
       id: 'injector',
       names: { de: 'Injektor', en: 'Injector' },
       category: 'weapon_1h',
-      weapon: { kind: 'tech', scalesWith: 'int', scaling: 8_000 },
+      weapon: { kind: 'tech', scalesWith: 'int', scaling: 9_000 },
       base: { weaponDamage: 1 },
       affixPool: [...WEAPON_AFFIXES, 'con'],
     },
@@ -556,6 +556,8 @@ export const DEFAULT_GAME_CONFIG: GameConfig = {
     levelOffset: 2,
     regenPermille: 100,
     healPermille: 400,
+    // Vorkalibrierung: Heilung wirkt im Dungeon zu 60 %, sonst läuft der Medtech doppelt so tief
+    healingPermille: 600,
     maxInjectors: 3,
     bossEvery: 5,
     boss: { hpPermille: 3_000, damage: 2_000 },

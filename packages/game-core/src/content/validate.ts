@@ -90,6 +90,10 @@ export function validateGameConfig(config: GameConfig): string[] {
       add('Shop: Umbenennen braucht ganze Zahlen ≥ 0');
   }
 
+  const healing = config.dungeon?.healingPermille;
+  if (!isInt(healing, 0) || healing > 2000)
+    add('Dungeon: Wirksamkeit der Heilung muss zwischen 0 und 2000 Promille liegen');
+
   // Bot-Ausrüstung
   const botGear = config.pvp?.botGear;
   if (!Array.isArray(botGear)) add('PvP: Bot-Ausrüstung muss eine Liste sein');

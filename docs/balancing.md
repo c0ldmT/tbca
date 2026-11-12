@@ -73,15 +73,57 @@ Schaden über Zeit hat. Gespeicherte Taktiken von Spielern bleiben unverändert.
 
 Mittlere Dungeon-Tiefe: L10 4,3 → 3,8, L30 8,7 → 7,7, L80 16,8 → 22,5 Etagen.
 
+## Zweite Runde
+
+Grundlage: eigene Simulation (Duelle auf Level 1–80 mit 150 Kämpfen je Paarung, dazu neu die
+Team-Simulation 2v2/3v3 und die Dungeon-Tiefe). Echte Spielerdaten (Report, Datenexport)
+lagen noch nicht vor. Die Koordinatensuche bewertete Duelle und Teams gemeinsam (Gesamtquote
+je Klasse 50 %, Dreieck 62/38 %, Team-Beitrag je Klasse 50 %) über zwei Seeds; geprüft mit
+einem dritten.
+
+| Wert                                   | vorher   | nachher    |
+| -------------------------------------- | -------- | ---------- |
+| Medtech: Flicken, Grundwert            | 12       | 10         |
+| Bruiser: Schwerer Schlag               | 210 %    | 220 %      |
+| Bruiser: Verschanzen je KON            | 1,5      | 1,4        |
+| Gunner: Doppelschuss                   | 2 × 85 % | 2 × 87,5 % |
+| Heilung im Dungeon (`healingPermille`) | 100 %    | 60 %       |
+| Schlagwaffe (Vorlage), Schaden je STR  | 1,0      | 0,925      |
+| Injektor (Vorlage), Schaden je INT     | 0,8      | 0,9        |
+
+Die Heilung im Dungeon ist eine neue Regel: Eigene Heilfähigkeiten wirken dort nur zu 60 %
+(Abzug additiv zum Heil-Bonus der Klasse). Schilde sind nicht betroffen. Bot-Gegner im PvP
+tragen jetzt Ausrüstung nach Level (`pvp.botGear`, ★2 bis ★9).
+
+Kurven-Abgleich danach: Schlagwaffe 103 %, Injektor 99 %, Pistole 95 % (bewusst: der
+Gunner hat zusätzlich Crit-Chance im Passiv).
+
+### Ergebnis (Gesamt-Siegquote in %, Bruiser / Gunner / Netrunner / Medtech)
+
+| Stufe   | Duell vorher      | Duell nachher     | 3v3-Beitrag nachher | Ø Dungeon-Tiefe vorher → nachher (Medtech) |
+| ------- | ----------------- | ----------------- | ------------------- | ------------------------------------------ |
+| L1 ★3   | 37 / 32 / 57 / 74 | 46 / 37 / 60 / 56 | 48 / 41 / 45 / 67   | 1,2 → 0,8 (1,8 → 0,5)                      |
+| L10 ★3  | 51 / 44 / 60 / 49 | 54 / 46 / 59 / 47 | 62 / 50 / 49 / 39   | 3,8 → 3,6 (4,5 → 3,9)                      |
+| L30 ★7  | 45 / 53 / 56 / 46 | 49 / 54 / 55 / 43 | 57 / 56 / 49 / 38   | 7,9 → 7,6 (10,1 → 9,3)                     |
+| L50 ★7  | 44 / 56 / 53 / 52 | 45 / 56 / 51 / 50 | 53 / 58 / 46 / 42   | 10,8 → 10,4 (13,9 → 12,4)                  |
+| L80 ★11 | 39 / 57 / 48 / 62 | 40 / 58 / 47 / 60 | 48 / 56 / 45 / 51   | 21,1 → 19,0 (32 → 23,8)                    |
+
+Gemischte Aufstellungen gewinnen gegen solche mit doppelter Klasse 53–61 %; reine
+Dreier-Stapel einer Klasse landen unten.
+
+Versuche, die nicht übernommen wurden: mehr Heilung oder stärkere Barriere hebt den Medtech
+im 3v3 um 3–5 Punkte, macht ihn aber im Duell auf Level 80 zu stark (63–65 %) und den Bruiser
+dort noch schwächer. Ein Stimulans in der Standard-Taktik half dem Team nicht.
+
 ## Offen
 
-- Bruiser liegt ab Level 50 noch unter 45 %, Gunner knapp darüber; Medtech gegen Bruiser bleibt
-  das schwierigste Duell (25–40 %).
-- Level 1 ist wegen langer Kämpfe mit wenig Schaden noch medtech-lastig.
-- Der Dungeon wird für den Medtech auf hohem Level zu leicht (Heilung zwischen den Etagen).
-- Die Simulation kennt nur Duelle; Team-Kämpfe (2v2, 3v3) sind nicht kalibriert.
-- Item-Vorlagen weichen von der Kurve ab: Schlagwaffe 115 %, Injektor 83 %, Pistole 95 %
-  (siehe Item-Editor). Gewürfelte Basiswerte und Affixe bleiben bei bestehenden Items, die
-  Waffen-Skalierung (Schadensart, Attribut, Schaden je Punkt) liest der Kampf aber aus der
-  Vorlage – eine Änderung dort wirkt sofort auch auf vorhandene Waffen. Das gilt auch für die
-  neue Pistolen-Skalierung, sobald sie veröffentlicht ist.
+- Bruiser im Duell auf Level 80 bei 40 % (gegen Medtech 29 %), im Team dagegen stark (3v3 auf
+  Level 10–30 57–62 %).
+- Medtech im 3v3 auf Level 10–50 nur 38–42 %; mehr Heilung verschiebt das Problem ins Duell
+  (siehe oben). Kandidaten: Heilung, die auf Verbündete stärker wirkt als auf sich selbst
+  (braucht eine Engine-Änderung), oder eine Team-Fähigkeit.
+- Dreieck auf niedrigem Level zu steil: Bruiser gegen Gunner 75–91 % bis Level 10; Gunner auf
+  Level 1 bei 37 %.
+- Auf Level 1 kommt im Dungeon kaum jemand über Etage 1; der Medtech mit gekürzter Heilung
+  noch weniger.
+- Alles ohne echte Spielerdaten; die nächste Runde braucht Report und Datenexport.

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_GAME_CONFIG as config,
   dungeonFee,
+  dungeonFighter,
   ENGINE_VERSION,
   floorReward,
   maxRarityAt,
@@ -95,5 +96,13 @@ describe('Dungeon', () => {
         teams: [[tweak(me, { state: { hp: 0, energy: 0 } })], [...plan.enemies]],
       }),
     ).toThrow(/state.hp/);
+  });
+
+  it('kürzt eigene Heilung im Dungeon additiv zum Heil-Bonus', () => {
+    const medtech = hero('m', 'medtech');
+    expect(medtech.modifiers.healing).toBe(2_000);
+    expect(dungeonFighter(rules, medtech).modifiers.healing).toBe(2_000 - 4_000);
+    const full = { ...rules, healingPermille: 1000 };
+    expect(dungeonFighter(full, medtech)).toBe(medtech);
   });
 });

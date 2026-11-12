@@ -111,6 +111,7 @@ export {
 export {
   DUNGEON_MODIFIERS,
   dungeonFee,
+  dungeonFighter,
   floorReward,
   isBossFloor,
   maxRarityAt,

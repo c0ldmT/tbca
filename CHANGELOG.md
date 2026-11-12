@@ -127,6 +127,16 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ### Geändert
 
+- Zweite Balancing-Runde (Vorkalibrierung aus der Simulation, noch ohne Spielerdaten):
+  Medtech heilt mit „Flicken“ auf niedrigem Level weniger (Grundwert 12 → 10), Schwerer Schlag
+  220 %, Verschanzen 1,4 je KON, Doppelschuss 2 × 87,5 %. Neue Regel `dungeon.healingPermille`:
+  eigene Heilung wirkt im Dungeon zu 60 % (der Medtech lief sonst doppelt so tief). Item-
+  Vorlagen näher an der Kurve: Schlagwaffe 0,925 statt 1,0 Schaden je STR, Injektor 0,9 statt
+  0,8 je INT. Medtech auf Level 1 im Duell 74 → 56 %, im Dungeon auf Level 80 Ø 32 → 24
+  Etagen. Zahlen und offene Punkte in `docs/balancing.md`. Referenz-Fingerabdrücke neu
+  gesetzt (Duell `53cba225`, Team `ad265af0`, Web-Demo `d2c05cca`); die Kampflogik ist
+  unverändert. Wirkt auf eine laufende Season erst über „Entwurf aus Startwerten“ – bis auf
+  `healingPermille`, das gespeicherte Versionen als neues Feld sofort mit 60 % erhalten.
 - Balancing, erste Angleichung der Klassen (Details und Zahlen in `docs/balancing.md`): GES gibt
   deutlich weniger Initiative, Genauigkeit, Ausweichen und Crit-Chance, dafür wachsen diese
   Werte mit dem Level; STR gibt Firewall; Schwerer Schlag 210 %, Doppelschuss 2 × 85 %, Pistole

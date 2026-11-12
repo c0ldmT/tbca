@@ -3,7 +3,7 @@ import type { BattleRules, CombatantSnapshot } from '../battle/types.js';
 import { botBuild } from '../bots/bot-build.js';
 import { deriveSnapshot } from '../character/build.js';
 import { CLASS_IDS, type ClassId, type GameConfig, type TargetSelector } from '../content/types.js';
-import { planFloor, regenerate } from '../dungeon/dungeon.js';
+import { dungeonFighter, planFloor, regenerate } from '../dungeon/dungeon.js';
 import { rollItem, slotsFor, type Equipment } from '../items/items.js';
 import { EQUIP_SLOTS, type ItemTemplate } from '../items/types.js';
 import { ENGINE_VERSION } from '../version.js';
@@ -244,13 +244,10 @@ export function simulateDungeon(
     const mine: number[] = [];
     for (let r = 0; r < input.runsPerClass; r++) {
       const seed = `${input.seed}:${classId}:${r}`;
-      const me = simCombatant(config, {
-        classId,
-        level: input.level,
-        gear: input.gear,
-        seed,
-        id: 'me',
-      });
+      const me = dungeonFighter(
+        config.dungeon,
+        simCombatant(config, { classId, level: input.level, gear: input.gear, seed, id: 'me' }),
+      );
       let state = { hp: me.stats.maxHp, energy: me.stats.energyMax };
       let floor = 0;
       while (floor < maxFloors) {
