@@ -82,6 +82,12 @@ export interface LeagueView {
   };
 }
 
+/** GET /api/league/divisions/:index – eine Division des aktuellen Zyklus. */
+export interface LeagueDivisionView {
+  cycle: NonNullable<LeagueView['cycle']>;
+  division: NonNullable<LeagueView['division']>;
+}
+
 export interface LeaderboardEntry extends LeagueCharacterRef {
   place: number;
   rating: number;

@@ -132,6 +132,14 @@ describe('Liga-Zyklus', () => {
     const table = (await call(alice, 'GET', '/api/league')).json().division.table;
     expect(table.reduce((s: number, r: { played: number }) => s + r.played, 0)).toBe(6);
     expect(others).toHaveLength(5);
+
+    // Jede Division ist einsehbar, auch ohne eigene Teilnahme
+    const division = (await call(alice, 'GET', '/api/league/divisions/0')).json();
+    expect(division.cycle.number).toBe(1);
+    expect(division.division.table.some((r: { me: boolean }) => r.me)).toBe(true);
+    expect((await call(alice, 'GET', '/api/league/divisions/3')).json().code).toBe(
+      'division_not_found',
+    );
   });
 
   it('holt nach dem Vorspulen alle Spieltage in Reihenfolge nach und startet den nächsten Zyklus', async () => {

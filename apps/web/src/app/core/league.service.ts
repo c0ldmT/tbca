@@ -1,6 +1,11 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import type { ChallengeResponse, LeaderboardEntry, LeagueView } from '@tbca/shared';
+import type {
+  ChallengeResponse,
+  LeaderboardEntry,
+  LeagueDivisionView,
+  LeagueView,
+} from '@tbca/shared';
 import { CSRF_HEADER } from '@tbca/shared/constants';
 import { firstValueFrom, type Observable } from 'rxjs';
 
@@ -14,6 +19,10 @@ export class LeagueService {
 
   view(): Promise<LeagueView> {
     return this.read(this.http.get<LeagueView>('/api/league'));
+  }
+
+  division(index: number): Promise<LeagueDivisionView> {
+    return this.read(this.http.get<LeagueDivisionView>(`/api/league/divisions/${index}`));
   }
 
   join(joined: boolean): Promise<LeagueView> {

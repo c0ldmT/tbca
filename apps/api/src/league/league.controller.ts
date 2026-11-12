@@ -1,8 +1,20 @@
-import { Controller, Get, HttpCode, Inject, Post, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpCode,
+  Inject,
+  Param,
+  ParseIntPipe,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import {
   leaderboardQuerySchema,
   type ChallengeResponse,
   type LeaderboardEntry,
+  type LeagueDivisionView,
   type LeagueTickResult,
   type LeagueView,
 } from '@tbca/shared';
@@ -22,6 +34,15 @@ export class LeagueController {
   @Get()
   view(@Req() req: FastifyRequest): Promise<LeagueView> {
     return this.league.view(req.auth!.accountId);
+  }
+
+  /** Tabelle und Spielplan einer Division (0 = oberste) des aktuellen Zyklus. */
+  @Get('divisions/:index')
+  division(
+    @Req() req: FastifyRequest,
+    @Param('index', new ParseIntPipe()) index: number,
+  ): Promise<LeagueDivisionView> {
+    return this.league.division(req.auth!.accountId, index);
   }
 
   @Post('join')

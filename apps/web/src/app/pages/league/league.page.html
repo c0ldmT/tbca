@@ -5,15 +5,42 @@
   @if (view(); as v) {
     <div class="cols">
       <div class="main">
-        @if (v.division; as d) {
+        @if (shown(); as d) {
           <section
             class="tbca-panel tbca-panel--flush tbca-gl tbca-gl--a"
             aria-labelledby="table-t"
           >
             <i class="tbca-gx" aria-hidden="true"></i>
             <div class="tbca-ph">
-              <h2 id="table-t">
+              <h2 id="table-t" class="divnav">
+                @if (d.count > 1) {
+                  <button
+                    type="button"
+                    class="arrow"
+                    [disabled]="d.index === 0"
+                    [attr.aria-label]="t('league.higher')"
+                    (click)="showDivision(d.index - 1)"
+                  >
+                    ‹
+                  </button>
+                }
                 {{ t('league.division', { n: d.index + 1, count: d.count }) }}
+                @if (d.count > 1) {
+                  <button
+                    type="button"
+                    class="arrow"
+                    [disabled]="d.index === d.count - 1"
+                    [attr.aria-label]="t('league.lower')"
+                    (click)="showDivision(d.index + 1)"
+                  >
+                    ›
+                  </button>
+                }
+                @if (other() && v.division) {
+                  <button type="button" class="own" (click)="showDivision(v.division.index)">
+                    {{ t('league.own') }}
+                  </button>
+                }
               </h2>
               <span class="tbca-idx">
                 {{ t('league.cycle', { n: v.cycle!.number }) }} ·

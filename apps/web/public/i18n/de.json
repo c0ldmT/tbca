@@ -415,7 +415,8 @@
     "confirm_mismatch": "Die Bestätigung passt nicht zur laufenden Season.",
     "season_end_before_start": "Das Ende muss nach dem Start der Season liegen.",
     "already_placed": "Deine Platzierung ist abgeschlossen.",
-    "no_opponent": "Gerade ist kein passender Gegner da."
+    "no_opponent": "Gerade ist kein passender Gegner da.",
+    "division_not_found": "Diese Division gibt es nicht."
   },
   "pvp": {
     "title": "Arena",
@@ -1461,6 +1462,9 @@
       "global": "Global",
       "community": "Community"
     },
-    "boardEmpty": "Noch niemand platziert."
+    "boardEmpty": "Noch niemand platziert.",
+    "higher": "Höhere Division",
+    "lower": "Niedrigere Division",
+    "own": "Meine Division"
   }
 }

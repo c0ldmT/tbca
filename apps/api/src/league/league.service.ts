@@ -15,6 +15,7 @@ import type {
   ChallengeResponse,
   LeaderboardEntry,
   LeagueCharacterRef,
+  LeagueDivisionView,
   LeagueMatchView,
   LeagueTickResult,
   LeagueView,
@@ -42,6 +43,7 @@ import type {
   CycleRecord,
   LeagueRepository,
   MatchRecord,
+  MemberRecord,
   NewMatch,
   RatingRecord,
 } from './types.js';
@@ -88,31 +90,8 @@ export class LeagueService {
       const members = await this.repo.members(cycle.id);
       const mine = members.find((m) => m.characterId === me.id);
       if (mine) {
-        const count = Math.max(...members.map((m) => m.division)) + 1;
-        const inDivision = members.filter((m) => m.division === mine.division);
-        const matches = (await this.repo.matches(cycle.id)).filter(
-          (m) => m.division === mine.division,
-        );
-        const refs = await this.refs(inDivision.map((m) => m.characterId));
-        const table = this.table(season, cycle, inDivision, matches, mine.division, count);
-        division = {
-          index: mine.division,
-          count,
-          table: table
-            .filter((row) => refs.has(row.characterId))
-            .map((row) => ({
-              ...refs.get(row.characterId)!,
-              place: row.place,
-              played: row.played,
-              wins: row.wins,
-              draws: row.draws,
-              losses: row.losses,
-              points: row.points,
-              movement: row.movement,
-              me: row.characterId === me.id,
-            })),
-          matches: matches.map((m) => matchView(m, refs)),
-        };
+        const matches = await this.repo.matches(cycle.id);
+        division = await this.divisionView(season, cycle, members, matches, mine.division, me.id);
         const upcoming = matches
           .filter(
             (m) =>
@@ -132,15 +111,7 @@ export class LeagueService {
     return {
       rating: rating ? ratingView(rating, rules.placementGames) : null,
       joined: rating?.leagueJoined ?? false,
-      cycle: cycle
-        ? {
-            id: cycle.id,
-            number: cycle.number,
-            status: cycle.status,
-            startsAt: cycle.startsAt.toISOString(),
-            endsAt: cycle.endsAt.toISOString(),
-          }
-        : null,
+      cycle: cycle ? cycleView(cycle) : null,
       division,
       next,
       rules: {
@@ -152,6 +123,56 @@ export class LeagueService {
         matchday: `${String(rules.matchdayHour).padStart(2, '0')}:${String(rules.matchdayMinute).padStart(2, '0')}`,
         points: { ...rules.points },
       },
+    };
+  }
+
+  /** Eine beliebige Division des laufenden (oder zuletzt beendeten) Zyklus. */
+  async division(accountId: string, index: number): Promise<LeagueDivisionView> {
+    const season = await this.seasons.current();
+    const me = await this.characters.findForAccount(accountId, season.id);
+    const cycle =
+      (await this.repo.activeCycle(season.id)) ?? (await this.repo.lastCycle(season.id));
+    const members = cycle ? await this.repo.members(cycle.id) : [];
+    if (!cycle || !members.some((m) => m.division === index)) {
+      throw new ApiError(HttpStatus.NOT_FOUND, 'division_not_found', 'Division nicht gefunden');
+    }
+    const matches = await this.repo.matches(cycle.id);
+    return {
+      cycle: cycleView(cycle),
+      division: await this.divisionView(season, cycle, members, matches, index, me?.id ?? null),
+    };
+  }
+
+  private async divisionView(
+    season: CurrentSeason,
+    cycle: CycleRecord,
+    members: MemberRecord[],
+    allMatches: MatchRecord[],
+    index: number,
+    meId: string | null,
+  ): Promise<NonNullable<LeagueView['division']>> {
+    const count = Math.max(...members.map((m) => m.division)) + 1;
+    const inDivision = members.filter((m) => m.division === index);
+    const matches = allMatches.filter((m) => m.division === index);
+    const refs = await this.refs(inDivision.map((m) => m.characterId));
+    const table = this.table(season, cycle, inDivision, matches, index, count);
+    return {
+      index,
+      count,
+      table: table
+        .filter((row) => refs.has(row.characterId))
+        .map((row) => ({
+          ...refs.get(row.characterId)!,
+          place: row.place,
+          played: row.played,
+          wins: row.wins,
+          draws: row.draws,
+          losses: row.losses,
+          points: row.points,
+          movement: row.movement,
+          me: row.characterId === meId,
+        })),
+      matches: matches.map((m) => matchView(m, refs)),
     };
   }
 
@@ -529,6 +550,16 @@ function participant(
     xpAwarded: reward.xp,
     creditsAwarded: reward.credits,
     opponentCharacterId,
+  };
+}
+
+function cycleView(cycle: CycleRecord): NonNullable<LeagueView['cycle']> {
+  return {
+    id: cycle.id,
+    number: cycle.number,
+    status: cycle.status,
+    startsAt: cycle.startsAt.toISOString(),
+    endsAt: cycle.endsAt.toISOString(),
   };
 }
 

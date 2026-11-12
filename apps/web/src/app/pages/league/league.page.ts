@@ -3,6 +3,8 @@ import { Router, RouterLink } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 import type { LeaderboardEntry, LeagueMatchView, LeagueView } from '@tbca/shared';
 
+type Division = NonNullable<LeagueView['division']>;
+
 import { ApiFailure } from '../../core/api-failure';
 import { CharacterService } from '../../core/character.service';
 import { LanguageService } from '../../core/language.service';
@@ -39,11 +41,16 @@ export class LeaguePage {
   protected readonly scope = signal<'global' | 'community'>('global');
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
+  /** Angesehene fremde Division; null = die eigene. */
+  protected readonly other = signal<Division | null>(null);
+  protected readonly shown = computed<Division | null>(
+    () => this.other() ?? this.view()?.division ?? null,
+  );
 
   /** Spielplan der eigenen Division nach Spieltagen. */
   protected readonly matchdays = computed<Matchday[]>(() => {
     const out = new Map<number, Matchday>();
-    for (const m of this.view()?.division?.matches ?? []) {
+    for (const m of this.shown()?.matches ?? []) {
       const day = out.get(m.matchday) ?? { matchday: m.matchday, playAt: m.playAt, matches: [] };
       day.matches.push(m);
       out.set(m.matchday, day);
@@ -52,9 +59,7 @@ export class LeaguePage {
   });
 
   protected readonly placed = computed(() => (this.view()?.rating?.placementLeft ?? 1) === 0);
-  protected readonly myId = computed(
-    () => this.view()?.division?.table.find((r) => r.me)?.id ?? null,
-  );
+  protected readonly myId = computed(() => this.shown()?.table.find((r) => r.me)?.id ?? null);
 
   constructor() {
     void this.load();
@@ -71,6 +76,21 @@ export class LeaguePage {
       ]);
       this.view.set(view);
       this.board.set(board);
+      // Ohne eigene Division zeigt die Seite die oberste des laufenden Zyklus
+      if (!view.division && view.cycle) await this.showDivision(0);
+    } catch (error) {
+      this.error.set(error instanceof ApiFailure ? error.code : 'unknown');
+    }
+  }
+
+  protected async showDivision(index: number): Promise<void> {
+    try {
+      const own = this.view()?.division;
+      if (own && own.index === index) {
+        this.other.set(null);
+        return;
+      }
+      this.other.set((await this.api.division(index)).division);
     } catch (error) {
       this.error.set(error instanceof ApiFailure ? error.code : 'unknown');
     }

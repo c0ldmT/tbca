@@ -307,3 +307,30 @@ li[data-outcome='loss'] .st a {
     padding-left: 12px;
   }
 }
+
+.divnav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.divnav button {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid rgb(0 240 255 / 0.3);
+  background: transparent;
+  color: var(--tbca-neon-cyan);
+  font: 600 0.75rem / 1 var(--tbca-font-mono);
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.divnav button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.divnav button:not(:disabled):hover {
+  background: rgb(0 240 255 / 0.1);
+}

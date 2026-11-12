@@ -8,6 +8,9 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ### Hinzugefügt
 
+- Liga: jede Division des laufenden (oder zuletzt beendeten) Zyklus ist einsehbar
+  (`GET /api/league/divisions/:index`); auf der Liga-Seite blättern Pfeile durch die
+  Divisionen, ohne eigene Teilnahme zeigt sie die oberste.
 - Liga (Phase 2, Spezifikation Abschnitt 9): Glicko-2-Rating aus allen gewerteten Kämpfen
   (Herausforderungen und Liga, beide Seiten, auch Bot-Spieler), Platzierung über die ersten
   5 gewerteten Kämpfe (eigener Knopf „Platzierungskampf“ mit automatisch gewähltem Gegner),
