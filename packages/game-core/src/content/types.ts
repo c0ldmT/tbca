@@ -183,6 +183,8 @@ export interface PvpRules {
    * Abnahme gegen denselben Gegner muss das Tageslimit erreichbar sein.
    */
   readonly dailyOpponents: number;
+  /** Gegnerische Teams je Team und Tag für Team-Herausforderungen auf der Website. */
+  readonly dailyTeamOpponents: number;
   /** Tagesgegner einmal am Tag neu würfeln: base + perLevel · Level Credits. */
   readonly opponentReroll: { readonly base: number; readonly perLevel: number };
 }

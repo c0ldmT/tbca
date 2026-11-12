@@ -5,6 +5,8 @@ import type {
   DiscordFightSummary,
   DiscordLeagueNews,
   DiscordLeagueView,
+  DiscordTeamChallengeAnswer,
+  DiscordTeamChallengeRequestView,
   DiscordTeamFightSummary,
   DiscordTeamView,
 } from '@tbca/shared';
@@ -105,13 +107,29 @@ const de = {
               t.members.map((m) => `• ${m.name}${m.level ? ` (Lv ${m.level})` : ''}`).join('\n'),
           )
           .join('\n\n') + `\n${v.url}`,
-  teamFight: (f: DiscordTeamFightSummary): string =>
-    `**[${f.ownTag}]** gegen **[${f.opponentTag}]** (${f.size}v${f.size}): ` +
-    (f.draw ? 'Unentschieden.' : f.won ? 'Sieg!' : 'Niederlage.') +
-    (f.rewards.some((r) => r.xp > 0)
-      ? '\n' + f.rewards.map((r) => `${r.name}: +${r.xp} XP, +${r.credits} Credits`).join('\n')
-      : ' Keine Belohnung.') +
-    `\nReplay: ${f.replayUrl}`,
+  teamFight: (f: DiscordTeamFightSummary): string => {
+    const lines = (list: { name: string; xp: number; credits: number }[]) =>
+      list
+        .filter((r) => r.xp > 0)
+        .map((r) => `${r.name}: +${r.xp} XP, +${r.credits} Credits`)
+        .join('\n');
+    const theirs = lines(f.opponentRewards ?? []);
+    return (
+      `**[${f.ownTag}]** gegen **[${f.opponentTag}]** (${f.size}v${f.size}): ` +
+      (f.draw ? 'Unentschieden.' : f.won ? 'Sieg!' : 'Niederlage.') +
+      (f.rewards.some((r) => r.xp > 0) ? '\n' + lines(f.rewards) : ' Keine Belohnung.') +
+      (theirs ? `\n[${f.opponentTag}]:\n${theirs}` : '') +
+      `\nReplay: ${f.replayUrl}`
+    );
+  },
+  teamChallengeRequest: (r: DiscordTeamChallengeRequestView): string =>
+    `⚔️ **[${r.ownTag}]** fordert **[${r.opponentTag}]** zum ${r.size}v${r.size} heraus (${r.mode === 'rated' ? 'gewertet' : 'Freundschaft'}). ` +
+    (r.captainUserId ? `<@${r.captainUserId}>` : `Kapitän von [${r.opponentTag}]`) +
+    `, nimmst du an? Die Anfrage läuft ${stamp(r.expiresAt, 'R')} ab.`,
+  teamChallengeAnswered: (a: DiscordTeamChallengeAnswer): string =>
+    a.status === 'declined' || !a.fight
+      ? `**[${a.opponentTag}]** hat die Herausforderung von **[${a.ownTag}]** abgelehnt.`
+      : `**[${a.opponentTag}]** nimmt an! ` + de.teamFight(a.fight),
   league: (v: DiscordLeagueView): string => {
     const lines = [
       v.rating === null
@@ -177,6 +195,7 @@ const de = {
     challenge_closed: 'Über diese Herausforderung ist schon entschieden.',
     challenge_not_found: 'Diese Herausforderung gibt es nicht mehr.',
     not_your_challenge: 'Diese Herausforderung gilt nicht dir.',
+    not_captain: 'Nur der Kapitän des geforderten Teams kann annehmen oder ablehnen.',
     already_placed: 'Deine Platzierung ist abgeschlossen.',
     no_opponent: 'Gerade ist kein passender Gegner da.',
     team_not_found: 'Kein Team mit diesem Kürzel gefunden.',
@@ -289,13 +308,29 @@ const en: typeof de = {
               t.members.map((m) => `• ${m.name}${m.level ? ` (lv ${m.level})` : ''}`).join('\n'),
           )
           .join('\n\n') + `\n${v.url}`,
-  teamFight: (f) =>
-    `**[${f.ownTag}]** vs **[${f.opponentTag}]** (${f.size}v${f.size}): ` +
-    (f.draw ? 'Draw.' : f.won ? 'Victory!' : 'Defeat.') +
-    (f.rewards.some((r) => r.xp > 0)
-      ? '\n' + f.rewards.map((r) => `${r.name}: +${r.xp} XP, +${r.credits} credits`).join('\n')
-      : ' No reward.') +
-    `\nReplay: ${f.replayUrl}`,
+  teamFight: (f) => {
+    const lines = (list: { name: string; xp: number; credits: number }[]) =>
+      list
+        .filter((r) => r.xp > 0)
+        .map((r) => `${r.name}: +${r.xp} XP, +${r.credits} credits`)
+        .join('\n');
+    const theirs = lines(f.opponentRewards ?? []);
+    return (
+      `**[${f.ownTag}]** vs **[${f.opponentTag}]** (${f.size}v${f.size}): ` +
+      (f.draw ? 'Draw.' : f.won ? 'Victory!' : 'Defeat.') +
+      (f.rewards.some((r) => r.xp > 0) ? '\n' + lines(f.rewards) : ' No reward.') +
+      (theirs ? `\n[${f.opponentTag}]:\n${theirs}` : '') +
+      `\nReplay: ${f.replayUrl}`
+    );
+  },
+  teamChallengeRequest: (r) =>
+    `⚔️ **[${r.ownTag}]** challenges **[${r.opponentTag}]** to a ${r.size}v${r.size} (${r.mode === 'rated' ? 'rated' : 'friendly'}). ` +
+    (r.captainUserId ? `<@${r.captainUserId}>` : `Captain of [${r.opponentTag}]`) +
+    `, do you accept? The request expires ${stamp(r.expiresAt, 'R')}.`,
+  teamChallengeAnswered: (a) =>
+    a.status === 'declined' || !a.fight
+      ? `**[${a.opponentTag}]** declined the challenge from **[${a.ownTag}]**.`
+      : `**[${a.opponentTag}]** accepts! ` + en.teamFight(a.fight),
   league: (v) => {
     const lines = [
       v.rating === null
@@ -361,6 +396,7 @@ const en: typeof de = {
     challenge_closed: 'This challenge has already been decided.',
     challenge_not_found: "This challenge doesn't exist anymore.",
     not_your_challenge: "This challenge isn't for you.",
+    not_captain: 'Only the captain of the challenged team can accept or decline.',
     already_placed: 'Your placement is complete.',
     no_opponent: 'No suitable opponent right now.',
     team_not_found: 'No team with that tag found.',

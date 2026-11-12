@@ -239,10 +239,7 @@
                 @if (teams().length > 1) {
                   <label class="opt grow">
                     <span class="tbca-label-mono">{{ t('teams.ownTeam') }}</span>
-                    <select
-                      class="tbca-select"
-                      (change)="activeTeamId.set($any($event.target).value)"
-                    >
+                    <select class="tbca-select" (change)="selectTeam($any($event.target).value)">
                       @for (x of teams(); track x.id) {
                         <option [value]="x.id" [selected]="x.id === team.id">
                           [{{ x.tag }}] {{ x.name }}
@@ -318,17 +315,10 @@
             <i class="tbca-gx" aria-hidden="true"></i>
             <div class="tbca-ph">
               <h2 id="challenge-title">{{ t('teams.challenge') }}</h2>
-              <span class="tbca-idx">{{ size() }}v{{ size() }}</span>
+              <span class="tbca-idx">{{ size() }}v{{ size() }} · {{ t('pvp.newDaily') }}</span>
             </div>
             <div class="pbody">
-              <label class="opt">
-                <span class="tbca-label-mono">{{ t('teams.search') }}</span>
-                <input
-                  class="tbca-input"
-                  type="search"
-                  (input)="search($any($event.target).value)"
-                />
-              </label>
+              <p class="tbca-hint">{{ t('teams.dailyOpponents') }}</p>
               <ul class="opponents">
                 @for (o of opponents(); track o.id) {
                   @if (o.id !== team.id) {
@@ -364,8 +354,11 @@
                       </div>
                     </li>
                   }
+                } @empty {
+                  <li class="tbca-hint">{{ t('teams.noOpponents') }}</li>
                 }
               </ul>
+              <p class="tbca-hint discord">{{ t('teams.direct') }}</p>
             </div>
           </section>
         </div>

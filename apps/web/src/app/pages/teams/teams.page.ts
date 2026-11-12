@@ -2,7 +2,7 @@ import { Component, input, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 import type { TargetSelector } from '@tbca/game-core';
-import type { CommunityView, TeamSummary, TeamView } from '@tbca/shared';
+import type { CommunityView, TeamOpponentView, TeamView } from '@tbca/shared';
 import { TEAM_FOCUS, TEAM_LOGOS, TEAM_MAX_MEMBERS } from '@tbca/shared/constants';
 
 import { ApiFailure } from '../../core/api-failure';
@@ -33,7 +33,7 @@ export class TeamsPage {
   protected readonly maxMembers = TEAM_MAX_MEMBERS;
   protected readonly communities = signal<CommunityView[]>([]);
   protected readonly teams = signal<TeamView[]>([]);
-  protected readonly opponents = signal<TeamSummary[]>([]);
+  protected readonly opponents = signal<TeamOpponentView[]>([]);
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
 
@@ -59,14 +59,10 @@ export class TeamsPage {
       if (this.auth.state() === undefined) await this.auth.refresh();
       if (!this.auth.user()) return;
       if (this.characters.state() === undefined) await this.characters.refresh();
-      const [communities, teams, opponents] = await Promise.all([
-        this.api.communities(),
-        this.api.mine(),
-        this.api.search(''),
-      ]);
+      const [communities, teams] = await Promise.all([this.api.communities(), this.api.mine()]);
       this.communities.set(communities);
       this.setTeams(teams);
-      this.opponents.set(opponents);
+      await this.loadOpponents();
       const first = communities.find((c) => c.member);
       if (first && !this.form().communityId) this.patchForm({ communityId: first.id });
     });
@@ -149,11 +145,19 @@ export class TeamsPage {
     this.lineup.update((l) => l.slice(0, size));
   }
 
-  protected search(q: string) {
-    return this.run(async () => this.opponents.set(await this.api.search(q)));
+  protected selectTeam(id: string) {
+    this.activeTeamId.set(id);
+    this.setTeams(this.teams());
+    return this.run(() => this.loadOpponents());
   }
 
-  protected challenge(opponent: TeamSummary, mode: 'rated' | 'friendly') {
+  /** Gegnerische Tages-Teams des aktiven Teams (für alle Mitglieder gleich). */
+  private async loadOpponents(): Promise<void> {
+    const team = this.activeTeam();
+    this.opponents.set(team ? await this.api.opponents(team.id) : []);
+  }
+
+  protected challenge(opponent: TeamOpponentView, mode: 'rated' | 'friendly') {
     const team = this.activeTeam();
     if (!team) return Promise.resolve();
     return this.run(async () => {

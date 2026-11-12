@@ -105,6 +105,8 @@ export function validateGameConfig(config: GameConfig): string[] {
   )
     add('PvP: Mit den Tagesgegnern ist das Tageslimit belohnter Kämpfe nicht erreichbar');
 
+  if (!isInt(pvp?.dailyTeamOpponents, 1) || pvp.dailyTeamOpponents > 20)
+    add('PvP: gegnerische Tages-Teams müssen zwischen 1 und 20 liegen');
   if (!isInt(pvp?.opponentReroll?.base) || !isInt(pvp?.opponentReroll?.perLevel))
     add('PvP: Kosten fürs Neuwürfeln der Tagesgegner müssen ganze Zahlen ≥ 0 sein');
 

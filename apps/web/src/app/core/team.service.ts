@@ -1,7 +1,12 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import type { TargetSelector } from '@tbca/game-core';
-import type { CommunityView, TeamChallengeResponse, TeamSummary, TeamView } from '@tbca/shared';
+import type {
+  CommunityView,
+  TeamChallengeResponse,
+  TeamOpponentView,
+  TeamView,
+} from '@tbca/shared';
 import { CSRF_HEADER } from '@tbca/shared/constants';
 import { firstValueFrom, type Observable } from 'rxjs';
 
@@ -22,8 +27,9 @@ export class TeamService {
   mine() {
     return this.read(this.http.get<TeamView[]>('/api/teams/mine'));
   }
-  search(q: string) {
-    return this.read(this.http.get<TeamSummary[]>('/api/teams', { params: { q } }));
+  /** Gegnerische Tages-Teams; nur diese lassen sich auf der Website herausfordern. */
+  opponents(id: string) {
+    return this.read(this.http.get<TeamOpponentView[]>(`/api/teams/${id}/opponents`));
   }
   create(body: { communityId: string; name: string; tag: string; logo: string }) {
     return this.write<TeamView[]>('POST', '/api/teams', body);

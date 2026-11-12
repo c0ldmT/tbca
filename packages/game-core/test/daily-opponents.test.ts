@@ -86,4 +86,20 @@ describe('Tagesgegner', () => {
     expect(again.filter((id) => first.includes(id))).toEqual([]);
     expect(opponentRerollCost(rules, 10)).toBe(50);
   });
+
+  it('wählt für Teams die eigene, kleinere Anzahl', () => {
+    const teams = pickDailyOpponents(rules, {
+      level: 21,
+      candidates: pool,
+      seed: 'team:x:2026-11-12',
+      testSeason: false,
+      count: rules.dailyTeamOpponents,
+    });
+    expect(teams).toHaveLength(3);
+    expect(teams.every((id) => id.startsWith('p'))).toBe(true);
+    const c = DEFAULT_GAME_CONFIG;
+    expect(validateGameConfig({ ...c, pvp: { ...c.pvp, dailyTeamOpponents: 0 } })).toContain(
+      'PvP: gegnerische Tages-Teams müssen zwischen 1 und 20 liegen',
+    );
+  });
 });

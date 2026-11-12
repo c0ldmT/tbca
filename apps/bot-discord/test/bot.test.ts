@@ -270,18 +270,36 @@ describe('Discord-Bot', () => {
     expect(calls).toHaveLength(0);
   });
 
-  it('fordert mit dem Team per Kürzel heraus', async () => {
+  it('fordert mit dem Team per Kürzel heraus; der gegnerische Kapitän entscheidet', async () => {
     const { fn, calls } = fakeFetch({
       'team-challenge': {
         status: 200,
         body: {
+          id: '01933b5e-0000-7000-8000-000000000888',
           ownTag: 'CHW',
           opponentTag: 'NEON',
           size: 3,
-          won: true,
-          draw: false,
-          rewards: [{ name: 'Neo', xp: 90, credits: 12 }],
-          replayUrl: 'https://tbca.example/replay/x',
+          mode: 'rated',
+          captainUserId: '444444444444444444',
+          expiresAt: '2026-11-12T11:15:00.000Z',
+        },
+      },
+      'team-challenge-answer': {
+        status: 200,
+        body: {
+          status: 'accepted',
+          ownTag: 'CHW',
+          opponentTag: 'NEON',
+          fight: {
+            ownTag: 'CHW',
+            opponentTag: 'NEON',
+            size: 3,
+            won: true,
+            draw: false,
+            rewards: [{ name: 'Neo', xp: 90, credits: 12 }],
+            opponentRewards: [{ name: 'Trinity', xp: 20, credits: 4 }],
+            replayUrl: 'https://tbca.example/replay/x',
+          },
         },
       },
     });
@@ -295,8 +313,42 @@ describe('Discord-Bot', () => {
       size: 3,
       mode: 'rated',
     });
-    expect(reply.content).toContain('Sieg!');
-    expect(reply.content).toContain('Neo: +90 XP');
+    expect(reply.content).toContain('**[CHW]** fordert **[NEON]** zum 3v3 heraus (gewertet)');
+    expect(reply.ping).toBe('444444444444444444');
+    expect(reply.buttons?.map((b) => b.customId)).toEqual([
+      'tc:accept:01933b5e-0000-7000-8000-000000000888',
+      'tc:decline:01933b5e-0000-7000-8000-000000000888',
+    ]);
+
+    const answer = await handleButton(api, {
+      customId: 'tc:accept:01933b5e-0000-7000-8000-000000000888',
+      userId: '444444444444444444',
+      displayName: 'Trin',
+      locale: 'de',
+    });
+    expect(JSON.parse(String(calls[1]!.init.body))).toMatchObject({
+      requestId: '01933b5e-0000-7000-8000-000000000888',
+      accept: true,
+    });
+    expect(answer.content).toContain('**[NEON]** nimmt an!');
+    expect(answer.content).toContain('Sieg!');
+    expect(answer.content).toContain('Neo: +90 XP');
+    expect(answer.content).toContain('Trinity: +20 XP');
+    expect(answer.buttons).toEqual([]);
+  });
+
+  it('meldet, wenn nicht der Kapitän eine Team-Herausforderung beantwortet', async () => {
+    const { fn } = fakeFetch({
+      'team-challenge-answer': { status: 403, body: { code: 'not_captain' } },
+    });
+    const reply = await handleButton(new ApiClient('http://api', 't'.repeat(40), fn), {
+      customId: 'tc:decline:01933b5e-0000-7000-8000-000000000888',
+      userId: '555555555555555555',
+      displayName: 'Mo',
+      locale: 'en-US',
+    });
+    expect(reply).toMatchObject({ ephemeral: true });
+    expect(reply.content).toContain('Only the captain');
   });
 
   const leagueView = (overrides: Record<string, unknown> = {}) => ({

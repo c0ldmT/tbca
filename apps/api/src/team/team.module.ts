@@ -4,11 +4,13 @@ import type { DbConnection } from '@tbca/db';
 import { AuthModule } from '../auth/auth.module.js';
 import { DrizzleCharacterRepository } from '../character/drizzle-character.repository.js';
 import { DrizzleFightRepository } from '../fight/drizzle-fight.repository.js';
+import { DrizzlePvpRepository } from '../fight/drizzle-pvp.repository.js';
 import {
   CHARACTER_REPOSITORY,
   ADMIN_REPOSITORY,
   DB_CONNECTION,
   FIGHT_REPOSITORY,
+  PVP_REPOSITORY,
   TEAM_REPOSITORY,
 } from '../tokens.js';
 import { DrizzleAdminRepository } from '../admin/drizzle-admin.repository.js';
@@ -35,6 +37,11 @@ import { TeamService } from './team.service.js';
       provide: FIGHT_REPOSITORY,
       inject: [DB_CONNECTION],
       useFactory: (c: DbConnection) => new DrizzleFightRepository(c.db),
+    },
+    {
+      provide: PVP_REPOSITORY,
+      inject: [DB_CONNECTION],
+      useFactory: (c: DbConnection) => new DrizzlePvpRepository(c.db),
     },
     {
       provide: CHARACTER_REPOSITORY,

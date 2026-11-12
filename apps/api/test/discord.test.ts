@@ -1,8 +1,11 @@
+import { randomUUID } from 'node:crypto';
+
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createTestApp, login, WEB_ORIGIN, type TestApp } from './helpers.js';
 
 let t: TestApp;
+const DEV = '01933b5e-0000-7000-8000-00000000c001';
 const GUILD = '111111111111111111';
 const CHANNEL = '222222222222222222';
 const USER = '333333333333333333';
@@ -201,6 +204,87 @@ describe('Interne Discord-API', () => {
       mode: 'friendly',
     });
     expect(res.json().code).toBe('no_team');
+  });
+
+  it('lässt Team-Herausforderungen vom gegnerischen Kapitän annehmen und belohnt beide Teams', async () => {
+    await setup();
+    const users = { other: OTHER, mate: '555555555555555555', rival: '666666666666666666' };
+    const names = { other: 'Trinity', mate: 'Morpheus', rival: 'Smith' };
+    for (const key of ['other', 'mate', 'rival'] as const)
+      await bot('POST', 'register', {
+        guildId: GUILD,
+        userId: users[key],
+        displayName: names[key],
+        name: names[key],
+        classId: 'bruiser',
+      });
+    const acc = async (id: string) => (await t.accounts.findAccountId('discord', id))!;
+    const team = (tag: string, members: string[]) => ({
+      id: randomUUID(),
+      communityId: DEV,
+      communityName: 'Dev Community',
+      name: `Team ${tag}`,
+      tag,
+      logo: 'wolf',
+      captainAccountId: members[0]!,
+      joinCode: tag.repeat(4),
+      focus: 'threat' as const,
+      lineup2: [],
+      lineup3: [],
+      members,
+    });
+    t.teams.teams.push(team('NEO', [await acc(USER), await acc(users.mate)]));
+    t.teams.teams.push(team('AGT', [await acc(OTHER), await acc(users.rival)]));
+
+    const request = (
+      await bot('POST', 'team-challenge', {
+        userId: USER,
+        displayName: 'Neo',
+        opponentTag: 'agt',
+        size: 2,
+        mode: 'rated',
+      })
+    ).json();
+    expect(request).toMatchObject({
+      ownTag: 'NEO',
+      opponentTag: 'AGT',
+      size: 2,
+      mode: 'rated',
+      captainUserId: OTHER,
+    });
+    expect(t.fights.fights).toHaveLength(0);
+
+    const answer = (userId: string, accept: boolean, requestId = request.id) =>
+      bot('POST', 'team-challenge-answer', { userId, displayName: 'x', requestId, accept });
+    // Nur der Kapitän des Gegner-Teams entscheidet
+    expect((await answer(users.rival, true)).json().code).toBe('not_captain');
+    expect((await answer(USER, true)).json().code).toBe('not_captain');
+    const accepted = (await answer(OTHER, true)).json();
+    expect(accepted).toMatchObject({ status: 'accepted', ownTag: 'NEO', opponentTag: 'AGT' });
+    expect(accepted.fight.replayUrl).toMatch(new RegExp(`^${WEB_ORIGIN}/replay/`));
+    expect(accepted.fight.rewards).toHaveLength(2);
+    expect(accepted.fight.opponentRewards).toHaveLength(2);
+    expect(accepted.fight.opponentRewards[0].xp).toBeGreaterThan(0);
+    const fight = t.fights.fights[0]!;
+    expect(fight.kind).toBe('team_rated');
+    expect(fight.participants.filter((p) => p.team === 1).every((p) => p.rewarded)).toBe(true);
+    expect((await answer(OTHER, true)).json().code).toBe('challenge_closed');
+
+    const again = (
+      await bot('POST', 'team-challenge', {
+        userId: USER,
+        displayName: 'Neo',
+        opponentTag: 'AGT',
+        size: 2,
+        mode: 'friendly',
+      })
+    ).json();
+    expect(again.id).not.toBe(request.id);
+    expect((await answer(OTHER, false, again.id)).json()).toMatchObject({
+      status: 'declined',
+      fight: null,
+    });
+    expect(t.fights.fights).toHaveLength(1);
   });
 
   it('fordert über eine Anfrage heraus, die der Gegner annehmen muss', async () => {

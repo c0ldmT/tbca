@@ -4,6 +4,7 @@ import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import {
   ENGINE_VERSION,
   levelFromXp,
+  pickDailyOpponents,
   pvpReward,
   simulateBattle,
   type Clock,
@@ -15,6 +16,8 @@ import {
   type CommunityMemberView,
   type CommunityView,
   type TeamChallengeResponse,
+  type TeamChallengeReward,
+  type TeamOpponentView,
   type TeamSummary,
   type TeamView,
 } from '@tbca/shared';
@@ -24,7 +27,7 @@ import type { CharacterRecord, CharacterRepository } from '../character/types.js
 import { ApiError } from '../common/api-error.js';
 import type { Env } from '../config/env.js';
 import { dayKey } from '../fight/day.js';
-import type { FightRepository } from '../fight/types.js';
+import type { FightRepository, PvpRepository } from '../fight/types.js';
 import { SeasonService, type CurrentSeason } from '../game/season.js';
 import { RatingService } from '../league/rating.service.js';
 import { ProgressionService } from '../progression/progression.service.js';
@@ -34,6 +37,7 @@ import {
   CLOCK,
   ENV,
   FIGHT_REPOSITORY,
+  PVP_REPOSITORY,
   TEAM_REPOSITORY,
 } from '../tokens.js';
 import type { AdminRepository } from '../admin/types.js';
@@ -66,6 +70,7 @@ export class TeamService {
     @Inject(ADMIN_REPOSITORY) private readonly admin: AdminRepository,
     @Inject(ProgressionService) private readonly progression: ProgressionService,
     @Inject(RatingService) private readonly ratings: RatingService,
+    @Inject(PVP_REPOSITORY) private readonly pvp: PvpRepository,
   ) {}
 
   communities(accountId: string): Promise<CommunityView[]> {
@@ -280,28 +285,39 @@ export class TeamService {
     const list = await this.teams.search(query.trim().slice(0, 30), 20);
     return Promise.all(
       list.map(async (t) => {
-        const chars = (await this.charactersOf(season, t.members)).filter(
-          (c): c is CharacterRecord => c !== null,
-        );
-        return {
-          id: t.id,
-          name: t.name,
-          tag: t.tag,
-          logo: t.logo as TeamSummary['logo'],
-          community: t.communityName,
-          members: t.members.length,
-          averageLevel: chars.length
-            ? Math.round(chars.reduce((s, c) => s + c.level, 0) / chars.length)
-            : 0,
-        };
+        const { isBot: _isBot, fighters: _fighters, ...summary } = await this.summary(season, t);
+        return summary;
       }),
     );
   }
 
+  /**
+   * Gegnerische Tages-Teams (Spezifikation, Abschnitt 9): Jedes Team bekommt pro Tag eine kleine
+   * Auswahl, nur diese lassen sich auf der Website fordern. Alle Mitglieder sehen dieselbe.
+   */
+  async opponents(accountId: string, teamId: string): Promise<TeamOpponentView[]> {
+    const season = await this.seasons.current();
+    const own = await this.member(accountId, teamId);
+    const ids = await this.dailyOpponentTeams(season, own);
+    const views: TeamOpponentView[] = [];
+    for (const id of ids) {
+      const t = await this.teams.find(id);
+      if (!t) continue;
+      const { fighters: _fighters, ...view } = await this.summary(season, t);
+      views.push(view);
+    }
+    return views;
+  }
+
+  /**
+   * Team-Kampf. Auf der Website nur gegen die gegnerischen Tages-Teams; `direct` (über Discord
+   * angenommen) erlaubt jedes Team, `rewardOpponent` belohnt dann auch das annehmende Team.
+   */
   async challenge(
     accountId: string,
     teamId: string,
     input: { opponentTeamId: string; size: 2 | 3; lineup: string[]; mode: 'rated' | 'friendly' },
+    options: { direct?: boolean; rewardOpponent?: boolean } = {},
   ): Promise<TeamChallengeResponse> {
     const season = await this.seasons.current();
     const own = await this.member(accountId, teamId);
@@ -309,6 +325,12 @@ export class TeamService {
       throw err(HttpStatus.BAD_REQUEST, 'self_challenge', 'Nicht gegen das eigene Team');
     const opponent = await this.teams.find(input.opponentTeamId);
     if (!opponent) throw err(HttpStatus.NOT_FOUND, 'team_not_found', 'Gegner-Team nicht gefunden');
+    if (!options.direct && !(await this.dailyOpponentTeams(season, own)).includes(opponent.id))
+      throw err(
+        HttpStatus.FORBIDDEN,
+        'not_daily_opponent',
+        'Nur gegnerische Tages-Teams; andere Teams über Discord mit Annahme',
+      );
 
     if (
       input.lineup.length !== input.size ||
@@ -341,29 +363,41 @@ export class TeamService {
     });
     const won = result.winner === 0;
     const day = dayKey(this.clock.now(), this.env.GAME_TIMEZONE);
-    const opponentLevel = Math.round(theirs.reduce((s, c) => s + c.level, 0) / theirs.length);
-    const opponentIsBot = theirs.every((c) => c.isBot);
+    const average = (list: readonly CharacterRecord[]) =>
+      Math.round(list.reduce((s, c) => s + c.level, 0) / list.length);
     const median = await this.progression.median(season.id);
+    const rewardOpponent = options.rewardOpponent === true;
 
     const response = await this.fights.lockedMany(
-      ours.map((c) => c.id),
+      [...ours, ...(rewardOpponent ? theirs : [])].map((c) => c.id),
       async (tx) => {
-        const rewards = [];
-        for (const c of ours) {
-          const counts = await tx.rewardCounts(c.id, day);
-          const base = pvpReward(season.game, {
-            mode: input.mode,
-            won,
-            level: c.level,
-            opponentLevel,
-            rewardedToday: counts.today,
-            rewardedVsOpponentToday: counts.byOpponent.get(opponent.id) ?? 0,
-            opponentIsBot,
-            testSeason: season.isTest,
-          });
-          const reward = this.progression.boost(season.game, base, c.level, median);
-          rewards.push({ c, reward });
-        }
+        const rewardsFor = async (
+          side: readonly CharacterRecord[],
+          other: readonly CharacterRecord[],
+          otherTeamId: string,
+          hasWon: boolean,
+        ) => {
+          const list = [];
+          for (const c of side) {
+            const counts = await tx.rewardCounts(c.id, day);
+            const base = pvpReward(season.game, {
+              mode: input.mode,
+              won: hasWon,
+              level: c.level,
+              opponentLevel: average(other),
+              rewardedToday: counts.today,
+              rewardedVsOpponentToday: counts.byOpponent.get(otherTeamId) ?? 0,
+              opponentIsBot: other.every((o) => o.isBot),
+              testSeason: season.isTest,
+            });
+            list.push({ c, reward: this.progression.boost(season.game, base, c.level, median) });
+          }
+          return list;
+        };
+        const rewards = await rewardsFor(ours, theirs, opponent.id, won);
+        const theirRewards = rewardOpponent
+          ? await rewardsFor(theirs, ours, own.id, result.winner === 1)
+          : null;
         const fightId = await tx.insert({
           seasonId: season.id,
           kind: input.mode === 'rated' ? 'team_rated' : 'team_friendly',
@@ -385,40 +419,53 @@ export class TeamService {
               opponentCharacterId: null,
               opponentTeamId: opponent.id,
             })),
-            ...theirs.map((c, slot) => ({
-              team: 1,
-              slot,
-              characterId: c.id,
-              initiator: false,
-              won: result.winner === 1,
-              rewarded: false,
-              xpAwarded: 0,
-              creditsAwarded: 0,
-              opponentCharacterId: null,
-              opponentTeamId: own.id,
-            })),
+            ...theirs.map((c, slot) => {
+              const reward = theirRewards?.[slot]?.reward;
+              return {
+                team: 1,
+                slot,
+                characterId: c.id,
+                initiator: false,
+                won: result.winner === 1,
+                rewarded: reward?.rewarded ?? false,
+                xpAwarded: reward?.xp ?? 0,
+                creditsAwarded: reward?.credits ?? 0,
+                opponentCharacterId: null,
+                opponentTeamId: own.id,
+              };
+            }),
           ],
         });
-        const summary = [];
-        for (const { c, reward } of rewards) {
-          let levelUp: number | null = null;
-          if (reward.xp > 0) {
-            const xp = c.xp + reward.xp;
-            const level = Math.max(c.level, levelFromXp(season.game, xp).level);
-            await tx.setProgress(c.id, xp, level);
-            if (level > c.level) levelUp = level;
+        const book = async (list: typeof rewards): Promise<TeamChallengeReward[]> => {
+          const summary: TeamChallengeReward[] = [];
+          for (const { c, reward } of list) {
+            let levelUp: number | null = null;
+            if (reward.xp > 0) {
+              const xp = c.xp + reward.xp;
+              const level = Math.max(c.level, levelFromXp(season.game, xp).level);
+              await tx.setProgress(c.id, xp, level);
+              if (level > c.level) levelUp = level;
+            }
+            if (reward.credits > 0)
+              await tx.rewardCredits(season.id, c.accountId, reward.credits, fightId);
+            summary.push({
+              name: c.name,
+              xp: reward.xp,
+              credits: reward.credits,
+              limit: reward.limit,
+              levelUp,
+            });
           }
-          if (reward.credits > 0)
-            await tx.rewardCredits(season.id, c.accountId, reward.credits, fightId);
-          summary.push({
-            name: c.name,
-            xp: reward.xp,
-            credits: reward.credits,
-            limit: reward.limit,
-            levelUp,
-          });
-        }
-        return { fightId, won, draw: result.winner === null, rewards: summary };
+          return summary;
+        };
+        const out: TeamChallengeResponse = {
+          fightId,
+          won,
+          draw: result.winner === null,
+          rewards: await book(rewards),
+        };
+        if (theirRewards) out.opponentRewards = await book(theirRewards);
+        return out;
       },
     );
     // Gewertete Team-Kämpfe schreiben das Team-Rating der Größe fort (Platzierung, Team-Liga)
@@ -450,7 +497,78 @@ export class TeamService {
     }
   }
 
+  /** Kapitän eines Teams (Account) oder null. */
+  async captainOf(teamId: string): Promise<string | null> {
+    return (await this.teams.find(teamId))?.captainAccountId ?? null;
+  }
+
+  /** Darf für das Team Herausforderungen annehmen: der Kapitän, ohne Kapitän jedes Mitglied. */
+  async canAnswerFor(accountId: string, teamId: string): Promise<boolean> {
+    const t = await this.teams.find(teamId);
+    if (!t) return false;
+    return t.captainAccountId ? t.captainAccountId === accountId : t.members.includes(accountId);
+  }
+
+  /** Kürzel zweier Teams (herausfordernd, gefordert) oder null, wenn eines fehlt. */
+  async tags(
+    ownTeamId: string,
+    opponentTeamId: string,
+  ): Promise<{ ownTag: string; opponentTag: string } | null> {
+    const [a, b] = await Promise.all([this.teams.find(ownTeamId), this.teams.find(opponentTeamId)]);
+    return a && b ? { ownTag: a.tag, opponentTag: b.tag } : null;
+  }
+
   // --- intern ---------------------------------------------------------------
+
+  /** Gespeicherte Tages-Teams oder, beim ersten Abruf des Tages, eine neue Auswahl. */
+  private async dailyOpponentTeams(season: CurrentSeason, own: TeamRecord): Promise<string[]> {
+    const day = dayKey(this.clock.now(), this.env.GAME_TIMEZONE);
+    const stored = await this.pvp.dailyTeamOpponents(own.id, day);
+    if (stored.length > 0) return stored;
+    const ownChars = (await this.charactersOf(season, own.members)).filter(
+      (c): c is CharacterRecord => c !== null,
+    );
+    const level = ownChars.length
+      ? Math.round(ownChars.reduce((s, c) => s + c.level, 0) / ownChars.length)
+      : 1;
+    // Kandidaten: Teams mit mindestens zwei Mitgliedern mit Charakter (sonst kein 2v2)
+    const candidates = [];
+    for (const t of await this.teams.search('', 200)) {
+      if (t.id === own.id) continue;
+      const s = await this.summary(season, t);
+      if (s.fighters >= 2) candidates.push({ id: t.id, level: s.averageLevel, isBot: s.isBot });
+    }
+    const ids = pickDailyOpponents(season.game.pvp, {
+      level,
+      candidates,
+      seed: `team:${own.id}:${day}`,
+      testSeason: season.isTest,
+      count: season.game.pvp.dailyTeamOpponents,
+    });
+    return this.pvp.saveDailyTeamOpponents(own.id, day, ids);
+  }
+
+  private async summary(
+    season: CurrentSeason,
+    t: TeamRecord,
+  ): Promise<TeamOpponentView & { fighters: number }> {
+    const chars = (await this.charactersOf(season, t.members)).filter(
+      (c): c is CharacterRecord => c !== null,
+    );
+    return {
+      id: t.id,
+      name: t.name,
+      tag: t.tag,
+      logo: t.logo as TeamSummary['logo'],
+      community: t.communityName,
+      members: t.members.length,
+      averageLevel: chars.length
+        ? Math.round(chars.reduce((s, c) => s + c.level, 0) / chars.length)
+        : 0,
+      isBot: chars.length > 0 && chars.every((c) => c.isBot),
+      fighters: chars.length,
+    };
+  }
 
   /** Standard-Aufstellung des Gegners; fehlt sie, die stärksten Mitglieder mit Charakter. */
   private async opponentLineup(

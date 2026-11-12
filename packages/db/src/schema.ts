@@ -1014,3 +1014,59 @@ export const challengeRequest = pgTable(
     check('challenge_request_mode_check', sql`${t.mode} IN ('rated', 'friendly')`),
   ],
 );
+
+/** Tägliche Auswahl gegnerischer Teams je Team (für alle Mitglieder gleich). */
+export const dailyTeamOpponent = pgTable(
+  'daily_team_opponent',
+  {
+    teamId: uuid('team_id')
+      .notNull()
+      .references(() => team.id, { onDelete: 'cascade' }),
+    day: text('day').notNull(),
+    slot: integer('slot').notNull(),
+    opponentTeamId: uuid('opponent_team_id')
+      .notNull()
+      .references(() => team.id, { onDelete: 'cascade' }),
+  },
+  (t) => [primaryKey({ columns: [t.teamId, t.day, t.slot] })],
+);
+
+/** Team-Herausforderung über Discord: läuft erst, wenn der gegnerische Kapitän annimmt. */
+export const teamChallengeRequest = pgTable(
+  'team_challenge_request',
+  {
+    id: id(),
+    seasonId: uuid('season_id')
+      .notNull()
+      .references(() => season.id, { onDelete: 'cascade' }),
+    challengerTeamId: uuid('challenger_team_id')
+      .notNull()
+      .references(() => team.id, { onDelete: 'cascade' }),
+    opponentTeamId: uuid('opponent_team_id')
+      .notNull()
+      .references(() => team.id, { onDelete: 'cascade' }),
+    /** Wer angefragt hat (Mitglied des herausfordernden Teams). */
+    requesterAccountId: uuid('requester_account_id')
+      .notNull()
+      .references(() => account.id, { onDelete: 'cascade' }),
+    size: integer('size').notNull(),
+    /** Aufstellung des herausfordernden Teams (Account-IDs). */
+    lineup: jsonb('lineup').$type<string[]>().notNull(),
+    mode: text('mode').$type<'rated' | 'friendly'>().notNull(),
+    status: text('status')
+      .$type<'pending' | 'accepted' | 'declined' | 'expired'>()
+      .notNull()
+      .default('pending'),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    fightId: uuid('fight_id').references(() => fight.id, { onDelete: 'set null' }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index('team_challenge_request_opponent_idx').on(t.opponentTeamId, t.status),
+    check(
+      'team_challenge_request_status_check',
+      sql`${t.status} IN ('pending', 'accepted', 'declined', 'expired')`,
+    ),
+    check('team_challenge_request_size_check', sql`${t.size} IN (2, 3)`),
+  ],
+);

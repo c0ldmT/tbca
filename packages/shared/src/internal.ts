@@ -127,7 +127,31 @@ export interface DiscordTeamFightSummary {
   won: boolean;
   draw: boolean;
   rewards: { name: string; xp: number; credits: number }[];
+  /** Belohnung des Teams, das die Herausforderung angenommen hat. */
+  opponentRewards?: { name: string; xp: number; credits: number }[];
   replayUrl: string;
+}
+
+/** Offene Team-Herausforderung; der Kapitän des Gegner-Teams nimmt an oder lehnt ab. */
+export interface DiscordTeamChallengeRequestView {
+  id: string;
+  ownTag: string;
+  opponentTag: string;
+  size: 2 | 3;
+  mode: 'rated' | 'friendly';
+  /** Discord-Nutzer des gegnerischen Kapitäns, falls verknüpft (für die Erwähnung). */
+  captainUserId: string | null;
+  expiresAt: string;
+}
+
+export const discordTeamChallengeAnswerSchema = discordChallengeAnswerSchema;
+
+export interface DiscordTeamChallengeAnswer {
+  status: 'accepted' | 'declined';
+  ownTag: string;
+  opponentTag: string;
+  /** Nur bei `accepted`: der gespielte Kampf aus Sicht des herausfordernden Teams. */
+  fight: DiscordTeamFightSummary | null;
 }
 
 export interface DiscordProfileView {

@@ -52,7 +52,7 @@ export const playerCommand = new SlashCommandBuilder()
   .addSubcommand((s) =>
     s
       .setName('team-kampf')
-      .setDescription('Mit deinem Team ein anderes Team herausfordern')
+      .setDescription('Ein anderes Team herausfordern – dessen Kapitän nimmt an')
       .addStringOption((o) =>
         o
           .setName('gegner')

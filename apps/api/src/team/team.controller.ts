@@ -128,6 +128,11 @@ export class TeamController {
     return this.teams.settings(req.auth!.accountId, id, parseBody(teamSettingsSchema, body));
   }
 
+  @Get(':id/opponents')
+  opponents(@Req() req: FastifyRequest, @Param('id', new ParseUUIDPipe()) id: string) {
+    return this.teams.opponents(req.auth!.accountId, id);
+  }
+
   @Post(':id/challenge')
   @HttpCode(201)
   challenge(

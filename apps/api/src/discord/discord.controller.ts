@@ -9,6 +9,7 @@ import {
   discordLeagueSchema,
   discordRegisterSchema,
   discordSetupSchema,
+  discordTeamChallengeAnswerSchema,
   discordTeamChallengeSchema,
 } from '@tbca/shared';
 
@@ -107,6 +108,13 @@ export class DiscordController {
   @HttpCode(200)
   teamChallenge(@Body() body: unknown) {
     return this.discord.teamChallenge(parseBody(discordTeamChallengeSchema, body));
+  }
+
+  @Post('team-challenge-answer')
+  @HttpCode(200)
+  teamChallengeAnswer(@Body() body: unknown) {
+    const { userId, requestId, accept } = parseBody(discordTeamChallengeAnswerSchema, body);
+    return this.discord.answerTeamChallenge({ userId, requestId, accept });
   }
 
   @Post('activity')

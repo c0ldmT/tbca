@@ -171,8 +171,8 @@ describe('Teams', () => {
   });
 
   it('prüft Aufstellung und Gegner', async () => {
-    const wolves = await makeTeam(0, [1], 'Chrome Wolves', 'CW');
-    await makeTeam(3, [], 'Neon Saints', 'NS');
+    const wolves = await makeTeam(0, [1, 2], 'Chrome Wolves', 'CW');
+    await makeTeam(3, [4], 'Neon Saints', 'NS');
     const saints = t.teams.teams.find((x) => x.tag === 'NS')!.id;
     const bad = await call(players[0]!, 'POST', `/api/teams/${wolves}/challenge`, {
       opponentTeamId: saints,
@@ -183,14 +183,48 @@ describe('Teams', () => {
     expect(bad.json().code).toBe('invalid_lineup');
     const small = await call(players[0]!, 'POST', `/api/teams/${wolves}/challenge`, {
       opponentTeamId: saints,
-      size: 2,
-      lineup: [accountOf(0), accountOf(1)],
+      size: 3,
+      lineup: [accountOf(0), accountOf(1), accountOf(2)],
       mode: 'rated',
     });
     expect(small.json().code).toBe('opponent_lineup_incomplete');
     expect((await call(players[0]!, 'GET', '/api/teams?q=neon')).json()[0]).toMatchObject({
       tag: 'NS',
-      members: 1,
+      members: 2,
     });
+  });
+
+  it('lässt auf der Website nur gegnerische Tages-Teams fordern', async () => {
+    const wolves = await makeTeam(0, [1], 'Chrome Wolves', 'CW');
+    const saints = await makeTeam(2, [3], 'Neon Saints', 'NS');
+    // Nur ein Mitglied mit Charakter: kein Kandidat
+    const lone = await makeTeam(4, [], 'Lone Rider', 'LR');
+
+    const list = (await call(players[1]!, 'GET', `/api/teams/${wolves}/opponents`)).json();
+    expect(list.map((x: { id: string }) => x.id)).toEqual([saints]);
+    expect(list[0]).toMatchObject({ tag: 'NS', members: 2, isBot: false });
+    expect(list[0].fighters).toBeUndefined();
+    // Alle Mitglieder sehen dieselbe, gespeicherte Auswahl; Fremde gar keine
+    expect((await call(players[0]!, 'GET', `/api/teams/${wolves}/opponents`)).json()).toEqual(list);
+    expect((await call(players[2]!, 'GET', `/api/teams/${wolves}/opponents`)).statusCode).toBe(404);
+
+    const lineup = [accountOf(0), accountOf(1)];
+    const blocked = await call(players[0]!, 'POST', `/api/teams/${wolves}/challenge`, {
+      opponentTeamId: lone,
+      size: 2,
+      lineup,
+      mode: 'friendly',
+    });
+    expect(blocked.statusCode).toBe(403);
+    expect(blocked.json().code).toBe('not_daily_opponent');
+    const ok = await call(players[0]!, 'POST', `/api/teams/${wolves}/challenge`, {
+      opponentTeamId: saints,
+      size: 2,
+      lineup,
+      mode: 'friendly',
+    });
+    expect(ok.statusCode).toBe(201);
+    // Das geforderte Team bekommt auf der Website nichts
+    expect(ok.json().opponentRewards).toBeUndefined();
   });
 });

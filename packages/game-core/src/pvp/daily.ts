@@ -23,10 +23,12 @@ export function pickDailyOpponents(
     testSeason: boolean;
     /** Möglichst nicht wieder wählen (z. B. die bisherige Auswahl beim Neuwürfeln). */
     exclude?: readonly string[];
+    /** Abweichende Anzahl, z. B. `dailyTeamOpponents` für Teams. */
+    count?: number;
   },
 ): string[] {
   const rng = Xoshiro128ss.fromSeed(input.seed);
-  const count = rules.dailyOpponents;
+  const count = input.count ?? rules.dailyOpponents;
   const shuffle = <T>(list: T[]): T[] => {
     for (let i = list.length - 1; i > 0; i--) {
       const j = rng.nextInt(i + 1);

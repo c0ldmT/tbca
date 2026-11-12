@@ -136,6 +136,21 @@ export async function handleButton(api: ApiClient, input: ButtonInput): Promise<
     if (!res.ok) return { content: errorText(t, res.code), ephemeral: true };
     return { content: t.challengeAnswered(res.data), ephemeral: false, buttons: [] };
   }
+  if (prefix === 'tc') {
+    // Team-Herausforderung: `tc:<accept|decline>:<anfrage>` – ob jemand für das Gegner-Team
+    // entscheiden darf (Kapitän), prüft die API
+    const [, decision, requestId] = input.customId.split(':');
+    if ((decision !== 'accept' && decision !== 'decline') || !requestId)
+      return { content: errorText(t, 'fallback'), ephemeral: true };
+    const res = await api.teamChallengeAnswer({
+      userId: input.userId,
+      displayName: input.displayName,
+      requestId,
+      accept: decision === 'accept',
+    });
+    if (!res.ok) return { content: errorText(t, res.code), ephemeral: true };
+    return { content: t.teamChallengeAnswered(res.data), ephemeral: false, buttons: [] };
+  }
   if (prefix === 'lg') {
     const actions: LeagueAction[] = ['join', 'leave', 'placement'];
     if (!actions.includes(action as LeagueAction) || !ownerId)
@@ -241,7 +256,25 @@ export async function handleCommand(api: ApiClient, input: CommandInput): Promis
           size,
           mode: input.options.string('modus') === 'friendly' ? 'friendly' : 'rated',
         });
-        return res.ok ? { content: t.teamFight(res.data), ephemeral: false } : fail(res.code);
+        if (!res.ok) return fail(res.code);
+        // Der Kampf läuft erst, wenn der Kapitän des Gegner-Teams annimmt
+        return {
+          content: t.teamChallengeRequest(res.data),
+          ephemeral: false,
+          ...(res.data.captainUserId ? { ping: res.data.captainUserId } : {}),
+          buttons: [
+            {
+              customId: `tc:accept:${res.data.id}`,
+              label: t.challengeButtons.accept,
+              style: 'success',
+            },
+            {
+              customId: `tc:decline:${res.data.id}`,
+              label: t.challengeButtons.decline,
+              style: 'secondary',
+            },
+          ],
+        };
       }
       case 'kampf': {
         const opponent = input.options.user('gegner');

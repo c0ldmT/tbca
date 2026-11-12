@@ -23,6 +23,8 @@ export interface AccountRepository {
     provider: ExternalProfile['provider'],
     providerUserId: string,
   ): Promise<string | null>;
+  /** Plattform-Nutzer-ID eines Accounts (z. B. für Discord-Erwähnungen) oder null. */
+  providerUserId(accountId: string, provider: ExternalProfile['provider']): Promise<string | null>;
   findProfile(accountId: string): Promise<MeProfile | null>;
   /** Rolle und Sperre, für Guards bei jeder Anfrage. */
   status(

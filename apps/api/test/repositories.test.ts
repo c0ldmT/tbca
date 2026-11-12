@@ -1029,6 +1029,64 @@ describe.skipIf(!url)('Drizzle-Repositories (Integration)', () => {
     expect(await repo.pendingRequest(me.id, a.id)).toBeNull();
   });
 
+  it('speichert gegnerische Tages-Teams und Team-Anfragen mit Annahme', async () => {
+    const season = (await new DrizzleSeasonRepository(conn.db).findCurrent())!;
+    const teams = new DrizzleTeamRepository(conn.db);
+    const guild = await new DrizzleDiscordRepository(conn.db).ensureGuildCommunity(
+      `${Date.now()}7`,
+      'Tagesteams',
+    );
+    const make = async (n: number) => {
+      const [acc] = await conn.db.insert(account).values({}).returning();
+      await teams.joinCommunity(guild.communityId, acc!.id);
+      const tag = `T${randomUUID().slice(0, 4)}`;
+      return {
+        account: acc!.id,
+        team: await teams.create({
+          communityId: guild.communityId,
+          name: `Tagesteam${n}${tag}`,
+          tag,
+          logo: 'wolf',
+          captainAccountId: acc!.id,
+          joinCode: `D${randomUUID().slice(0, 7)}`,
+          focus: 'threat',
+          lineup2: [],
+          lineup3: [],
+        }),
+      };
+    };
+    const [own, x, y] = [await make(1), await make(2), await make(3)];
+    const repo = new DrizzlePvpRepository(conn.db);
+    expect(await repo.dailyTeamOpponents(own.team.id, '2026-11-12')).toEqual([]);
+    expect(
+      await repo.saveDailyTeamOpponents(own.team.id, '2026-11-12', [y.team.id, x.team.id]),
+    ).toEqual([y.team.id, x.team.id]);
+    expect(await repo.saveDailyTeamOpponents(own.team.id, '2026-11-12', [x.team.id])).toEqual([
+      y.team.id,
+      x.team.id,
+    ]);
+    expect(await repo.dailyTeamOpponents(own.team.id, '2026-11-13')).toEqual([]);
+
+    const request = await repo.createTeamRequest({
+      seasonId: season.id,
+      challengerTeamId: own.team.id,
+      opponentTeamId: x.team.id,
+      requesterAccountId: own.account,
+      size: 2,
+      lineup: [own.account, x.account],
+      mode: 'friendly',
+      expiresAt: new Date('2026-11-12T12:15:00Z'),
+    });
+    expect(request).toMatchObject({ status: 'pending', size: 2, fightId: null });
+    expect(request.lineup).toEqual([own.account, x.account]);
+    expect((await repo.pendingTeamRequest(own.team.id, x.team.id, 2))!.id).toBe(request.id);
+    expect(await repo.pendingTeamRequest(own.team.id, x.team.id, 3)).toBeNull();
+    expect(await repo.resolveTeamRequest(request.id, 'declined')).toBe(true);
+    expect(await repo.resolveTeamRequest(request.id, 'accepted')).toBe(false);
+    expect(await repo.findTeamRequest(request.id)).toMatchObject({ status: 'declined' });
+    expect(await repo.pendingTeamRequest(own.team.id, x.team.id, 2)).toBeNull();
+  });
+
   it('liefert die Rohdaten für den Balancing-Export', async () => {
     const current = (await new DrizzleSeasonRepository(conn.db).findCurrent())!;
     const rows = await new DrizzleExportRepository(conn.db).rows(current.id, new Date(0), 50);

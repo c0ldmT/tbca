@@ -147,6 +147,17 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ### Geändert
 
+- Team-Herausforderungen wie im Einzel eingeschränkt: Jedes Team bekommt täglich eine kleine
+  Auswahl gegnerischer Teams nahe am eigenen Durchschnittslevel (`pvp.dailyTeamOpponents`,
+  Standard 3; nur Teams mit mindestens zwei Mitgliedern mit Charakter), für alle Mitglieder
+  gleich (`GET /api/teams/:id/opponents`, Tabelle `daily_team_opponent`). Auf der Website und
+  über die API werden nur diese gefordert (`not_daily_opponent` sonst); die freie Team-Suche im
+  Team-Kampf entfällt. `/tbca team-kampf` im Discord stellt eine Anfrage (Tabelle
+  `team_challenge_request`, 15 Minuten gültig), die der Kapitän des Gegner-Teams – ohne
+  Kapitän jedes Mitglied – per Button annimmt oder ablehnt (`POST
+/api/internal/discord/team-challenge-answer`, sonst `not_captain`); die Aufstellung wird beim
+  Anfragen festgelegt. Beim Annehmen wird sofort gekämpft und die Aufstellung des annehmenden
+  Teams nach denselben Regeln belohnt. Migration 0019.
 - Tagesgegner lassen sich einmal am Tag gegen Credits neu würfeln (`POST
 /api/pvp/opponents/reroll`; Kosten `pvp.opponentReroll`, Vorkalibrierung 20 + 3 je Level,
   Senke `sink:pvp`). Die neue Auswahl meidet die bisherige, solange genug Gegner da sind.

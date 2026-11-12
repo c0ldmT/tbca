@@ -12,6 +12,20 @@ REST-API auf NestJS mit Fastify. Alle Routen liegen unter `/api`.
 | `GET /api/auth/options`          | Angebotene Anmeldewege (`discord`, `devLogin`) |
 | `POST /api/auth/dev-login`       | Testzugang per Name, nur mit `DEV_LOGIN=true`  |
 
+### PvP und Teams (angemeldet, schreibend mit CSRF-Token)
+
+| Route                                                  | Zweck                                                                           |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| `GET /api/pvp/opponents`                               | Tagesgegner mit verbleibenden Belohnungen                                       |
+| `POST /api/pvp/opponents/reroll`                       | Tagesgegner einmal am Tag gegen Credits neu würfeln                             |
+| `POST /api/pvp/challenges`                             | Herausforderung, nur gegen Tagesgegner                                          |
+| `GET /api/teams/:id/opponents`                         | Gegnerische Tages-Teams (für alle Mitglieder gleich)                            |
+| `POST /api/teams/:id/challenge`                        | Team-Kampf 2v2/3v3, nur gegen Tages-Teams                                       |
+| `POST /api/internal/discord/challenge` (Dienst)        | Discord: Anfrage an einen bestimmten Spieler                                    |
+| `POST /api/internal/discord/challenge-answer` (Dienst) | Discord: Gegner nimmt an (Kampf, beide belohnt) oder lehnt ab                   |
+| `POST /api/internal/discord/team-challenge` (Dienst)   | Discord: Anfrage an ein Team per Kürzel                                         |
+| `POST /api/internal/discord/team-challenge-answer`     | Discord (Dienst): Kapitän des Gegner-Teams nimmt an (beide belohnt) o. lehnt ab |
+
 ### Liga (angemeldet, schreibend mit CSRF-Token)
 
 | Route                                             | Zweck                                                                 |

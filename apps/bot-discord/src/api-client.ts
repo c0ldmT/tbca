@@ -6,7 +6,8 @@ import type {
   DiscordLeagueNews,
   DiscordLeagueView,
   DiscordProfileView,
-  DiscordTeamFightSummary,
+  DiscordTeamChallengeAnswer,
+  DiscordTeamChallengeRequestView,
   DiscordTeamView,
 } from '@tbca/shared';
 
@@ -92,7 +93,16 @@ export class ApiClient {
     size: 2 | 3;
     mode: 'rated' | 'friendly';
   }) {
-    return this.call<DiscordTeamFightSummary>('POST', 'team-challenge', input);
+    return this.call<DiscordTeamChallengeRequestView>('POST', 'team-challenge', input);
+  }
+
+  teamChallengeAnswer(input: {
+    userId: string;
+    displayName: string;
+    requestId: string;
+    accept: boolean;
+  }) {
+    return this.call<DiscordTeamChallengeAnswer>('POST', 'team-challenge-answer', input);
   }
 
   leagueChannel(guildId: string, channelId: string, enabled: boolean) {

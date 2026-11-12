@@ -88,6 +88,21 @@ export interface DailyOpponents {
   rerolled: boolean;
 }
 
+export interface TeamChallengeRequestRecord {
+  id: string;
+  seasonId: string;
+  challengerTeamId: string;
+  opponentTeamId: string;
+  requesterAccountId: string;
+  size: 2 | 3;
+  lineup: string[];
+  mode: 'rated' | 'friendly';
+  status: 'pending' | 'accepted' | 'declined' | 'expired';
+  expiresAt: Date;
+  fightId: string | null;
+  createdAt: Date;
+}
+
 /** Tagesgegner und Herausforderungen mit Annahme. */
 export interface PvpRepository {
   /** Auswahl des Tages in fester Reihenfolge; leer, wenn es noch keine gibt. */
@@ -121,4 +136,30 @@ export interface PvpRepository {
   resolveRequest(id: string, status: 'accepted' | 'declined' | 'expired'): Promise<boolean>;
   /** Kampf einer angenommenen Anfrage vermerken. */
   setRequestFight(id: string, fightId: string): Promise<void>;
+
+  /** Gegnerische Tages-Teams eines Teams; leer, wenn es noch keine gibt. */
+  dailyTeamOpponents(teamId: string, day: string): Promise<string[]>;
+  saveDailyTeamOpponents(teamId: string, day: string, ids: readonly string[]): Promise<string[]>;
+  createTeamRequest(
+    input: Pick<
+      TeamChallengeRequestRecord,
+      | 'seasonId'
+      | 'challengerTeamId'
+      | 'opponentTeamId'
+      | 'requesterAccountId'
+      | 'size'
+      | 'lineup'
+      | 'mode'
+      | 'expiresAt'
+    >,
+  ): Promise<TeamChallengeRequestRecord>;
+  findTeamRequest(id: string): Promise<TeamChallengeRequestRecord | null>;
+  pendingTeamRequest(
+    challengerTeamId: string,
+    opponentTeamId: string,
+    size: 2 | 3,
+  ): Promise<TeamChallengeRequestRecord | null>;
+  /** Wechselt nur aus „pending“; false, wenn schon entschieden. */
+  resolveTeamRequest(id: string, status: 'accepted' | 'declined' | 'expired'): Promise<boolean>;
+  setTeamRequestFight(id: string, fightId: string): Promise<void>;
 }

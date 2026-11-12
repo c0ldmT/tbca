@@ -1,7 +1,19 @@
-import { challengeRequest, dailyOpponent, transferCredits, type Database } from '@tbca/db';
+import {
+  challengeRequest,
+  dailyOpponent,
+  dailyTeamOpponent,
+  teamChallengeRequest,
+  transferCredits,
+  type Database,
+} from '@tbca/db';
 import { and, asc, eq } from 'drizzle-orm';
 
-import type { ChallengeRequestRecord, DailyOpponents, PvpRepository } from './types.js';
+import type {
+  ChallengeRequestRecord,
+  DailyOpponents,
+  PvpRepository,
+  TeamChallengeRequestRecord,
+} from './types.js';
 
 export class DrizzlePvpRepository implements PvpRepository {
   constructor(private readonly db: Database) {}
@@ -117,4 +129,84 @@ export class DrizzlePvpRepository implements PvpRepository {
   async setRequestFight(id: string, fightId: string): Promise<void> {
     await this.db.update(challengeRequest).set({ fightId }).where(eq(challengeRequest.id, id));
   }
+
+  async dailyTeamOpponents(teamId: string, day: string): Promise<string[]> {
+    const rows = await this.db
+      .select({ id: dailyTeamOpponent.opponentTeamId })
+      .from(dailyTeamOpponent)
+      .where(and(eq(dailyTeamOpponent.teamId, teamId), eq(dailyTeamOpponent.day, day)))
+      .orderBy(asc(dailyTeamOpponent.slot));
+    return rows.map((r) => r.id);
+  }
+
+  async saveDailyTeamOpponents(
+    teamId: string,
+    day: string,
+    ids: readonly string[],
+  ): Promise<string[]> {
+    if (ids.length > 0)
+      await this.db
+        .insert(dailyTeamOpponent)
+        .values(ids.map((opponentTeamId, slot) => ({ teamId, day, slot, opponentTeamId })))
+        .onConflictDoNothing();
+    return this.dailyTeamOpponents(teamId, day);
+  }
+
+  async createTeamRequest(
+    input: Parameters<PvpRepository['createTeamRequest']>[0],
+  ): Promise<TeamChallengeRequestRecord> {
+    const [row] = await this.db.insert(teamChallengeRequest).values(input).returning();
+    return toTeamRequest(row!);
+  }
+
+  async findTeamRequest(id: string): Promise<TeamChallengeRequestRecord | null> {
+    const [row] = await this.db
+      .select()
+      .from(teamChallengeRequest)
+      .where(eq(teamChallengeRequest.id, id));
+    return row ? toTeamRequest(row) : null;
+  }
+
+  async pendingTeamRequest(
+    challengerTeamId: string,
+    opponentTeamId: string,
+    size: 2 | 3,
+  ): Promise<TeamChallengeRequestRecord | null> {
+    const [row] = await this.db
+      .select()
+      .from(teamChallengeRequest)
+      .where(
+        and(
+          eq(teamChallengeRequest.challengerTeamId, challengerTeamId),
+          eq(teamChallengeRequest.opponentTeamId, opponentTeamId),
+          eq(teamChallengeRequest.size, size),
+          eq(teamChallengeRequest.status, 'pending'),
+        ),
+      )
+      .limit(1);
+    return row ? toTeamRequest(row) : null;
+  }
+
+  async resolveTeamRequest(
+    id: string,
+    status: 'accepted' | 'declined' | 'expired',
+  ): Promise<boolean> {
+    const rows = await this.db
+      .update(teamChallengeRequest)
+      .set({ status })
+      .where(and(eq(teamChallengeRequest.id, id), eq(teamChallengeRequest.status, 'pending')))
+      .returning({ id: teamChallengeRequest.id });
+    return rows.length > 0;
+  }
+
+  async setTeamRequestFight(id: string, fightId: string): Promise<void> {
+    await this.db
+      .update(teamChallengeRequest)
+      .set({ fightId })
+      .where(eq(teamChallengeRequest.id, id));
+  }
+}
+
+function toTeamRequest(r: typeof teamChallengeRequest.$inferSelect): TeamChallengeRequestRecord {
+  return { ...r, size: r.size as 2 | 3 };
 }

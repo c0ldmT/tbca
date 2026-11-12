@@ -38,6 +38,7 @@ import { loadEnv, type Env } from '../src/config/env.js';
 import type {
   ChallengeRequestRecord,
   FightTx,
+  TeamChallengeRequestRecord,
   FightRepository,
   NewFight,
   PvpRepository,
@@ -173,6 +174,13 @@ export class InMemoryAccounts implements AccountRepository {
         return id;
     }
     return null;
+  }
+
+  async providerUserId(accountId: string, provider: string): Promise<string | null> {
+    return (
+      this.accounts.get(accountId)?.identities.find((i) => i.provider === provider)
+        ?.providerUserId ?? null
+    );
   }
 
   async findProfile(accountId: string): Promise<MeProfile | null> {
@@ -1722,6 +1730,59 @@ export class InMemoryPvp implements PvpRepository {
 
   async setRequestFight(id: string, fightId: string) {
     const r = this.requests.find((x) => x.id === id);
+    if (r) r.fightId = fightId;
+  }
+
+  readonly dailyTeams = new Map<string, string[]>();
+  readonly teamRequests: TeamChallengeRequestRecord[] = [];
+
+  async dailyTeamOpponents(teamId: string, day: string) {
+    return [...(this.dailyTeams.get(`${teamId}:${day}`) ?? [])];
+  }
+
+  async saveDailyTeamOpponents(teamId: string, day: string, ids: readonly string[]) {
+    const key = `${teamId}:${day}`;
+    if (!this.dailyTeams.get(key)?.length && ids.length) this.dailyTeams.set(key, [...ids]);
+    return this.dailyTeamOpponents(teamId, day);
+  }
+
+  async createTeamRequest(input: Parameters<PvpRepository['createTeamRequest']>[0]) {
+    const r: TeamChallengeRequestRecord = {
+      ...input,
+      id: randomUUID(),
+      status: 'pending',
+      fightId: null,
+      createdAt: new Date(),
+    };
+    this.teamRequests.push(r);
+    return { ...r };
+  }
+
+  async findTeamRequest(id: string) {
+    const r = this.teamRequests.find((x) => x.id === id);
+    return r ? { ...r } : null;
+  }
+
+  async pendingTeamRequest(challengerTeamId: string, opponentTeamId: string, size: 2 | 3) {
+    const r = this.teamRequests.find(
+      (x) =>
+        x.challengerTeamId === challengerTeamId &&
+        x.opponentTeamId === opponentTeamId &&
+        x.size === size &&
+        x.status === 'pending',
+    );
+    return r ? { ...r } : null;
+  }
+
+  async resolveTeamRequest(id: string, status: 'accepted' | 'declined' | 'expired') {
+    const r = this.teamRequests.find((x) => x.id === id && x.status === 'pending');
+    if (!r) return false;
+    r.status = status;
+    return true;
+  }
+
+  async setTeamRequestFight(id: string, fightId: string) {
+    const r = this.teamRequests.find((x) => x.id === id);
     if (r) r.fightId = fightId;
   }
 }

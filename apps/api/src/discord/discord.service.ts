@@ -21,6 +21,8 @@ import type {
   DiscordLeagueNews,
   DiscordLeagueView,
   DiscordProfileView,
+  DiscordTeamChallengeAnswer,
+  DiscordTeamChallengeRequestView,
   DiscordTeamFightSummary,
   DiscordTeamView,
   DungeonView,
@@ -176,17 +178,18 @@ export class DiscordService {
   }
 
   /**
-   * Team-Herausforderung über Discord: eigenes (erstes) Team gegen ein Team per Kürzel. Die
-   * Aufstellung ist die gespeicherte Standard-Aufstellung, sonst die ersten Mitglieder mit
-   * Charakter.
+   * Team-Herausforderung über Discord: eigenes (erstes) Team gegen ein Team per Kürzel. Sie läuft
+   * erst, wenn der Kapitän des Gegner-Teams annimmt (`answerTeamChallenge`). Die Aufstellung wird
+   * jetzt festgelegt: gespeicherte Standard-Aufstellung, sonst die ersten Mitglieder mit Charakter.
    */
   async teamChallenge(input: {
     userId: string;
     opponentTag: string;
     size: 2 | 3;
     mode: 'rated' | 'friendly';
-  }): Promise<DiscordTeamFightSummary> {
+  }): Promise<DiscordTeamChallengeRequestView> {
     const accountId = await this.requireAccount(input.userId);
+    const season = await this.seasons.current();
     const own = (await this.teamService.mine(accountId))[0];
     if (!own) throw new ApiError(HttpStatus.NOT_FOUND, 'no_team', 'Du bist in keinem Team');
     const tag = input.opponentTag.trim().toUpperCase();
@@ -201,21 +204,98 @@ export class DiscordService {
       saved.length === input.size && saved.every((id) => withCharacter.includes(id))
         ? saved
         : withCharacter.slice(0, input.size);
-    const result = await this.teamService.challenge(accountId, own.id, {
+    if (lineup.length < input.size)
+      throw new ApiError(
+        HttpStatus.BAD_REQUEST,
+        'lineup_without_character',
+        'Nicht genug Mitglieder mit Charakter',
+      );
+    const now = this.clock.now();
+    let request = await this.pvp.pendingTeamRequest(own.id, opponent.id, input.size);
+    if (request && request.expiresAt.getTime() <= now) {
+      await this.pvp.resolveTeamRequest(request.id, 'expired');
+      request = null;
+    }
+    request ??= await this.pvp.createTeamRequest({
+      seasonId: season.id,
+      challengerTeamId: own.id,
       opponentTeamId: opponent.id,
+      requesterAccountId: accountId,
       size: input.size,
       lineup,
       mode: input.mode,
+      expiresAt: new Date(now + CHALLENGE_TTL_MS),
     });
+    const captain = await this.teamService.captainOf(opponent.id);
     return {
+      id: request.id,
       ownTag: own.tag,
       opponentTag: opponent.tag,
-      size: input.size,
+      size: request.size,
+      mode: request.mode,
+      captainUserId: captain ? await this.accounts.providerUserId(captain, 'discord') : null,
+      expiresAt: request.expiresAt.toISOString(),
+    };
+  }
+
+  /**
+   * Der Kapitän des Gegner-Teams (ohne Kapitän: jedes Mitglied) nimmt an oder lehnt ab. Beim
+   * Annehmen kämpfen beide Teams sofort, auch das annehmende Team wird belohnt.
+   */
+  async answerTeamChallenge(input: {
+    userId: string;
+    requestId: string;
+    accept: boolean;
+  }): Promise<DiscordTeamChallengeAnswer> {
+    const accountId = await this.requireAccount(input.userId);
+    const request = await this.pvp.findTeamRequest(input.requestId);
+    const tags =
+      request && (await this.teamService.tags(request.challengerTeamId, request.opponentTeamId));
+    if (!request || !tags)
+      throw new ApiError(HttpStatus.NOT_FOUND, 'challenge_not_found', 'Anfrage nicht gefunden');
+    if (!(await this.teamService.canAnswerFor(accountId, request.opponentTeamId)))
+      throw new ApiError(HttpStatus.FORBIDDEN, 'not_captain', 'Nur der Kapitän entscheidet');
+    if (request.status !== 'pending')
+      throw new ApiError(HttpStatus.CONFLICT, 'challenge_closed', 'Schon entschieden');
+    if (request.expiresAt.getTime() <= this.clock.now()) {
+      await this.pvp.resolveTeamRequest(request.id, 'expired');
+      throw new ApiError(HttpStatus.CONFLICT, 'challenge_expired', 'Anfrage abgelaufen');
+    }
+    if (!input.accept) {
+      if (!(await this.pvp.resolveTeamRequest(request.id, 'declined')))
+        throw new ApiError(HttpStatus.CONFLICT, 'challenge_closed', 'Schon entschieden');
+      return { status: 'declined', ...tags, fight: null };
+    }
+    // Erst schließen, damit ein doppelter Klick nicht zweimal kämpft
+    if (!(await this.pvp.resolveTeamRequest(request.id, 'accepted')))
+      throw new ApiError(HttpStatus.CONFLICT, 'challenge_closed', 'Schon entschieden');
+    const result = await this.teamService.challenge(
+      request.requesterAccountId,
+      request.challengerTeamId,
+      {
+        opponentTeamId: request.opponentTeamId,
+        size: request.size,
+        lineup: request.lineup,
+        mode: request.mode,
+      },
+      { direct: true, rewardOpponent: true },
+    );
+    await this.pvp.setTeamRequestFight(request.id, result.fightId);
+    const short = (r: { name: string; xp: number; credits: number }) => ({
+      name: r.name,
+      xp: r.xp,
+      credits: r.credits,
+    });
+    const fight: DiscordTeamFightSummary = {
+      ...tags,
+      size: request.size,
       won: result.won,
       draw: result.draw,
-      rewards: result.rewards.map((r) => ({ name: r.name, xp: r.xp, credits: r.credits })),
+      rewards: result.rewards.map(short),
       replayUrl: `${this.env.WEB_ORIGIN}/replay/${result.fightId}`,
     };
+    if (result.opponentRewards) fight.opponentRewards = result.opponentRewards.map(short);
+    return { status: 'accepted', ...tags, fight };
   }
 
   /**

@@ -84,9 +84,25 @@ export interface TeamSummary {
   averageLevel: number;
 }
 
+/** Gegnerisches Tages-Team: Nur diese lassen sich auf der Website herausfordern. */
+export interface TeamOpponentView extends TeamSummary {
+  /** Alle Mitglieder sind Bots (belohnen nur in Test-Seasons). */
+  isBot: boolean;
+}
+
+export interface TeamChallengeReward {
+  name: string;
+  xp: number;
+  credits: number;
+  limit: string;
+  levelUp: number | null;
+}
+
 export interface TeamChallengeResponse {
   fightId: string;
   won: boolean;
   draw: boolean;
-  rewards: { name: string; xp: number; credits: number; limit: string; levelUp: number | null }[];
+  rewards: TeamChallengeReward[];
+  /** Nur bei angenommenen Discord-Herausforderungen: Belohnung des annehmenden Teams. */
+  opponentRewards?: TeamChallengeReward[];
 }
