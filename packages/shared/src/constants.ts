@@ -45,6 +45,7 @@ export const SEASON_JOB_IDS = [
   'expire-dungeon-runs',
   'end-dungeon-runs',
   'bot-agents',
+  'league-tick',
 ] as const;
 export type SeasonJobId = (typeof SEASON_JOB_IDS)[number];
 

@@ -7,7 +7,9 @@ import {
   fight,
   fightParticipant,
   itemInstance,
+  leagueCycle,
   materialStack,
+  rating,
   season,
   shopPurchase,
   wallet,
@@ -141,6 +143,9 @@ export class DrizzleSeasonAdminRepository implements SeasonAdminRepository {
       await tx.delete(wallet).where(eq(wallet.seasonId, seasonId));
       await tx.delete(xpLedgerDaily).where(eq(xpLedgerDaily.seasonId, seasonId));
       await tx.delete(dailyReset).where(eq(dailyReset.seasonId, seasonId));
+      // Liga und Rating beginnen von vorn
+      await tx.delete(leagueCycle).where(eq(leagueCycle.seasonId, seasonId));
+      await tx.delete(rating).where(eq(rating.seasonId, seasonId));
       let removed = 0;
       if (mode === 'wipe') {
         const humans = tx.select({ id: account.id }).from(account).where(eq(account.isBot, false));

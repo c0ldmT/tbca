@@ -10,7 +10,8 @@ import { ApiError } from '../common/api-error.js';
 import { DungeonService } from '../dungeon/dungeon.service.js';
 import { FightService } from '../fight/fight.service.js';
 import { SeasonService } from '../game/season.js';
-import { ADMIN_REPOSITORY, BOT_REPOSITORY } from '../tokens.js';
+import type { LeagueRepository } from '../league/types.js';
+import { ADMIN_REPOSITORY, BOT_REPOSITORY, LEAGUE_REPOSITORY } from '../tokens.js';
 import type { AdminRepository } from '../admin/types.js';
 import type { BotInfo, BotRepository } from './bot.repository.js';
 
@@ -24,6 +25,9 @@ import type { BotInfo, BotRepository } from './bot.repository.js';
  * - farmer: Dungeon-Runs bis Etage 3
  * - climber: Dungeon-Runs, so tief es die HP erlauben
  * - class_switcher: wechselt die Klasse und kämpft
+ *
+ * Alle Bots mit Agent melden sich für die Liga an; eingeteilt werden sie wie Spieler erst nach
+ * ihren Platzierungskämpfen (gewertete Kämpfe in beide Richtungen zählen).
  */
 @Injectable()
 export class BotAgentService {
@@ -34,6 +38,7 @@ export class BotAgentService {
     @Inject(DungeonService) private readonly dungeon: DungeonService,
     @Inject(CharacterService) private readonly characters: CharacterService,
     @Inject(SeasonService) private readonly seasons: SeasonService,
+    @Inject(LEAGUE_REPOSITORY) private readonly league: LeagueRepository,
   ) {}
 
   async list(): Promise<AdminBotView[]> {
@@ -68,6 +73,8 @@ export class BotAgentService {
     for (const bot of await this.bots.list(season.id)) {
       if (!bot.agent || !bot.character) continue;
       try {
+        // Bots mit Agent spielen in Test-Seasons auch in der Liga mit (nach ihrer Platzierung)
+        await this.league.setJoined(season.id, bot.character.id, true);
         try {
           result.actions += await this.act(bot, bot.agent, rng);
         } finally {

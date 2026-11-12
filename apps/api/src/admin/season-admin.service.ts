@@ -15,6 +15,7 @@ import type { Env } from '../config/env.js';
 import { DiscordService } from '../discord/discord.service.js';
 import { DungeonService } from '../dungeon/dungeon.service.js';
 import { dayKey } from '../fight/day.js';
+import { LeagueService } from '../league/league.service.js';
 import { SeasonService } from '../game/season.js';
 import { ProgressionService } from '../progression/progression.service.js';
 import {
@@ -42,6 +43,7 @@ export class SeasonAdminService {
     @Inject(DungeonService) private readonly dungeon: DungeonService,
     @Inject(DiscordService) private readonly discord: DiscordService,
     @Inject(BotAgentService) private readonly bots: BotAgentService,
+    @Inject(LeagueService) private readonly league: LeagueService,
     @Inject(CLOCK) private readonly clock: Clock,
     @Inject(ENV) private readonly env: Env,
   ) {}
@@ -125,6 +127,9 @@ export class SeasonAdminService {
         break;
       case 'bot-agents':
         result = { ...(await this.bots.runAll()) };
+        break;
+      case 'league-tick':
+        result = { ...(await this.league.tick()) };
         break;
     }
     await this.admin.audit({

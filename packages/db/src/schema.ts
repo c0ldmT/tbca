@@ -337,6 +337,7 @@ export const fightKind = pgEnum('fight_kind', [
   'dungeon',
   'team_rated',
   'team_friendly',
+  'league',
 ]);
 export const fightEndReason = pgEnum('fight_end_reason', ['knockout', 'timeout']);
 
@@ -737,4 +738,110 @@ export const auditLog = pgTable(
     createdAt: createdAt(),
   },
   (t) => [index('audit_log_created_idx').on(t.createdAt)],
+);
+
+// --- Rating und Liga (Abschnitt 9) ---------------------------------------------
+
+/**
+ * Glicko-2-Rating eines Charakters (je Season, weil Charaktere je Season existieren). Wird aus
+ * allen gewerteten Kämpfen fortgeschrieben; `games` zählt die Platzierung.
+ */
+export const rating = pgTable(
+  'rating',
+  {
+    characterId: uuid('character_id')
+      .primaryKey()
+      .references(() => character.id, { onDelete: 'cascade' }),
+    seasonId: uuid('season_id')
+      .notNull()
+      .references(() => season.id, { onDelete: 'cascade' }),
+    rating: doublePrecision('rating').notNull(),
+    rd: doublePrecision('rd').notNull(),
+    volatility: doublePrecision('volatility').notNull(),
+    games: integer('games').notNull().default(0),
+    wins: integer('wins').notNull().default(0),
+    losses: integer('losses').notNull().default(0),
+    draws: integer('draws').notNull().default(0),
+    /** Für die nächsten Liga-Zyklen angemeldet. */
+    leagueJoined: boolean('league_joined').notNull().default(false),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('rating_season_rating_idx').on(t.seasonId, t.rating)],
+);
+
+/** Ein Liga-Zyklus: jede Division spielt Round Robin, ein Spieltag pro Tag. */
+export const leagueCycle = pgTable(
+  'league_cycle',
+  {
+    id: id(),
+    seasonId: uuid('season_id')
+      .notNull()
+      .references(() => season.id, { onDelete: 'cascade' }),
+    number: integer('number').notNull(),
+    status: text('status').$type<'active' | 'finished'>().notNull().default('active'),
+    /** Spielzeit des ersten und letzten Spieltags. */
+    startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
+    endsAt: timestamp('ends_at', { withTimezone: true }).notNull(),
+    finishedAt: timestamp('finished_at', { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('league_cycle_season_number_idx').on(t.seasonId, t.number),
+    check('league_cycle_status_check', sql`${t.status} IN ('active', 'finished')`),
+  ],
+);
+
+/** Teilnehmer eines Zyklus mit Division (0 = oberste) und Abschluss. */
+export const leagueMember = pgTable(
+  'league_member',
+  {
+    cycleId: uuid('cycle_id')
+      .notNull()
+      .references(() => leagueCycle.id, { onDelete: 'cascade' }),
+    characterId: uuid('character_id')
+      .notNull()
+      .references(() => character.id, { onDelete: 'cascade' }),
+    division: integer('division').notNull(),
+    ratingAtStart: doublePrecision('rating_at_start').notNull(),
+    /** Gesetzt am Zyklusende. */
+    place: integer('place'),
+    movement: text('movement').$type<'up' | 'down' | 'stay'>(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.cycleId, t.characterId] }),
+    index('league_member_character_idx').on(t.characterId),
+  ],
+);
+
+/**
+ * Eine Paarung eines Spieltags. Zum Lock werden die Momentaufnahmen beider Seiten gespeichert,
+ * zum Spieltag wird mit ihnen gekämpft. `b` fehlt bei spielfrei.
+ */
+export const leagueMatch = pgTable(
+  'league_match',
+  {
+    id: id(),
+    cycleId: uuid('cycle_id')
+      .notNull()
+      .references(() => leagueCycle.id, { onDelete: 'cascade' }),
+    division: integer('division').notNull(),
+    matchday: integer('matchday').notNull(),
+    lockAt: timestamp('lock_at', { withTimezone: true }).notNull(),
+    playAt: timestamp('play_at', { withTimezone: true }).notNull(),
+    aCharacterId: uuid('a_character_id').references(() => character.id, { onDelete: 'set null' }),
+    bCharacterId: uuid('b_character_id').references(() => character.id, { onDelete: 'set null' }),
+    status: text('status').$type<'scheduled' | 'locked' | 'played' | 'bye'>().notNull(),
+    snapshots: jsonb('snapshots').$type<CombatantSnapshot[]>(),
+    fightId: uuid('fight_id').references(() => fight.id, { onDelete: 'set null' }),
+    winnerCharacterId: uuid('winner_character_id'),
+    draw: boolean('draw').notNull().default(false),
+  },
+  (t) => [
+    index('league_match_cycle_idx').on(t.cycleId, t.division, t.matchday),
+    index('league_match_due_idx').on(t.status, t.lockAt, t.playAt),
+    check(
+      'league_match_status_check',
+      sql`${t.status} IN ('scheduled', 'locked', 'played', 'bye')`,
+    ),
+  ],
 );

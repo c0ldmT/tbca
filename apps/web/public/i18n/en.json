@@ -413,7 +413,9 @@
     "xp_limit": "Moderators correct at most ±5,000 XP.",
     "invalid_name": "That name isn't allowed (3–20 characters, no reserved words).",
     "confirm_mismatch": "The confirmation does not match the running season.",
-    "season_end_before_start": "The end must be after the season start."
+    "season_end_before_start": "The end must be after the season start.",
+    "already_placed": "Your placement is complete.",
+    "no_opponent": "No suitable opponent right now."
   },
   "pvp": {
     "title": "Arena",
@@ -473,7 +475,8 @@
       "training": "Training",
       "dungeon": "Dungeon",
       "team_rated": "Rated team challenge",
-      "team_friendly": "Friendly team fight"
+      "team_friendly": "Friendly team fight",
+      "league": "League matchday"
     },
     "winnerTeam": "{{ name }} win after {{ rounds }} rounds",
     "turnOrder": "Turn order",
@@ -1070,6 +1073,10 @@
         "bot-agents": {
           "name": "Let bots act",
           "hint": "Let every bot with an agent type play once (test seasons only)."
+        },
+        "league-tick": {
+          "name": "Process league",
+          "hint": "Run due locks and matchdays now, close finished cycles and start new ones (otherwise every minute). Catches up in order after fast-forwarding."
         }
       },
       "end": {
@@ -1333,7 +1340,8 @@
       "arena": "Arena",
       "dungeon": "Dungeon",
       "training": "Training",
-      "history": "History"
+      "history": "History",
+      "league": "League"
     },
     "today": "Today",
     "reset": "Reset 00:00",
@@ -1390,5 +1398,69 @@
     "tabs": {
       "shop": "Shop"
     }
+  },
+  "league": {
+    "title": "League",
+    "intro": "Every day at {{ time }} is matchday: you fight an opponent from your division automatically, with the gear, class and tactics you had at the lock {{ lock }} minutes before. Top of the table moves up at the end of the cycle.",
+    "needPlacement": "First {{ n }} rated fights for your starting rating – placement fights or challenges in the arena.",
+    "needJoin": "Sign up to be placed in a division in the next cycle.",
+    "waiting": "Signed up. The next cycle starts when the current one ends and enough players have joined.",
+    "division": "Division {{ n }} of {{ count }}",
+    "cycle": "Cycle {{ n }}",
+    "cycleStatus": {
+      "active": "running",
+      "finished": "finished"
+    },
+    "tableCaption": "Division table with points, promotion and relegation",
+    "player": "Player",
+    "played": "P",
+    "playedLong": "Played",
+    "wins": "W",
+    "winsLong": "Wins",
+    "draws": "D",
+    "drawsLong": "Draws",
+    "losses": "L",
+    "lossesLong": "Losses",
+    "points": "Pts",
+    "move": {
+      "up": "Promotion",
+      "down": "Relegation"
+    },
+    "moveHint": "The top {{ up }} move up, the bottom {{ down }} move down (not in the top or bottom division). Win {{ win }} points, draw {{ draw }}. Ties are broken by wins, then head-to-head.",
+    "schedule": "Schedule",
+    "matchdayAt": "Matchday at {{ time }}",
+    "matchday": "Matchday {{ n }}",
+    "bye": "{{ name }} has a bye",
+    "forfeit": "walkover",
+    "result": {
+      "win": "Win · replay",
+      "loss": "Loss · replay",
+      "draw": "Draw · replay",
+      "other": "Replay",
+      "open": "open",
+      "bye": "bye"
+    },
+    "status": {
+      "scheduled": "scheduled",
+      "locked": "locked"
+    },
+    "rating": "Rating",
+    "record": "{{ w }} W · {{ d }} D · {{ l }} L from {{ n }} rated fights",
+    "unrated": "No rating yet – it starts with your first rated fight.",
+    "placement": "Placement",
+    "placementFight": "Placement fight",
+    "placementHint": "An opponent close to your level, chosen automatically. Counts like a rated challenge.",
+    "nextMatchday": "Next matchday {{ n }}",
+    "lockedNow": "Locked – changes count from the next matchday.",
+    "lockAt": "Lock at {{ time }} – changes count until then.",
+    "join": "Join the league",
+    "leave": "Leave",
+    "leaveHint": "If you leave, you finish the current cycle and won't be placed in the next one.",
+    "leaderboard": "Leaderboard",
+    "scope": {
+      "global": "Global",
+      "community": "Community"
+    },
+    "boardEmpty": "Nobody placed yet."
   }
 }

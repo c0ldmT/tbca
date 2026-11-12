@@ -47,6 +47,10 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/dungeon/dungeon.page').then((m) => m.DungeonPage),
       },
       {
+        path: 'league',
+        loadComponent: () => import('./pages/league/league.page').then((m) => m.LeaguePage),
+      },
+      {
         path: 'training',
         loadComponent: () => import('./pages/pvp/training.page').then((m) => m.TrainingPage),
       },
@@ -134,6 +138,7 @@ export const routes: Routes = [
   },
   // Frühere Adressen (v0.1.0)
   { path: 'pvp', redirectTo: 'fight/arena' },
+  { path: 'league', redirectTo: 'fight/league' },
   { path: 'dungeon', redirectTo: 'fight/dungeon' },
   { path: 'teams', redirectTo: 'crew/team' },
   { path: 'communities/:id', redirectTo: 'crew/communities/:id' },

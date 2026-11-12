@@ -101,6 +101,43 @@ export function validateGameConfig(config: GameConfig): string[] {
         add('PvP: Bot-Ausrüstung muss nach Level aufsteigend sortiert sein');
     });
 
+  // Liga
+  const league = config.league;
+  if (!league) add('Liga-Regeln fehlen');
+  else {
+    const ints = [
+      league.divisionSize,
+      league.minDivisionSize,
+      league.maxDivisionSize,
+      league.promote,
+      league.relegate,
+      league.lockMinutes,
+      league.placementGames,
+      league.minPlayers,
+      league.points?.win,
+      league.points?.draw,
+      league.points?.loss,
+    ];
+    if (!ints.every((v) => isInt(v))) add('Liga: alle Werte müssen ganze Zahlen ≥ 0 sein');
+    else {
+      if (league.divisionSize < 2) add('Liga: Divisionen brauchen mindestens 2 Plätze');
+      if (
+        league.minDivisionSize > league.divisionSize ||
+        league.maxDivisionSize < league.divisionSize
+      )
+        add('Liga: Mindest- ≤ Ziel- ≤ Höchstgröße der Division');
+      if (league.promote + league.relegate > league.minDivisionSize)
+        add('Liga: Auf- und Absteiger dürfen die Mindestgröße nicht übersteigen');
+      if (league.lockMinutes > 23 * 60) add('Liga: Lock höchstens 23 Stunden vor dem Spieltag');
+      if (league.points.win < league.points.draw || league.points.draw < league.points.loss)
+        add('Liga: Punkte für Sieg ≥ Unentschieden ≥ Niederlage');
+    }
+    if (!isInt(league.matchdayHour) || league.matchdayHour > 23)
+      add('Liga: Stunde des Spieltags zwischen 0 und 23');
+    if (!isInt(league.matchdayMinute) || league.matchdayMinute > 59)
+      add('Liga: Minute des Spieltags zwischen 0 und 59');
+  }
+
   // Aufholbonus
   if (!isInt(config.catchUp?.levelGap, 0) || !isInt(config.catchUp?.bonusPermille, 0))
     add('Aufholbonus: Level-Abstand und Zuschlag müssen ganze Zahlen ≥ 0 sein');

@@ -195,6 +195,9 @@ describe('Bot-Spieler', () => {
     expect(run).toMatchObject({ acted: 2, errors: {} });
     expect(run.actions).toBeGreaterThanOrEqual(3);
     expect(t.fights.fights.length).toBeGreaterThanOrEqual(3);
+    // Bots mit Agent sind für die Liga angemeldet, die ohne nicht
+    const joined = [...t.league.ratingRows.values()].filter((r) => r.leagueJoined);
+    expect(joined).toHaveLength(2);
     // Freie Punkte wurden verteilt (Level 3 = 15 Punkte).
     const active = t.characters.records.find((c) => c.accountId === bots[0].accountId)!;
     expect(Object.values(active.allocated).reduce((a, b) => a + b, 0)).toBe(active.level * 5);

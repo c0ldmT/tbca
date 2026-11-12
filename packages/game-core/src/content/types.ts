@@ -1,3 +1,4 @@
+import type { LeagueRules } from '../league/league.js';
 import type { DungeonRules } from '../dungeon/dungeon.js';
 import type { CatchUpRules } from '../progression/catch-up.js';
 import type { PassiveXpRules } from '../progression/passive.js';
@@ -215,6 +216,7 @@ export interface GameConfig {
   readonly dungeon: DungeonRules;
   readonly passiveXp: PassiveXpRules;
   readonly catchUp: CatchUpRules;
+  readonly league: LeagueRules;
 }
 
 export interface LootRules {

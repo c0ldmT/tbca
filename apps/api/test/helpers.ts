@@ -9,6 +9,7 @@ import {
   DEFAULT_GAME_CONFIG,
   GameClock,
   ManualTimeSource,
+  type CombatantSnapshot,
   type Equipment,
   type EquipSlot,
   type ItemData,
@@ -72,6 +73,14 @@ import {
   type EconomyRepository,
 } from '../src/economy/types.js';
 import type { CurrentSeason, SeasonRepository } from '../src/game/season.js';
+import { GLICKO_START } from '../src/league/glicko2.js';
+import type {
+  CycleRecord,
+  LeagueRepository,
+  MatchRecord,
+  MemberRecord,
+  RatingRecord,
+} from '../src/league/types.js';
 import {
   ACCOUNT_REPOSITORY,
   CHARACTER_REPOSITORY,
@@ -91,6 +100,7 @@ import {
   BOT_REPOSITORY,
   ACCOUNT_DATA_REPOSITORY,
   DISCORD_OAUTH,
+  LEAGUE_REPOSITORY,
   SEASON_REPOSITORY,
   SESSION_STORE,
 } from '../src/tokens.js';
@@ -1184,6 +1194,198 @@ export class InMemoryExport implements AdminExportRepository {
   }
 }
 
+export class InMemoryLeague implements LeagueRepository {
+  readonly ratingRows = new Map<string, RatingRecord>();
+  readonly cycles: CycleRecord[] = [];
+  readonly memberRows: MemberRecord[] = [];
+  readonly matchRows: MatchRecord[] = [];
+  /** Heimat-Community je Account, für die Community-Rangliste. */
+  readonly homes = new Map<string, string>();
+
+  constructor(private readonly characters: InMemoryCharacters) {}
+
+  private fresh(seasonId: string, characterId: string): RatingRecord {
+    return {
+      characterId,
+      seasonId,
+      ...GLICKO_START,
+      games: 0,
+      wins: 0,
+      losses: 0,
+      draws: 0,
+      leagueJoined: false,
+    };
+  }
+
+  async ratings(ids: readonly string[]) {
+    return new Map(
+      ids
+        .filter((id) => this.ratingRows.has(id))
+        .map((id) => [id, { ...this.ratingRows.get(id)! }]),
+    );
+  }
+
+  async updateRatings(
+    seasonId: string,
+    ids: readonly string[],
+    update: (current: Map<string, RatingRecord>) => RatingRecord[],
+  ) {
+    for (const id of ids)
+      if (!this.ratingRows.has(id)) this.ratingRows.set(id, this.fresh(seasonId, id));
+    const next = update(new Map(ids.map((id) => [id, { ...this.ratingRows.get(id)! }])));
+    for (const r of next)
+      this.ratingRows.set(r.characterId, {
+        ...r,
+        leagueJoined: this.ratingRows.get(r.characterId)!.leagueJoined,
+      });
+    return next;
+  }
+
+  async setJoined(seasonId: string, characterId: string, joined: boolean) {
+    const row = this.ratingRows.get(characterId) ?? this.fresh(seasonId, characterId);
+    const next = { ...row, leagueJoined: joined };
+    this.ratingRows.set(characterId, next);
+    return { ...next };
+  }
+
+  async entrants(seasonId: string, minGames: number) {
+    return [...this.ratingRows.values()]
+      .filter((r) => r.seasonId === seasonId && r.leagueJoined && r.games >= minGames)
+      .sort((a, b) => b.rating - a.rating || (a.characterId < b.characterId ? -1 : 1));
+  }
+
+  async leaderboard(
+    seasonId: string,
+    options: { minGames: number; limit: number; homeOfAccount: string | null },
+  ) {
+    const home = options.homeOfAccount ? this.homes.get(options.homeOfAccount) : null;
+    return [...this.ratingRows.values()]
+      .filter((r) => r.seasonId === seasonId && r.games >= options.minGames)
+      .map((r) => ({ r, c: this.characters.records.find((c) => c.id === r.characterId)! }))
+      .filter(
+        ({ c }) =>
+          c && (options.homeOfAccount === null || (home && this.homes.get(c.accountId) === home)),
+      )
+      .sort((a, b) => b.r.rating - a.r.rating)
+      .slice(0, options.limit)
+      .map(({ r, c }) => ({
+        ...r,
+        name: c.name,
+        level: c.level,
+        classId: c.classId,
+        isBot: c.isBot ?? false,
+      }));
+  }
+
+  async activeCycle(seasonId: string) {
+    return this.cycles.find((c) => c.seasonId === seasonId && c.status === 'active') ?? null;
+  }
+
+  async lastCycle(seasonId: string) {
+    return (
+      this.cycles.filter((c) => c.seasonId === seasonId).sort((a, b) => b.number - a.number)[0] ??
+      null
+    );
+  }
+
+  async findCycle(id: string) {
+    return this.cycles.find((c) => c.id === id) ?? null;
+  }
+
+  async createCycle(input: Parameters<LeagueRepository['createCycle']>[0]) {
+    if (this.cycles.some((c) => c.seasonId === input.seasonId && c.number === input.number))
+      throw new Error('league_cycle_season_number_idx');
+    const cycle: CycleRecord = {
+      id: randomUUID(),
+      seasonId: input.seasonId,
+      number: input.number,
+      status: 'active',
+      startsAt: input.startsAt,
+      endsAt: input.endsAt,
+      finishedAt: null,
+    };
+    this.cycles.push(cycle);
+    for (const m of input.members)
+      this.memberRows.push({ ...m, cycleId: cycle.id, place: null, movement: null });
+    for (const m of input.matches)
+      this.matchRows.push({
+        ...m,
+        id: randomUUID(),
+        cycleId: cycle.id,
+        snapshots: null,
+        fightId: null,
+        winnerCharacterId: null,
+        draw: false,
+      });
+    return cycle;
+  }
+
+  async members(cycleId: string) {
+    return this.memberRows.filter((m) => m.cycleId === cycleId).map((m) => ({ ...m }));
+  }
+
+  async matches(cycleId: string) {
+    return this.matchRows
+      .filter((m) => m.cycleId === cycleId)
+      .sort((a, b) => a.matchday - b.matchday || a.division - b.division)
+      .map((m) => ({ ...m }));
+  }
+
+  async nextEvent(cycleId: string) {
+    const open = this.matchRows.filter((m) => m.cycleId === cycleId);
+    const lock = open
+      .filter((m) => m.status === 'scheduled')
+      .map((m) => m.lockAt.getTime())
+      .sort((a, b) => a - b)[0];
+    const play = open
+      .filter((m) => m.status === 'locked')
+      .map((m) => m.playAt.getTime())
+      .sort((a, b) => a - b)[0];
+    if (lock !== undefined && (play === undefined || lock <= play))
+      return { kind: 'lock' as const, at: new Date(lock) };
+    return play !== undefined ? { kind: 'play' as const, at: new Date(play) } : null;
+  }
+
+  async lockMatches(updates: { id: string; snapshots: CombatantSnapshot[] }[]) {
+    for (const u of updates) {
+      const m = this.matchRows.find((x) => x.id === u.id && x.status === 'scheduled');
+      if (m) Object.assign(m, { status: 'locked', snapshots: u.snapshots });
+    }
+  }
+
+  async finishMatch(
+    id: string,
+    result: { fightId: string | null; winnerCharacterId: string | null; draw: boolean },
+  ) {
+    const m = this.matchRows.find((x) => x.id === id && x.status === 'locked');
+    if (m) Object.assign(m, { status: 'played', ...result });
+  }
+
+  async finishCycle(
+    cycleId: string,
+    at: Date,
+    rows: { characterId: string; place: number; movement: 'up' | 'down' | 'stay' }[],
+  ) {
+    for (const r of rows) {
+      const m = this.memberRows.find(
+        (x) => x.cycleId === cycleId && x.characterId === r.characterId,
+      );
+      if (m) Object.assign(m, { place: r.place, movement: r.movement });
+    }
+    const c = this.cycles.find((x) => x.id === cycleId);
+    if (c && c.status === 'active') Object.assign(c, { status: 'finished', finishedAt: at });
+  }
+
+  async memberships(characterId: string, limit: number) {
+    return this.memberRows
+      .filter((m) => m.characterId === characterId)
+      .map((m) => ({ m, n: this.cycles.find((c) => c.id === m.cycleId)!.number }))
+      .sort((a, b) => b.n - a.n)
+      .slice(0, limit)
+      .map(({ m }) => m);
+  }
+}
+
 export interface TestApp {
   app: NestFastifyApplication;
   accounts: InMemoryAccounts;
@@ -1203,6 +1405,7 @@ export interface TestApp {
   configs: InMemoryConfigs;
   bots: InMemoryBots;
   accountData: InMemoryAccountData;
+  league: InMemoryLeague;
   time: ManualTimeSource;
   dbUp: { value: boolean };
 }
@@ -1226,6 +1429,7 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
   const configs = new InMemoryConfigs(seasons.current!.id);
   const bots = new InMemoryBots(characters);
   const accountData = new InMemoryAccountData(accounts, characters, sessions, fights);
+  const league = new InMemoryLeague(characters);
   // 12.11.2026, 12:00 Uhr in Berlin
   const time = new ManualTimeSource(Date.UTC(2026, 10, 12, 11, 0));
   const dbUp = { value: true };
@@ -1265,6 +1469,8 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
     .useValue(bots)
     .overrideProvider(ACCOUNT_DATA_REPOSITORY)
     .useValue(accountData)
+    .overrideProvider(LEAGUE_REPOSITORY)
+    .useValue(league)
     .overrideProvider(RATE_LIMITER)
     .useValue(new MemoryRateLimiter(time.read))
     .overrideProvider(CLOCK)
@@ -1300,6 +1506,7 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
     configs,
     bots,
     accountData,
+    league,
     time,
     dbUp,
   };

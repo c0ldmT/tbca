@@ -413,7 +413,9 @@
     "xp_limit": "Moderatoren korrigieren höchstens ±5 000 XP.",
     "invalid_name": "Dieser Name ist nicht erlaubt (3–20 Zeichen, keine reservierten Wörter).",
     "confirm_mismatch": "Die Bestätigung passt nicht zur laufenden Season.",
-    "season_end_before_start": "Das Ende muss nach dem Start der Season liegen."
+    "season_end_before_start": "Das Ende muss nach dem Start der Season liegen.",
+    "already_placed": "Deine Platzierung ist abgeschlossen.",
+    "no_opponent": "Gerade ist kein passender Gegner da."
   },
   "pvp": {
     "title": "Arena",
@@ -473,7 +475,8 @@
       "training": "Training",
       "dungeon": "Dungeon",
       "team_rated": "Gewertete Team-Herausforderung",
-      "team_friendly": "Team-Freundschaftskampf"
+      "team_friendly": "Team-Freundschaftskampf",
+      "league": "Liga-Spieltag"
     },
     "winnerTeam": "{{ name }} gewinnen nach {{ rounds }} Runden",
     "turnOrder": "Zugreihenfolge",
@@ -1070,6 +1073,10 @@
         "bot-agents": {
           "name": "Bots handeln lassen",
           "hint": "Alle Bots mit Agententyp einmal spielen lassen (nur Test-Seasons)."
+        },
+        "league-tick": {
+          "name": "Liga abarbeiten",
+          "hint": "Fällige Locks und Spieltage sofort ausführen, beendete Zyklen abschließen und neue starten (sonst jede Minute). Holt nach dem Vorspulen alles in Reihenfolge nach."
         }
       },
       "end": {
@@ -1333,7 +1340,8 @@
       "arena": "Arena",
       "dungeon": "Dungeon",
       "training": "Training",
-      "history": "Verlauf"
+      "history": "Verlauf",
+      "league": "Liga"
     },
     "today": "Heute",
     "reset": "Reset 00:00",
@@ -1390,5 +1398,69 @@
     "tabs": {
       "shop": "Shop"
     }
+  },
+  "league": {
+    "title": "Liga",
+    "intro": "Jeden Tag um {{ time }} Uhr ist Spieltag: Du kämpfst automatisch gegen einen Gegner deiner Division, mit Ausrüstung, Klasse und Taktik vom Lock {{ lock }} Minuten vorher. Wer oben steht, steigt am Zyklusende auf.",
+    "needPlacement": "Zuerst {{ n }} gewertete Kämpfe für dein Start-Rating – Platzierungskämpfe oder Herausforderungen in der Arena.",
+    "needJoin": "Melde dich an, um im nächsten Zyklus eingeteilt zu werden.",
+    "waiting": "Angemeldet. Der nächste Zyklus startet, sobald der laufende endet und genug Spieler dabei sind.",
+    "division": "Division {{ n }} von {{ count }}",
+    "cycle": "Zyklus {{ n }}",
+    "cycleStatus": {
+      "active": "läuft",
+      "finished": "beendet"
+    },
+    "tableCaption": "Tabelle der Division mit Punkten und Auf- und Abstieg",
+    "player": "Spieler",
+    "played": "Sp",
+    "playedLong": "Spiele",
+    "wins": "S",
+    "winsLong": "Siege",
+    "draws": "U",
+    "drawsLong": "Unentschieden",
+    "losses": "N",
+    "lossesLong": "Niederlagen",
+    "points": "Pkt",
+    "move": {
+      "up": "Aufstieg",
+      "down": "Abstieg"
+    },
+    "moveHint": "Die ersten {{ up }} steigen auf, die letzten {{ down }} ab (nicht in der obersten bzw. untersten Division). Sieg {{ win }} Punkte, Unentschieden {{ draw }}. Bei Gleichstand zählen Siege, dann der direkte Vergleich.",
+    "schedule": "Spielplan",
+    "matchdayAt": "Spieltag {{ time }} Uhr",
+    "matchday": "Spieltag {{ n }}",
+    "bye": "{{ name }} ist spielfrei",
+    "forfeit": "kampflos",
+    "result": {
+      "win": "Sieg · Replay",
+      "loss": "Niederlage · Replay",
+      "draw": "Unentschieden · Replay",
+      "other": "Replay",
+      "open": "offen",
+      "bye": "spielfrei"
+    },
+    "status": {
+      "scheduled": "geplant",
+      "locked": "gesperrt"
+    },
+    "rating": "Rating",
+    "record": "{{ w }} S · {{ d }} U · {{ l }} N aus {{ n }} gewerteten Kämpfen",
+    "unrated": "Noch kein Rating – es entsteht mit deinem ersten gewerteten Kampf.",
+    "placement": "Platzierung",
+    "placementFight": "Platzierungskampf",
+    "placementHint": "Gegner nahe an deinem Level, automatisch gewählt. Zählt wie eine gewertete Herausforderung.",
+    "nextMatchday": "Nächster Spieltag {{ n }}",
+    "lockedNow": "Gesperrt – Änderungen zählen ab dem nächsten Spieltag.",
+    "lockAt": "Lock um {{ time }} Uhr – bis dahin zählen Änderungen.",
+    "join": "Für die Liga anmelden",
+    "leave": "Abmelden",
+    "leaveHint": "Abgemeldet spielst du den laufenden Zyklus zu Ende und wirst im nächsten nicht mehr eingeteilt.",
+    "leaderboard": "Rangliste",
+    "scope": {
+      "global": "Global",
+      "community": "Community"
+    },
+    "boardEmpty": "Noch niemand platziert."
   }
 }

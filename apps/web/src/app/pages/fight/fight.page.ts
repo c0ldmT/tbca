@@ -7,7 +7,7 @@ import { CharacterService } from '../../core/character.service';
 import { HudStatusService } from '../../core/hud-status.service';
 import { HubTabs, type HubTab } from '../../shared/ui/hub-tabs';
 
-/** Kampf-Hub: Arena, Dungeon, Training und Verlauf. */
+/** Kampf-Hub: Arena, Liga, Dungeon, Training und Verlauf. */
 @Component({
   selector: 'tbca-fight-page',
   imports: [TranslocoDirective, RouterOutlet, RouterLink, HubTabs],
@@ -48,6 +48,7 @@ export class FightPage {
 
   protected readonly tabs = computed<HubTab[]>(() => [
     { path: '/fight/arena', label: 'fight.tabs.arena' },
+    { path: '/fight/league', label: 'fight.tabs.league' },
     {
       path: '/fight/dungeon',
       label: 'fight.tabs.dungeon',

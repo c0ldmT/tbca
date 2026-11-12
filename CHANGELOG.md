@@ -8,6 +8,22 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ### Hinzugefügt
 
+- Liga (Phase 2, Spezifikation Abschnitt 9): Glicko-2-Rating aus allen gewerteten Kämpfen
+  (Herausforderungen und Liga, beide Seiten, auch Bot-Spieler), Platzierung über die ersten
+  5 gewerteten Kämpfe (eigener Knopf „Platzierungskampf“ mit automatisch gewähltem Gegner),
+  Anmeldung für kommende Zyklen. Ein Zyklus teilt die Angemeldeten in Divisionen (Ziel 8,
+  höchstens 10; Bisherige behalten ihre Division, je 2 Auf- und Absteiger, Neue nach Rating)
+  und spielt Round Robin mit einem Spieltag pro Tag um 20:00 Uhr in der Spielzeitzone. Eine
+  Stunde vorher werden Ausrüstung, Klasse und Taktik eingefroren (Lock), zum Spieltag wird
+  gekämpft (Sieg 3, Unentschieden 1, Niederlage 0; XP und Credits wie bei einer gewerteten
+  Herausforderung, ohne das Tageslimit zu belasten). Tabelle mit Siegen und direktem Vergleich
+  als Tiebreak, Rangliste global oder nach Heimat-Community. Der Worker-Job `league-tick`
+  (jede Minute, auch als Admin-Job) arbeitet alle fälligen Termine nach Spielzeit in
+  Reihenfolge ab – nach dem Vorspulen einer Test-Season Spieltag für Spieltag und Zyklus für
+  Zyklus. Regeln in der Konfiguration (`league`), Migration 0014 (`rating`, `league_cycle`,
+  `league_member`, `league_match`, Kampfart `league`). Website: Tab „Liga“ im Kampf-Hub.
+  Bots mit Agent melden sich in Test-Seasons an. Das Zurücksetzen einer Season löscht Liga und
+  Ratings mit.
 - Bot-Gegner tragen Ausrüstung: Für jeden leeren Platz bekommen Bot-Spieler ein Item passend zu
   Klasse und Level, fest je Bot und Level (PvP, Team-Kämpfe, Dungeon). Trainingsgegner tragen
   dieselbe Ausrüstung. Die Rarität je Level-Stufe steht in der Konfiguration (`pvp.botGear`;

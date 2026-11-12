@@ -25,10 +25,11 @@ import { DrizzleExportRepository } from './drizzle-export.repository.js';
 import { ExportService } from './export.service.js';
 import { DrizzleSeasonAdminRepository } from './drizzle-season-admin.repository.js';
 import { SeasonAdminController } from './season-admin.controller.js';
+import { LeagueModule } from '../league/league.module.js';
 import { SeasonAdminService } from './season-admin.service.js';
 
 @Module({
-  imports: [AuthModule, DungeonModule, DiscordModule, BotsModule],
+  imports: [AuthModule, DungeonModule, DiscordModule, BotsModule, LeagueModule],
   controllers: [AdminController, SeasonAdminController],
   providers: [
     AdminService,

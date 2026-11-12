@@ -28,6 +28,7 @@ import type { CharacterRecord, CharacterRepository } from '../character/types.js
 import { ApiError } from '../common/api-error.js';
 import type { Env } from '../config/env.js';
 import { SeasonService, type CurrentSeason } from '../game/season.js';
+import { RatingService } from '../league/rating.service.js';
 import { ProgressionService } from '../progression/progression.service.js';
 import { CHARACTER_REPOSITORY, CLOCK, ENV, FIGHT_REPOSITORY } from '../tokens.js';
 import { dayKey } from './day.js';
@@ -46,6 +47,7 @@ export class FightService {
     @Inject(CLOCK) private readonly clock: Clock,
     @Inject(ENV) private readonly env: Env,
     @Inject(ProgressionService) private readonly progression: ProgressionService,
+    @Inject(RatingService) private readonly ratings: RatingService,
   ) {}
 
   async status(accountId: string): Promise<PvpStatus> {
@@ -113,7 +115,7 @@ export class FightService {
     const day = this.today();
     const median = await this.progression.median(season.id);
 
-    return this.fights.locked(me.id, async (tx) => {
+    const response = await this.fights.locked(me.id, async (tx) => {
       const counts = await tx.rewardCounts(me.id, day);
       const base = pvpReward(season.game, {
         mode: req.mode,
@@ -183,6 +185,15 @@ export class FightService {
         level: { before: me.level, after },
       };
     });
+    // Gewertete Kämpfe schreiben das Glicko-2-Rating beider Seiten fort (Platzierung, Liga)
+    if (req.mode === 'rated')
+      await this.ratings.record(
+        season.id,
+        me.id,
+        opponent.id,
+        result.winner === null ? null : (result.winner as 0 | 1),
+      );
+    return response;
   }
 
   /**

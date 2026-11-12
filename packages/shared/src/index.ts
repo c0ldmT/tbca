@@ -11,3 +11,4 @@ export * from './internal.js';
 export * from './teams.js';
 export * from './admin.js';
 export * from './account.js';
+export * from './league.js';

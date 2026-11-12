@@ -175,3 +175,14 @@ export {
   type TeamSimResult,
   type TeamSize,
 } from './sim/balance.js';
+export {
+  formDivisions,
+  roundRobin,
+  standings,
+  type LeagueEntrant,
+  type LeagueRules,
+  type MatchResult,
+  type Pairing,
+  type PreviousPlacement,
+  type StandingRow,
+} from './league/league.js';

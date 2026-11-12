@@ -589,4 +589,17 @@ export const DEFAULT_GAME_CONFIG: GameConfig = {
   },
   // Aufholbonus: mehr als 5 Level unter dem Median der Season → +50 % XP aus aktivem Spielen.
   catchUp: { levelGap: 5, bonusPermille: 500 },
+  league: {
+    divisionSize: 8,
+    minDivisionSize: 4,
+    maxDivisionSize: 10,
+    promote: 2,
+    relegate: 2,
+    matchdayHour: 20,
+    matchdayMinute: 0,
+    lockMinutes: 60,
+    placementGames: 5,
+    points: { win: 3, draw: 1, loss: 0 },
+    minPlayers: 4,
+  },
 };

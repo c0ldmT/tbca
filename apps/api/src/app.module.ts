@@ -19,6 +19,8 @@ import { FightModule } from './fight/fight.module.js';
 import { GameModule } from './game/game.module.js';
 import { ProgressionModule } from './progression/progression.module.js';
 import { InventoryModule } from './inventory/inventory.module.js';
+import { LeagueModule } from './league/league.module.js';
+import { RatingModule } from './league/rating.module.js';
 import { HealthModule } from './health/health.module.js';
 
 @Module({})
@@ -35,6 +37,7 @@ export class AppModule {
         AuthModule,
         GameModule,
         ProgressionModule,
+        RatingModule,
         CharacterModule,
         FightModule,
         InventoryModule,
@@ -43,6 +46,7 @@ export class AppModule {
         RateLimitModule,
         DiscordModule,
         TeamModule,
+        LeagueModule,
         AdminModule,
         BotsModule,
         AccountModule,

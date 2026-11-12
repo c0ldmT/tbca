@@ -19,6 +19,8 @@ export const JOBS: readonly JobDefinition[] = [
   { name: 'season-stats', everyMs: 10 * 60_000, path: 'season-stats' },
   // Bot-Spieler handeln nur in Test-Seasons; in echten Seasons antwortet die API mit „übersprungen“.
   { name: 'bot-agents', everyMs: 5 * 60_000, path: 'bot-agents' },
+  // Liga: Lock und Spieltag nach Spielzeit; holt nach dem Vorspulen alles in Reihenfolge nach
+  { name: 'league-tick', everyMs: 60_000, path: 'league-tick' },
 ];
 
 /** Führt einen Job aus, indem er den internen Endpunkt der API aufruft. */

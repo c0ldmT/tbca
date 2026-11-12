@@ -12,19 +12,29 @@ REST-API auf NestJS mit Fastify. Alle Routen liegen unter `/api`.
 | `GET /api/auth/options`          | Angebotene Anmeldewege (`discord`, `devLogin`) |
 | `POST /api/auth/dev-login`       | Testzugang per Name, nur mit `DEV_LOGIN=true`  |
 
+### Liga (angemeldet, schreibend mit CSRF-Token)
+
+| Route                                             | Zweck                                                                 |
+| ------------------------------------------------- | --------------------------------------------------------------------- |
+| `GET /api/league`                                 | Rating, Anmeldung, eigene Division mit Tabelle und Spielplan          |
+| `POST /api/league/join`, `POST /api/league/leave` | Für kommende Zyklen an- oder abmelden                                 |
+| `POST /api/league/placement`                      | Platzierungskampf (gewertet) gegen einen automatisch gewählten Gegner |
+| `GET /api/league/leaderboard?scope=&limit=`       | Rangliste `global` oder nach eigener Heimat-Community                 |
+| `POST /api/internal/jobs/league-tick` (Dienst)    | Fällige Locks, Spieltage, Zyklus-Ende und -Start abarbeiten           |
+
 ### Admin (nur Superadmins, schreibend mit CSRF-Token)
 
-| Route                                    | Zweck                                                                                                   |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `GET /api/admin/season`                  | Laufende Season: Zeitraum, Kennzahlen des Tages, Rücksetzungen                                          |
-| `POST /api/admin/season/daily-reset`     | Tageslimits (`dungeon`, `fights`, `passive`) für alle/einen                                             |
-| `POST /api/admin/season/jobs/:job`       | Job sofort: `season-stats`, `flush-passive-xp`, `expire-dungeon-runs`, `end-dungeon-runs`, `bot-agents` |
-| `PUT /api/admin/season/end`              | Season-Ende verschieben                                                                                 |
-| `POST /api/admin/season/reset`           | `progress` oder `wipe`, Bestätigung mit dem Season-Slug                                                 |
-| `POST /api/admin/config/drafts`          | Entwurf aus Version, veröffentlichter Version oder `defaults`                                           |
-| `POST /api/admin/simulations`            | Simulation einer Stufe (Matrix, Dungeon oder Team-Aufstellungen 2v2/3v3)                                |
-| `POST /api/admin/simulations/report`     | Report über Level 3–80 mit Teams und Konfiguration (`tbca-sim-report/v1`)                               |
-| `GET /api/admin/export?days=&maxFights=` | Anonymisierter Datenexport (`tbca-data/v1`)                                                             |
+| Route                                    | Zweck                                                                                                                  |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/admin/season`                  | Laufende Season: Zeitraum, Kennzahlen des Tages, Rücksetzungen                                                         |
+| `POST /api/admin/season/daily-reset`     | Tageslimits (`dungeon`, `fights`, `passive`) für alle/einen                                                            |
+| `POST /api/admin/season/jobs/:job`       | Job sofort: `season-stats`, `flush-passive-xp`, `expire-dungeon-runs`, `end-dungeon-runs`, `bot-agents`, `league-tick` |
+| `PUT /api/admin/season/end`              | Season-Ende verschieben                                                                                                |
+| `POST /api/admin/season/reset`           | `progress` oder `wipe`, Bestätigung mit dem Season-Slug                                                                |
+| `POST /api/admin/config/drafts`          | Entwurf aus Version, veröffentlichter Version oder `defaults`                                                          |
+| `POST /api/admin/simulations`            | Simulation einer Stufe (Matrix, Dungeon oder Team-Aufstellungen 2v2/3v3)                                               |
+| `POST /api/admin/simulations/report`     | Report über Level 3–80 mit Teams und Konfiguration (`tbca-sim-report/v1`)                                              |
+| `GET /api/admin/export?days=&maxFights=` | Anonymisierter Datenexport (`tbca-data/v1`)                                                                            |
 
 ## Discord-App einrichten (Entwicklung)
 

@@ -41,6 +41,7 @@ import { TeamConflictError } from '../src/team/types.js';
 import { DrizzleSeasonAdminRepository } from '../src/admin/drizzle-season-admin.repository.js';
 import { DrizzleExportRepository } from '../src/admin/drizzle-export.repository.js';
 import { DrizzleDungeonRepository } from '../src/dungeon/drizzle-dungeon.repository.js';
+import { DrizzleLeagueRepository } from '../src/league/drizzle-league.repository.js';
 
 const url = process.env['TBCA_TEST_DATABASE_URL'];
 
@@ -677,6 +678,148 @@ describe.skipIf(!url)('Drizzle-Repositories (Integration)', () => {
     await repo.setEnd(seasonId, new Date('2027-02-01T00:00:00Z'));
     expect((await repo.info(seasonId))!.endsAt.toISOString()).toBe('2027-02-01T00:00:00.000Z');
   });
+  it('speichert Ratings, Liga-Zyklen, Paarungen und Abschluss', async () => {
+    const [own] = await conn.db
+      .insert(season)
+      .values({
+        slug: `league-${Date.now()}`,
+        name: 'Liga-Test',
+        isTest: true,
+        startsAt: new Date('2026-11-01T00:00:00Z'),
+        endsAt: new Date('2027-01-01T00:00:00Z'),
+      })
+      .returning();
+    const seasonId = own!.id;
+    const chars = new DrizzleCharacterRepository(conn.db);
+    const make = async (name: string) => {
+      const [acc] = await conn.db.insert(account).values({}).returning();
+      return chars.create({
+        accountId: acc!.id,
+        seasonId,
+        name: `${name}${Date.now() % 100000}`,
+        classId: 'gunner',
+        level: 3,
+        xp: 0,
+        allocated: { str: 0, dex: 3, int: 0, con: 3 },
+        loadouts: {},
+      });
+    };
+    const [a, b, c] = [await make('La'), await make('Lb'), await make('Lc')];
+    const repo = new DrizzleLeagueRepository(conn.db);
+
+    // Ratings: fehlende werden mit Startwerten angelegt und gesperrt fortgeschrieben
+    const updated = await repo.updateRatings(seasonId, [a.id, b.id], (cur) =>
+      [...cur.values()].map((r) => ({
+        ...r,
+        rating: r.rating + (r.characterId === a.id ? 50 : -50),
+        games: r.games + 5,
+      })),
+    );
+    expect(updated).toHaveLength(2);
+    expect((await repo.ratings([a.id, b.id, c.id])).get(a.id)).toMatchObject({
+      rating: 1550,
+      games: 5,
+    });
+    expect(await repo.setJoined(seasonId, a.id, true)).toMatchObject({
+      leagueJoined: true,
+      games: 5,
+    });
+    await repo.setJoined(seasonId, b.id, true);
+    await repo.setJoined(seasonId, c.id, true);
+    expect((await repo.entrants(seasonId, 5)).map((r) => r.characterId)).toEqual([a.id, b.id]);
+    const board = await repo.leaderboard(seasonId, { minGames: 5, limit: 10, homeOfAccount: null });
+    expect(board.map((r) => r.characterId)).toEqual([a.id, b.id]);
+    expect(board[0]).toMatchObject({ classId: 'gunner', isBot: false });
+    // Ohne Heimat-Community bleibt die Community-Rangliste leer
+    expect(
+      await repo.leaderboard(seasonId, { minGames: 5, limit: 10, homeOfAccount: a.accountId }),
+    ).toEqual([]);
+
+    // Zyklus mit zwei Spieltagen
+    const day = (h: number) => new Date(Date.UTC(2026, 10, 12, h));
+    const cycle = await repo.createCycle({
+      seasonId,
+      number: 1,
+      startsAt: day(19),
+      endsAt: day(43),
+      members: [a, b, c].map((x, i) => ({
+        characterId: x.id,
+        division: 0,
+        ratingAtStart: 1500 - i,
+      })),
+      matches: [
+        {
+          division: 0,
+          matchday: 1,
+          lockAt: day(18),
+          playAt: day(19),
+          aCharacterId: a.id,
+          bCharacterId: b.id,
+          status: 'scheduled',
+        },
+        {
+          division: 0,
+          matchday: 1,
+          lockAt: day(18),
+          playAt: day(19),
+          aCharacterId: c.id,
+          bCharacterId: null,
+          status: 'bye',
+        },
+        {
+          division: 0,
+          matchday: 2,
+          lockAt: day(42),
+          playAt: day(43),
+          aCharacterId: b.id,
+          bCharacterId: c.id,
+          status: 'scheduled',
+        },
+      ],
+    });
+    expect(await repo.activeCycle(seasonId)).toMatchObject({ id: cycle.id, number: 1 });
+    await expect(
+      repo.createCycle({
+        seasonId,
+        number: 1,
+        startsAt: day(1),
+        endsAt: day(2),
+        members: [],
+        matches: [],
+      }),
+    ).rejects.toThrow();
+    expect(await repo.nextEvent(cycle.id)).toEqual({ kind: 'lock', at: day(18) });
+    const [first] = await repo.matches(cycle.id);
+    await repo.lockMatches([{ id: first!.id, snapshots: [] }]);
+    expect(await repo.nextEvent(cycle.id)).toEqual({ kind: 'play', at: day(19) });
+    await repo.finishMatch(first!.id, { fightId: null, winnerCharacterId: a.id, draw: false });
+    // Ein zweites Abschließen ändert nichts mehr
+    await repo.finishMatch(first!.id, { fightId: null, winnerCharacterId: b.id, draw: false });
+    expect((await repo.matches(cycle.id))[0]).toMatchObject({
+      status: 'played',
+      winnerCharacterId: a.id,
+    });
+    expect(await repo.nextEvent(cycle.id)).toEqual({ kind: 'lock', at: day(42) });
+
+    await repo.finishCycle(cycle.id, day(43), [
+      { characterId: a.id, place: 1, movement: 'stay' },
+      { characterId: b.id, place: 2, movement: 'stay' },
+      { characterId: c.id, place: 3, movement: 'stay' },
+    ]);
+    expect(await repo.activeCycle(seasonId)).toBeNull();
+    expect(await repo.lastCycle(seasonId)).toMatchObject({
+      status: 'finished',
+      finishedAt: day(43),
+    });
+    expect((await repo.members(cycle.id)).map((m) => m.place)).toEqual([1, 2, 3]);
+    expect(await repo.memberships(a.id, 5)).toHaveLength(1);
+
+    // Season zurücksetzen löscht Liga und Ratings
+    await new DrizzleSeasonAdminRepository(conn.db).resetSeason(seasonId, 'progress');
+    expect(await repo.lastCycle(seasonId)).toBeNull();
+    expect((await repo.ratings([a.id])).size).toBe(0);
+  });
+
   it('liefert die Rohdaten für den Balancing-Export', async () => {
     const current = (await new DrizzleSeasonRepository(conn.db).findCurrent())!;
     const rows = await new DrizzleExportRepository(conn.db).rows(current.id, new Date(0), 50);

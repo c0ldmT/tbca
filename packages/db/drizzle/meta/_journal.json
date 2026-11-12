@@ -99,6 +99,13 @@
       "when": 1794493258120,
       "tag": "0013_dev_login",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1794498175453,
+      "tag": "0014_league",
+      "breakpoints": true
     }
   ]
 }
