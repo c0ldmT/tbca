@@ -64,6 +64,8 @@ export class DungeonPage {
     fight: FightView;
     floor: number;
     pending: DungeonView;
+    /** Funde vor der Etage, für den Hinweis „+N Fund“. */
+    lootBefore: number;
   } | null>(null);
   /** Kurzer Hinweis nach einer gewonnenen Etage, z. B. „+1 Fund“. */
   protected readonly found = signal(0);
@@ -135,10 +137,14 @@ export class DungeonPage {
     }
   }
 
-  protected start(): Promise<void> {
-    return this.act(() =>
-      this.economy.dungeonStart({ injectors: this.injectors(), backupChip: this.backupChip() }),
-    );
+  /** Start kämpft sofort Etage 1 – auch diesen Kampf erst zeigen, dann das Ergebnis. */
+  protected async start(): Promise<void> {
+    const request = { injectors: this.injectors(), backupChip: this.backupChip() };
+    const started = await this.playFloor(1, 0, () => this.economy.dungeonStart(request));
+    if (started) {
+      this.injectors.set(0);
+      this.backupChip.set(false);
+    }
   }
 
   protected async action(name: 'continue' | 'heal' | 'leave'): Promise<void> {
@@ -148,18 +154,35 @@ export class DungeonPage {
       return;
     }
     // Weiter: Ergebnis zurückhalten und erst den Kampf der Etage zeigen
-    const floor = (this.run()?.floor ?? 0) + 1;
+    const run = this.run();
+    await this.playFloor((run?.floor ?? 0) + 1, run?.loot.count ?? 0, () =>
+      this.economy.dungeonAction('continue'),
+    );
+  }
+
+  /**
+   * Führt eine Aktion aus, die eine Etage kämpft, hält das Ergebnis zurück und spielt zuerst
+   * den Kampf im HUD ab. Ohne abrufbaren Kampf erscheint das Ergebnis sofort.
+   * @returns false bei einem Fehler der Aktion.
+   */
+  private async playFloor(
+    floor: number,
+    lootBefore: number,
+    fn: () => Promise<DungeonView>,
+  ): Promise<boolean> {
     this.busy.set(true);
     this.error.set(null);
     try {
-      const pending = await this.economy.dungeonAction('continue');
+      const pending = await fn();
       const fightId = pending.run?.lastFightId;
       const fight = fightId ? await this.pvp.fight(fightId).catch(() => null) : null;
-      if (fight) this.battle.set({ fight, floor, pending });
-      else this.reveal(pending);
+      if (fight) this.battle.set({ fight, floor, pending, lootBefore });
+      else this.reveal(pending, lootBefore);
+      return true;
     } catch (error) {
       this.error.set(error instanceof ApiFailure ? error.code : 'unknown');
       this.busy.set(false);
+      return false;
     }
   }
 
@@ -175,11 +198,10 @@ export class DungeonPage {
     const b = this.battle();
     if (!b) return;
     this.battle.set(null);
-    this.reveal(b.pending);
+    this.reveal(b.pending, b.lootBefore);
   }
 
-  private reveal(view: DungeonView): void {
-    const before = this.run()?.loot.count ?? 0;
+  private reveal(view: DungeonView, before: number): void {
     this.setView(view);
     this.busy.set(false);
     void this.characters.refresh();

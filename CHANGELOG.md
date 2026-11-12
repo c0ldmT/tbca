@@ -133,6 +133,8 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ### Behoben
 
+- Dungeon: Auch der Kampf um Etage 1, der beim Start des Runs sofort ausgetragen wird, läuft jetzt
+  im Kampf-HUD ab, bevor das Ergebnis erscheint (vorher nur ab Etage 2 über „Weiter“).
 - Website: Die Season-Steuerung (und die Team-Seite) luden Konstanten aus dem Haupteinstieg von
   `@tbca/shared`, der zod mitbringt; im Dev-Server schlug das Nachladen der Seite mit „zod nicht
   gefunden“ fehl. Laufzeitwerte kommen jetzt aus `@tbca/shared/constants`, eine ESLint-Regel
