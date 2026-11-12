@@ -117,6 +117,15 @@ export class DrizzleTeamRepository implements TeamRepository {
     return this.load(rows);
   }
 
+  async sample(limit: number): Promise<TeamRecord[]> {
+    const rows = await this.db
+      .select()
+      .from(team)
+      .orderBy(sql`random()`)
+      .limit(limit);
+    return this.load(rows);
+  }
+
   async create(record: Omit<TeamRecord, 'id' | 'members' | 'communityName'>): Promise<TeamRecord> {
     try {
       const id = await this.db.transaction(async (tx) => {

@@ -208,4 +208,59 @@ describe('Bot-Spieler', () => {
       skipped: 'real_season',
     });
   });
+
+  it('melden Teams mit Bot-Kapitän für die Team-Liga an und fordern Tages-Teams heraus', async () => {
+    const seasonId = t.seasons.current!.id;
+    const classes = ['gunner', 'bruiser', 'medtech'] as const;
+    const account = (i: number) =>
+      `01933b5e-0000-7000-8000-00000000a1${String(i).padStart(2, '0')}`;
+    for (let i = 0; i < 6; i++) {
+      const classId = classes[i % 3]!;
+      t.characters.records.push({
+        id: `01933b5e-0000-7000-8000-00000000b1${String(i).padStart(2, '0')}`,
+        accountId: account(i),
+        seasonId,
+        name: `TeamBot${i}`,
+        classId,
+        level: 3,
+        xp: 300,
+        allocated: { str: 0, dex: 0, int: 0, con: 0 },
+        loadouts: { [classId]: defaultLoadout(DEFAULT_GAME_CONFIG, classId, 3) },
+        isBot: true,
+      });
+    }
+    const team = (n: number, tag: string, members: string[]) => ({
+      id: `01933b5e-0000-7000-8000-00000000d00${n}`,
+      communityId: '01933b5e-0000-7000-8000-00000000c001',
+      communityName: 'Dev Community',
+      name: `Bot Team ${tag}`,
+      tag,
+      logo: 'wolf',
+      captainAccountId: members[0]!,
+      joinCode: `BOT${tag}`,
+      focus: 'threat' as const,
+      lineup2: [],
+      lineup3: [],
+      members,
+    });
+    t.teams.teams.push(team(1, 'BTA', [account(0), account(1), account(2)]));
+    t.teams.teams.push(team(2, 'BTB', [account(3), account(4), account(5)]));
+    // Nur die Kapitäne haben einen Agenten
+    await call('PUT', `/api/admin/bots/${account(0)}`, { agent: 'casual' });
+    await call('PUT', `/api/admin/bots/${account(3)}`, { agent: 'casual' });
+
+    for (let i = 0; i < 12; i++)
+      expect((await call('POST', '/api/admin/bots/run')).json().errors).toEqual({});
+    const joined = t.teamLeague.ratingRows.filter((r) => r.leagueJoined);
+    expect(joined.map((r) => `${r.teamId.slice(-1)}:${r.size}`).sort()).toEqual([
+      '1:2',
+      '1:3',
+      '2:2',
+      '2:3',
+    ]);
+    const teamFights = t.fights.fights.filter((f) => f.kind === 'team_rated');
+    expect(teamFights.length).toBeGreaterThan(0);
+    // Gewertete Team-Kämpfe zählen für die Platzierung
+    expect(t.teamLeague.ratingRows.some((r) => r.games > 0)).toBe(true);
+  });
 });

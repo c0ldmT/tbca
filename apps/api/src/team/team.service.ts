@@ -533,7 +533,8 @@ export class TeamService {
       : 1;
     // Kandidaten: Teams mit mindestens zwei Mitgliedern mit Charakter (sonst kein 2v2)
     const candidates = [];
-    for (const t of await this.teams.search('', 200)) {
+    // Zufällige Stichprobe, damit bei vielen Teams nicht immer dieselben (alphabetisch ersten) kommen
+    for (const t of await this.teams.sample(200)) {
       if (t.id === own.id) continue;
       const s = await this.summary(season, t);
       if (s.fighters >= 2) candidates.push({ id: t.id, level: s.averageLevel, isBot: s.isBot });

@@ -8,7 +8,7 @@ import {
   totalXpForLevel,
   type GameConfig,
 } from '@tbca/game-core';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 
 import type { Database } from './client.js';
 import {
@@ -84,8 +84,9 @@ export async function seedDevelopment(db: Database, now = new Date()): Promise<v
 }
 
 /**
- * Zwei Bot-Teams in der Dev-Community, damit sich Team-Herausforderungen allein testen lassen.
- * Beitrittscodes BOTCHW und BOTNEON.
+ * Vier Bot-Teams in der Dev-Community, damit sich Team-Herausforderungen und die Team-Liga
+ * (mindestens vier Teams) allein testen lassen. Je Team vier Bots, die noch in keinem Team sind.
+ * Beitrittscodes BOTCHW, BOTNEON, BOTRUST und BOTOWL.
  */
 export async function seedBotTeams(db: Database, seasonId: string): Promise<void> {
   const [dev] = await db
@@ -97,10 +98,13 @@ export async function seedBotTeams(db: Database, seasonId: string): Promise<void
     .select({ accountId: character.accountId, name: character.name, level: character.level })
     .from(character)
     .innerJoin(account, eq(account.id, character.accountId))
-    .where(and(eq(character.seasonId, seasonId), eq(account.isBot, true)));
+    .where(and(eq(character.seasonId, seasonId), eq(account.isBot, true)))
+    .orderBy(asc(character.level), asc(character.name));
   const plans = [
     { name: 'Chrome Wolves', tag: 'CHW', logo: 'wolf', levels: [1, 3] },
     { name: 'Neon Saints', tag: 'NEON', logo: 'halo', levels: [6, 10] },
+    { name: 'Rust Ronin', tag: 'RUST', logo: 'blade', levels: [1, 3] },
+    { name: 'Static Owls', tag: 'OWL', logo: 'eye', levels: [6, 10] },
   ];
   for (const plan of plans) {
     const [exists] = await db
@@ -109,7 +113,13 @@ export async function seedBotTeams(db: Database, seasonId: string): Promise<void
       .where(sql`lower(${team.tag}) = lower(${plan.tag})`);
     if (exists) continue;
     // Vier Bots je Team: so bleiben zwei Plätze, um selbst beizutreten.
-    const members = bots.filter((b) => plan.levels.includes(b.level)).slice(0, 4);
+    const taken = new Set(
+      (await db.select({ id: teamMember.accountId }).from(teamMember)).map((r) => r.id),
+    );
+    const members = bots
+      .filter((b) => plan.levels.includes(b.level) && !taken.has(b.accountId))
+      .slice(0, 4);
+    if (members.length < 2) continue;
     await db.transaction(async (tx) => {
       const [row] = await tx
         .insert(team)

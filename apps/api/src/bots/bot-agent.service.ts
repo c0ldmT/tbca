@@ -3,15 +3,22 @@ import { randomUUID } from 'node:crypto';
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { BOT_AGENTS, type BotAgent } from '@tbca/db';
 import { CLASS_IDS, Xoshiro128ss } from '@tbca/game-core';
-import type { AdminBotView, BotRunResult } from '@tbca/shared';
+import type { AdminBotView, BotRunResult, TeamView } from '@tbca/shared';
 
 import { CharacterService } from '../character/character.service.js';
 import { ApiError } from '../common/api-error.js';
 import { DungeonService } from '../dungeon/dungeon.service.js';
 import { FightService } from '../fight/fight.service.js';
 import { SeasonService } from '../game/season.js';
+import type { TeamLeagueRepository } from '../league/team-types.js';
 import type { LeagueRepository } from '../league/types.js';
-import { ADMIN_REPOSITORY, BOT_REPOSITORY, LEAGUE_REPOSITORY } from '../tokens.js';
+import { TeamService } from '../team/team.service.js';
+import {
+  ADMIN_REPOSITORY,
+  BOT_REPOSITORY,
+  LEAGUE_REPOSITORY,
+  TEAM_LEAGUE_REPOSITORY,
+} from '../tokens.js';
 import type { AdminRepository } from '../admin/types.js';
 import type { BotInfo, BotRepository } from './bot.repository.js';
 
@@ -28,6 +35,10 @@ import type { BotInfo, BotRepository } from './bot.repository.js';
  *
  * Alle Bots mit Agent melden sich für die Liga an; eingeteilt werden sie wie Spieler erst nach
  * ihren Platzierungskämpfen (gewertete Kämpfe in beide Richtungen zählen).
+ *
+ * Teams mit einem Bot-Kapitän (mit Agent) melden sich für die Team-Liga beider Größen an und
+ * fordern je Runde mit halber Wahrscheinlichkeit eines ihrer Tages-Teams gewertet heraus –
+ * so kommen auch Bot-Teams durch die Platzierung.
  */
 @Injectable()
 export class BotAgentService {
@@ -39,6 +50,8 @@ export class BotAgentService {
     @Inject(CharacterService) private readonly characters: CharacterService,
     @Inject(SeasonService) private readonly seasons: SeasonService,
     @Inject(LEAGUE_REPOSITORY) private readonly league: LeagueRepository,
+    @Inject(TEAM_LEAGUE_REPOSITORY) private readonly teamLeague: TeamLeagueRepository,
+    @Inject(TeamService) private readonly teams: TeamService,
   ) {}
 
   async list(): Promise<AdminBotView[]> {
@@ -70,7 +83,8 @@ export class BotAgentService {
     if (!season.isTest) return { acted: 0, actions: 0, errors: {}, skipped: 'real_season' };
     const rng = Xoshiro128ss.fromSeed(randomUUID());
     const result: BotRunResult = { acted: 0, actions: 0, errors: {}, skipped: null };
-    for (const bot of await this.bots.list(season.id)) {
+    const bots = await this.bots.list(season.id);
+    for (const bot of bots) {
       if (!bot.agent || !bot.character) continue;
       try {
         // Bots mit Agent spielen in Test-Seasons auch in der Liga mit (nach ihrer Platzierung)
@@ -83,14 +97,56 @@ export class BotAgentService {
         }
         result.acted++;
       } catch (error) {
-        const code =
-          error instanceof ApiError
-            ? String((error.getResponse() as { code?: string }).code)
-            : 'error';
+        const code = errorCode(error);
         result.errors[code] = (result.errors[code] ?? 0) + 1;
       }
     }
+    // Teams mit Bot-Kapitän: jedes Team nur einmal, auch wenn mehrere Bots darin sind
+    const seen = new Set<string>();
+    for (const bot of bots) {
+      if (!bot.agent || !bot.character) continue;
+      for (const team of await this.teams.mine(bot.accountId)) {
+        if (seen.has(team.id) || !team.captain) continue;
+        seen.add(team.id);
+        try {
+          result.actions += await this.teamTurn(season.id, bot.accountId, team, rng);
+        } catch (error) {
+          const code = errorCode(error);
+          result.errors[code] = (result.errors[code] ?? 0) + 1;
+        }
+      }
+    }
     return result;
+  }
+
+  /** Anmelden für die Team-Liga (Größen mit voller Aufstellung) und ab und zu ein Team-Kampf. */
+  private async teamTurn(
+    seasonId: string,
+    captain: string,
+    team: TeamView,
+    rng: Xoshiro128ss,
+  ): Promise<number> {
+    const fighters = team.members.filter((m) => m.character).map((m) => m.accountId);
+    const sizes = ([2, 3] as const).filter((size) => fighters.length >= size);
+    for (const size of sizes) await this.teamLeague.setJoined(seasonId, size, team.id, true);
+    if (sizes.length === 0 || !rng.chance(500, 1000)) return 0;
+    const opponents = await this.teams.opponents(captain, team.id);
+    if (opponents.length === 0) return 0;
+    const opponent = opponents[rng.nextInt(opponents.length)]!;
+    // 3v3 nur, wenn auch der Gegner genug Mitglieder hat; sonst 2v2
+    const size = sizes.includes(3) && opponent.members >= 3 && rng.chance(500, 1000) ? 3 : 2;
+    const saved = size === 2 ? team.lineup2 : team.lineup3;
+    const lineup =
+      saved.length === size && saved.every((id) => fighters.includes(id))
+        ? saved
+        : fighters.slice(0, size);
+    await this.teams.challenge(captain, team.id, {
+      opponentTeamId: opponent.id,
+      size,
+      lineup,
+      mode: 'rated',
+    });
+    return 1;
   }
 
   private async act(bot: BotInfo, agent: BotAgent, rng: Xoshiro128ss): Promise<number> {
@@ -178,4 +234,10 @@ export class BotAgentService {
   }
 
   static readonly agents = BOT_AGENTS;
+}
+
+function errorCode(error: unknown): string {
+  return error instanceof ApiError
+    ? String((error.getResponse() as { code?: string }).code)
+    : 'error';
 }

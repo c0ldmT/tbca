@@ -723,6 +723,10 @@ export class InMemoryTeams implements TeamRepository {
     return t ? structuredClone(t) : null;
   }
 
+  async sample(limit: number) {
+    return structuredClone(this.teams.slice(0, limit));
+  }
+
   async search(query: string, limit: number) {
     const q = query.toLowerCase();
     return structuredClone(

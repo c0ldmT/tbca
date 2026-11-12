@@ -24,6 +24,7 @@ import { parseBody } from '../common/api-error.js';
 import { ServiceTokenGuard } from '../discord/service-token.guard.js';
 import { DungeonModule } from '../dungeon/dungeon.module.js';
 import { FightModule } from '../fight/fight.module.js';
+import { TeamModule } from '../team/team.module.js';
 import { ADMIN_REPOSITORY, BOT_REPOSITORY, DB_CONNECTION } from '../tokens.js';
 import { BotAgentService } from './bot-agent.service.js';
 import { DrizzleBotRepository } from './bot.repository.js';
@@ -67,7 +68,7 @@ export class BotJobsController {
 }
 
 @Module({
-  imports: [AuthModule, CharacterModule, FightModule, DungeonModule],
+  imports: [AuthModule, CharacterModule, FightModule, DungeonModule, TeamModule],
   controllers: [AdminBotsController, BotJobsController],
   providers: [
     BotAgentService,

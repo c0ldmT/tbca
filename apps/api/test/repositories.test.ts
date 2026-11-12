@@ -431,6 +431,8 @@ describe.skipIf(!url)('Drizzle-Repositories (Integration)', () => {
       lineup3: [],
     });
     expect(t1).toMatchObject({ members: [a!.id], communityName: 'Teamtest' });
+    const sample = await repo.sample(10_000);
+    expect(sample.find((x) => x.id === t1.id)).toMatchObject({ members: [a!.id] });
     await expect(
       repo.create({
         communityId: guild.communityId,

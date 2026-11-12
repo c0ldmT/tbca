@@ -24,6 +24,7 @@ import {
   runMigrations,
   season,
   seedDevelopment,
+  teamMember,
   type DbConnection,
 } from '../src/index.js';
 
@@ -70,6 +71,14 @@ describe.skipIf(!url)('Datenbank (Integration)', () => {
       .where(eq(character.seasonId, seasons[0]!.id));
     expect(bots.filter((b) => b.isBot)).toHaveLength(16);
     expect(new Set(bots.map((b) => b.level))).toEqual(new Set([1, 3, 6, 10]));
+
+    // Vier Bot-Teams mit je vier verschiedenen Bots
+    const members = await conn.db
+      .select({ teamId: teamMember.teamId, accountId: teamMember.accountId })
+      .from(teamMember);
+    expect(new Set(members.map((m) => m.teamId)).size).toBe(4);
+    expect(members).toHaveLength(16);
+    expect(new Set(members.map((m) => m.accountId)).size).toBe(16);
   });
 
   it('ordnet Identitäten eindeutig über Anbieter und Plattform-ID zu', async () => {

@@ -51,6 +51,8 @@ export interface TeamRepository {
   find(id: string): Promise<TeamRecord | null>;
   findByCode(code: string): Promise<TeamRecord | null>;
   search(query: string, limit: number): Promise<TeamRecord[]>;
+  /** Zufällige Stichprobe aller Teams (Kandidaten für die Tages-Teams). */
+  sample(limit: number): Promise<TeamRecord[]>;
   create(team: Omit<TeamRecord, 'id' | 'members' | 'communityName'>): Promise<TeamRecord>;
   addMember(team: TeamRecord, accountId: string): Promise<void>;
   removeMember(teamId: string, accountId: string): Promise<void>;

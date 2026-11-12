@@ -8,6 +8,13 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ### Hinzugefügt
 
+- Bot-Teams in der Team-Liga: Teams, deren Kapitän ein Bot mit Agententyp ist, melden sich in
+  Test-Seasons für die Team-Liga beider Größen an (3v3 nur mit drei Mitgliedern mit Charakter)
+  und fordern je Bot-Runde mit halber Wahrscheinlichkeit eines ihrer Tages-Teams gewertet heraus
+  (2v2, oder 3v3, wenn der Gegner genug Mitglieder hat) – so kommen sie durch die Platzierung.
+  Der Seed legt vier statt zwei Bot-Teams an (neu: `RUST` Rust Ronin, `OWL` Static Owls, je vier
+  Bots, die noch in keinem Team sind); damit erreicht die Team-Liga ihre Mindestgröße. Ein
+  erneuter Seed ergänzt bestehende Datenbanken.
 - Team-Liga im Discord: Der Liga-Kanal eines Servers (`/tbca-admin liga-kanal`) meldet jetzt
   auch gespielte Spieltage und das Zyklusende der Team-Liga 2v2 und 3v3 – nur Paarungen und
   Plätze von Teams der Community des Servers. Die Nachricht nennt die Größe
@@ -151,6 +158,8 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ### Geändert
 
+- Die gegnerischen Tages-Teams werden aus einer Zufallsstichprobe von bis zu 200 Teams gewählt
+  statt aus den alphabetisch ersten.
 - Team-Herausforderungen wie im Einzel eingeschränkt: Jedes Team bekommt täglich eine kleine
   Auswahl gegnerischer Teams nahe am eigenen Durchschnittslevel (`pvp.dailyTeamOpponents`,
   Standard 3; nur Teams mit mindestens zwei Mitgliedern mit Charakter), für alle Mitglieder
