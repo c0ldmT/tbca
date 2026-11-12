@@ -244,6 +244,13 @@ describe('Interne Discord-API', () => {
     expect(accepted.fight.url).toMatch(new RegExp(`^${WEB_ORIGIN}/replay/`));
     expect(accepted.fight.rounds).toBeGreaterThan(0);
     expect(t.fights.fights).toHaveLength(1);
+    // Beide Seiten werden belohnt und zählen fürs Tageslimit
+    expect(accepted.fight.opponentReward).toMatchObject({ name: 'Trinity' });
+    expect(accepted.fight.opponentReward.xp).toBeGreaterThan(0);
+    const [, theirs] = t.fights.fights[0]!.participants;
+    expect(theirs).toMatchObject({ rewarded: true, xpAwarded: accepted.fight.opponentReward.xp });
+    const trinity = t.characters.records.find((c) => c.name === 'Trinity')!;
+    expect(trinity.xp).toBe(accepted.fight.opponentReward.xp);
     // Kein zweiter Kampf aus derselben Anfrage
     expect((await answer(OTHER, true)).json().code).toBe('challenge_closed');
 

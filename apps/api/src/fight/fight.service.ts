@@ -126,7 +126,7 @@ export class FightService {
   async challenge(
     accountId: string,
     req: ChallengeRequest,
-    options: { direct?: boolean } = {},
+    options: { direct?: boolean; rewardOpponent?: boolean } = {},
   ): Promise<ChallengeResponse> {
     const { season, me } = await this.mine(accountId);
     const opponent = await this.characters.findById(req.opponentId);
@@ -164,20 +164,31 @@ export class FightService {
     const day = this.today();
     const median = await this.progression.median(season.id);
 
-    const response = await this.fights.locked(me.id, async (tx) => {
-      const counts = await tx.rewardCounts(me.id, day);
-      const base = pvpReward(season.game, {
-        mode: req.mode,
-        won,
-        level: me.level,
-        opponentLevel: opponent.level,
-        rewardedToday: counts.today,
-        rewardedVsOpponentToday: counts.byOpponent.get(opponent.id) ?? 0,
-        opponentIsBot: opponent.isBot ?? false,
-        testSeason: season.isTest,
-      });
-      // Aufholbonus: mehr XP, wer weit unter dem Median der Season liegt
-      const reward = this.progression.boost(season.game, base, me.level, median);
+    // Angenommene Herausforderungen (Discord) belohnen auch den Gegner – nach denselben Regeln
+    const both = options.rewardOpponent === true;
+    const ids = both ? [me.id, opponent.id] : [me.id];
+    const response = await this.fights.lockedMany(ids, async (tx) => {
+      const rewardFor = async (
+        c: CharacterRecord,
+        other: CharacterRecord,
+        hasWon: boolean,
+      ): Promise<ReturnType<typeof pvpReward>> => {
+        const counts = await tx.rewardCounts(c.id, day);
+        const base = pvpReward(season.game, {
+          mode: req.mode,
+          won: hasWon,
+          level: c.level,
+          opponentLevel: other.level,
+          rewardedToday: counts.today,
+          rewardedVsOpponentToday: counts.byOpponent.get(other.id) ?? 0,
+          opponentIsBot: other.isBot ?? false,
+          testSeason: season.isTest,
+        });
+        // Aufholbonus: mehr XP, wer weit unter dem Median der Season liegt
+        return this.progression.boost(season.game, base, c.level, median);
+      };
+      const reward = await rewardFor(me, opponent, won);
+      const theirs = both ? await rewardFor(opponent, me, result.winner === 1) : null;
       const fightId = await tx.insert({
         seasonId: season.id,
         kind: req.mode === 'rated' ? 'pvp_rated' : 'pvp_friendly',
@@ -204,34 +215,38 @@ export class FightService {
             characterId: opponent.id,
             initiator: false,
             won: result.winner === 1,
-            rewarded: false,
-            xpAwarded: 0,
-            creditsAwarded: 0,
+            rewarded: theirs?.rewarded ?? false,
+            xpAwarded: theirs?.xp ?? 0,
+            creditsAwarded: theirs?.credits ?? 0,
             opponentCharacterId: me.id,
           },
         ],
       });
-      if (reward.credits > 0) await tx.rewardCredits(season.id, accountId, reward.credits, fightId);
-
       // XP erst nach dem Kampf anrechnen; das Level folgt aus der XP-Kurve der Season.
-      let after = me.level;
-      if (reward.xp > 0) {
-        const xp = me.xp + reward.xp;
-        after = Math.max(me.level, levelFromXp(season.game, xp).level);
-        await tx.setProgress(me.id, xp, after);
-      }
+      const grant = async (c: CharacterRecord, r: { xp: number; credits: number }) => {
+        if (r.credits > 0) await tx.rewardCredits(season.id, c.accountId, r.credits, fightId);
+        if (r.xp <= 0) return c.level;
+        const xp = c.xp + r.xp;
+        const level = Math.max(c.level, levelFromXp(season.game, xp).level);
+        await tx.setProgress(c.id, xp, level);
+        return level;
+      };
+      const after = await grant(me, reward);
+      if (theirs) await grant(opponent, theirs);
+      const view = (r: ReturnType<typeof pvpReward>) => ({
+        xp: r.xp,
+        credits: r.credits,
+        rewarded: r.rewarded,
+        limit: r.limit,
+        underdogBonus: r.underdogBonus,
+      });
       return {
         fightId,
         won,
         draw: result.winner === null,
-        reward: {
-          xp: reward.xp,
-          credits: reward.credits,
-          rewarded: reward.rewarded,
-          limit: reward.limit,
-          underdogBonus: reward.underdogBonus,
-        },
+        reward: view(reward),
         level: { before: me.level, after },
+        ...(theirs ? { opponentReward: view(theirs) } : {}),
       };
     });
     // Gewertete Kämpfe schreiben das Glicko-2-Rating beider Seiten fort (Platzierung, Liga)

@@ -128,6 +128,7 @@ describe('Discord-Bot', () => {
             credits: 12,
             limit: 'none',
             levelUp: 2,
+            opponentReward: { name: 'Trinity', xp: 15, credits: 3 },
             url: 'https://tbca/replay/x',
           },
         },
@@ -152,6 +153,7 @@ describe('Discord-Bot', () => {
     expect(JSON.parse(String(calls[0]!.init.body))).toMatchObject({ accept: true });
     expect(reply.content).toContain('**Trinity** nimmt an!');
     expect(reply.content).toContain('**Neo** gewinnt nach 9 Runden');
+    expect(reply.content).toContain('Trinity: +15 XP, +3 Credits');
     expect(reply.content).toContain('https://tbca/replay/x');
     expect(reply.buttons).toEqual([]);
   });

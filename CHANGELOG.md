@@ -147,6 +147,10 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ### Geändert
 
+- Angenommene Discord-Herausforderungen belohnen auch die angefragte Person – nach denselben
+  Regeln wie den Herausforderer (Tageslimit, Abnahme gegen denselben Gegner, Underdog-Bonus,
+  Aufholbonus); der Kampf zählt für beide als belohnter Kampf. Die Bot-Nachricht nennt beide
+  Belohnungen.
 - Keine freie Gegnersuche mehr: Jeder Spieler bekommt täglich eine kleine Auswahl zufälliger
   Gegner nahe am eigenen Level (`pvp.dailyOpponents`, Standard 5; echte Spieler vor Bots, außer
   in Test-Seasons). Mit der Abnahme gegen denselben Gegner (100 %, 50 %) ergibt das genau das

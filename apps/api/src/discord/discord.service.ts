@@ -354,10 +354,17 @@ export class DiscordService {
     const result = await this.fights.challenge(
       challenger.accountId,
       { opponentId: opponent.id, mode: request.mode },
-      { direct: true },
+      { direct: true, rewardOpponent: true },
     );
     await this.pvp.setRequestFight(request.id, result.fightId);
-    return { status: 'accepted', ...names, fight: await this.summarize(result) };
+    const fight = await this.summarize(result);
+    if (result.opponentReward)
+      fight.opponentReward = {
+        name: opponent.name,
+        xp: result.opponentReward.xp,
+        credits: result.opponentReward.credits,
+      };
+    return { status: 'accepted', ...names, fight };
   }
 
   /** Kurzfassung eines Kampfes für eine Discord-Nachricht. */

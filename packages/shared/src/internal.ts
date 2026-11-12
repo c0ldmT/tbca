@@ -178,6 +178,8 @@ export interface DiscordFightSummary {
   credits: number;
   limit: string;
   levelUp: number | null;
+  /** Bei angenommenen Herausforderungen: Belohnung der angefragten Person. */
+  opponentReward?: { name: string; xp: number; credits: number };
   url: string;
 }
 

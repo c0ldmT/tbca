@@ -28,6 +28,9 @@ const de = {
     `${f.winner ? `**${f.winner}** gewinnt` : 'Unentschieden'} nach ${f.rounds} Runden.` +
     (f.bestHit ? ` Bester Treffer: ${f.bestHit.name} mit ${f.bestHit.value}.` : '') +
     (f.xp > 0 ? ` +${f.xp} XP, +${f.credits} Credits.` : ' Keine Belohnung.') +
+    (f.opponentReward && f.opponentReward.xp > 0
+      ? ` ${f.opponentReward.name}: +${f.opponentReward.xp} XP, +${f.opponentReward.credits} Credits.`
+      : '') +
     (f.levelUp ? ` Level ${f.levelUp} erreicht!` : '') +
     `\nReplay: ${f.url}`,
   challengeRequest: (r: DiscordChallengeRequestView): string =>
@@ -211,6 +214,9 @@ const en: typeof de = {
     `${f.winner ? `**${f.winner}** wins` : 'Draw'} after ${f.rounds} rounds.` +
     (f.bestHit ? ` Best hit: ${f.bestHit.name} with ${f.bestHit.value}.` : '') +
     (f.xp > 0 ? ` +${f.xp} XP, +${f.credits} credits.` : ' No reward.') +
+    (f.opponentReward && f.opponentReward.xp > 0
+      ? ` ${f.opponentReward.name}: +${f.opponentReward.xp} XP, +${f.opponentReward.credits} credits.`
+      : '') +
     (f.levelUp ? ` Reached level ${f.levelUp}!` : '') +
     `\nReplay: ${f.url}`,
   challengeRequest: (r) =>

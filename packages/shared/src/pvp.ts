@@ -29,6 +29,8 @@ export interface ChallengeResponse {
   draw: boolean;
   reward: RewardView;
   level: { before: number; after: number };
+  /** Nur bei angenommenen Herausforderungen: Belohnung des Gegners. */
+  opponentReward?: RewardView;
 }
 
 export interface PvpStatus {
