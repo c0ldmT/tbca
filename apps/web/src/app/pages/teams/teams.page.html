@@ -1,288 +1,426 @@
 <ng-container *transloco="let t">
-  <header class="head">
-    <h1>{{ t('teams.title') }}</h1>
-    <p class="tbca-hint">{{ t('teams.intro') }}</p>
-  </header>
-
   @if (auth.state() === null) {
-    <section class="tbca-panel">
+    <section class="tbca-panel gate">
       <a class="tbca-button" [href]="auth.loginUrl()">{{ t('auth.login') }}</a>
     </section>
   } @else if (characters.state() === null) {
-    <section class="tbca-panel">
+    <section class="tbca-panel gate">
       <p>{{ t('pvp.characterFirst') }}</p>
       <a class="tbca-button" routerLink="/character">{{ t('character.create.title') }}</a>
     </section>
   } @else {
     @if (error()) {
-      <p class="tbca-error" role="alert">{{ t('errors.' + error()) }}</p>
+      <p class="tbca-notice tbca-notice--bad" role="alert">{{ t('errors.' + error()) }}</p>
     }
 
-    @for (team of teams(); track team.id) {
-      <section class="tbca-panel team" [attr.aria-label]="team.name">
-        <header class="team__head">
-          <span class="badge" aria-hidden="true">{{ glyph[team.logo] }}</span>
-          <div>
-            <h2>[{{ team.tag }}] {{ team.name }}</h2>
-            <p class="tbca-hint">
-              {{ team.community.name }} · {{ t('teams.code', { code: team.joinCode }) }}
-            </p>
-          </div>
-        </header>
-        <ul class="members">
-          @for (m of team.members; track m.accountId) {
-            <li class="member">
-              <span>
-                {{ m.character?.name ?? t('teams.noCharacter') }}
-                @if (m.captain) {
-                  <span class="chip">{{ t('teams.captain') }}</span>
+    <!-- ===== Mein Team ===== -->
+    @if (section() === 'team') {
+      <div class="layout">
+        <div class="col">
+          @for (team of teams(); track team.id) {
+            <section
+              class="tbca-panel tbca-panel--flush team tbca-gl tbca-gl--b"
+              [attr.aria-label]="team.name"
+            >
+              <i class="tbca-gx" aria-hidden="true"></i>
+              <div class="tbca-ph">
+                <h2>{{ t('crew.myTeam') }}</h2>
+                <span class="tbca-idx">{{ team.community.name }}</span>
+              </div>
+              <header class="team__head">
+                <tbca-team-logo [logo]="team.logo" [tag]="team.tag" [size]="84" />
+                <div class="team__id">
+                  <span class="tbca-tag tbca-tag--cyan">[{{ team.tag }}]</span>
+                  <h3 class="team__name">{{ team.name }}</h3>
+                  <span class="tbca-label-mono">{{
+                    t('teams.code', { code: team.joinCode })
+                  }}</span>
+                </div>
+                <dl class="team__stats">
+                  <div>
+                    <dt class="tbca-label-mono">{{ t('crew.members') }}</dt>
+                    <dd>
+                      {{ team.members.length }}<small>/{{ maxMembers }}</small>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt class="tbca-label-mono">{{ t('crew.avgLevel') }}</dt>
+                    <dd>{{ averageLevel(team) }}</dd>
+                  </div>
+                </dl>
+              </header>
+              <div class="team__fill">
+                <tbca-segments
+                  [total]="maxMembers"
+                  [filled]="team.members.length"
+                  [pulseNext]="false"
+                  [height]="8"
+                />
+              </div>
+
+              <ul class="members">
+                @for (m of team.members; track m.accountId) {
+                  <li class="member" [class.member--captain]="m.captain">
+                    <tbca-class-badge [classId]="m.character?.classId ?? null" [size]="40" />
+                    <span class="member__who">
+                      <b>{{ m.character?.name ?? t('teams.noCharacter') }}</b>
+                      @if (m.character; as c) {
+                        <span class="tbca-label-mono"
+                          >{{ t('classes.' + c.classId) }} ·
+                          {{ t('character.level', { level: c.level }) }}</span
+                        >
+                      }
+                    </span>
+                    @if (m.captain) {
+                      <span class="tbca-tag tbca-tag--yellow">{{ t('teams.captain') }}</span>
+                    }
+                    @if (team.captain && !m.captain) {
+                      <button
+                        type="button"
+                        class="tbca-button tbca-button--ghost tbca-button--sm"
+                        [disabled]="busy()"
+                        (click)="kick(team, m.accountId)"
+                      >
+                        {{ t('teams.kick') }}
+                      </button>
+                    }
+                  </li>
                 }
-              </span>
-              @if (m.character; as c) {
-                <span class="tbca-hint"
-                  >{{ t('classes.' + c.classId) }},
-                  {{ t('character.level', { level: c.level }) }}</span
-                >
-              }
-              @if (team.captain && !m.captain) {
+              </ul>
+
+              <div class="team__actions">
+                <label class="opt">
+                  <span class="tbca-label-mono">{{ t('teams.focus') }}</span>
+                  <select
+                    class="tbca-select"
+                    [disabled]="!team.captain || busy()"
+                    (change)="saveSettings(team, { focus: $any($event.target).value })"
+                  >
+                    @for (f of focusOptions; track f) {
+                      <option [value]="f" [selected]="team.focus === f">
+                        {{ t('tactic.target.' + f) }}
+                      </option>
+                    }
+                  </select>
+                </label>
+                <a class="tbca-button" routerLink="/crew/challenge">{{ t('crew.toChallenge') }}</a>
                 <button
                   type="button"
-                  class="tbca-button tbca-button--ghost"
+                  class="tbca-button tbca-button--danger"
                   [disabled]="busy()"
-                  (click)="kick(team, m.accountId)"
+                  (click)="leave(team)"
                 >
-                  {{ t('teams.kick') }}
+                  {{ t('teams.leave') }}
+                </button>
+              </div>
+            </section>
+          } @empty {
+            <section class="tbca-panel empty">
+              <span class="tbca-kicker">{{ t('crew.myTeam') }}</span>
+              <p>{{ t('teams.intro') }}</p>
+            </section>
+          }
+        </div>
+
+        <div class="col">
+          <section
+            class="tbca-panel tbca-panel--flush tbca-gl tbca-gl--e"
+            aria-labelledby="new-team-title"
+          >
+            <i class="tbca-gx" aria-hidden="true"></i>
+            <div class="tbca-ph">
+              <h2 id="new-team-title">{{ t('crew.create') }}</h2>
+            </div>
+            <div class="pbody">
+              @if (memberCommunities().length === 0) {
+                <p class="tbca-hint">{{ t('teams.joinCommunityFirst') }}</p>
+              } @else {
+                <form class="form" (submit)="$event.preventDefault(); create()">
+                  <label class="opt">
+                    <span class="tbca-label-mono">{{ t('teams.community') }}</span>
+                    <select
+                      class="tbca-select"
+                      (change)="patchForm({ communityId: $any($event.target).value })"
+                    >
+                      @for (c of memberCommunities(); track c.id) {
+                        <option [value]="c.id" [selected]="form().communityId === c.id">
+                          {{ c.name }}
+                        </option>
+                      }
+                    </select>
+                  </label>
+                  <div class="form__row">
+                    <label class="opt grow">
+                      <span class="tbca-label-mono">{{ t('teams.name') }}</span>
+                      <input
+                        class="tbca-input"
+                        maxlength="20"
+                        [value]="form().name"
+                        (input)="patchForm({ name: $any($event.target).value })"
+                      />
+                    </label>
+                    <label class="opt">
+                      <span class="tbca-label-mono">{{ t('teams.tag') }}</span>
+                      <input
+                        class="tbca-input tag"
+                        maxlength="5"
+                        [value]="form().tag"
+                        (input)="patchForm({ tag: $any($event.target).value })"
+                      />
+                    </label>
+                  </div>
+                  <fieldset class="logos">
+                    <legend class="tbca-label-mono">{{ t('teams.logo') }}</legend>
+                    @for (l of logos; track l) {
+                      <button
+                        type="button"
+                        class="logo-pick"
+                        [attr.aria-pressed]="form().logo === l"
+                        [attr.aria-label]="t('teams.logos.' + l)"
+                        [title]="t('teams.logos.' + l)"
+                        (click)="patchForm({ logo: l })"
+                      >
+                        <tbca-team-logo [logo]="l" [tag]="form().tag || 'TBCA'" [size]="40" />
+                      </button>
+                    }
+                  </fieldset>
+                  <button class="tbca-button" type="submit" [disabled]="busy()">
+                    {{ t('teams.create') }}
+                  </button>
+                </form>
+              }
+            </div>
+          </section>
+
+          <section class="tbca-panel tbca-panel--flush" aria-labelledby="join-team-title">
+            <div class="tbca-ph">
+              <h2 id="join-team-title">{{ t('crew.joinTitle') }}</h2>
+            </div>
+            <form class="pbody form form--inline" (submit)="$event.preventDefault(); join()">
+              <label class="opt grow">
+                <span class="tbca-label-mono">{{ t('teams.joinCode') }}</span>
+                <input
+                  class="tbca-input tag"
+                  maxlength="12"
+                  [value]="code()"
+                  (input)="code.set($any($event.target).value)"
+                />
+              </label>
+              <button
+                class="tbca-button tbca-button--ghost"
+                type="submit"
+                [disabled]="busy() || code().length < 4"
+              >
+                {{ t('teams.join') }}
+              </button>
+            </form>
+          </section>
+        </div>
+      </div>
+    }
+
+    <!-- ===== Team-Kampf ===== -->
+    @if (section() === 'challenge') {
+      @if (activeTeam(); as team) {
+        <div class="layout layout--challenge">
+          <section
+            class="tbca-panel tbca-panel--flush tbca-gl tbca-gl--c"
+            aria-labelledby="lineup-title"
+          >
+            <i class="tbca-gx" aria-hidden="true"></i>
+            <div class="tbca-ph">
+              <h2 id="lineup-title">{{ t('crew.lineup') }}</h2>
+              <span class="tbca-idx">{{
+                t('teams.lineup', { count: lineup().length, size: size() })
+              }}</span>
+            </div>
+            <div class="pbody">
+              <div class="form__row">
+                @if (teams().length > 1) {
+                  <label class="opt grow">
+                    <span class="tbca-label-mono">{{ t('teams.ownTeam') }}</span>
+                    <select
+                      class="tbca-select"
+                      (change)="activeTeamId.set($any($event.target).value)"
+                    >
+                      @for (x of teams(); track x.id) {
+                        <option [value]="x.id" [selected]="x.id === team.id">
+                          [{{ x.tag }}] {{ x.name }}
+                        </option>
+                      }
+                    </select>
+                  </label>
+                } @else {
+                  <div class="own">
+                    <tbca-team-logo [logo]="team.logo" [tag]="team.tag" [size]="44" />
+                    <b>[{{ team.tag }}] {{ team.name }}</b>
+                  </div>
+                }
+                <div class="opt">
+                  <span class="tbca-label-mono">{{ t('teams.size') }}</span>
+                  <span class="tbca-seg" role="group" [attr.aria-label]="t('teams.size')">
+                    @for (s of [2, 3]; track s) {
+                      <button
+                        type="button"
+                        [attr.aria-pressed]="size() === s"
+                        (click)="setSize($any(s))"
+                      >
+                        {{ s }}v{{ s }}
+                      </button>
+                    }
+                  </span>
+                </div>
+              </div>
+
+              <fieldset class="lineup">
+                <legend class="visually-hidden">
+                  {{ t('teams.lineup', { count: lineup().length, size: size() }) }}
+                </legend>
+                @for (m of team.members; track m.accountId) {
+                  @if (m.character; as c) {
+                    <label class="pick" [class.pick--on]="lineup().includes(m.accountId)">
+                      <input
+                        type="checkbox"
+                        [checked]="lineup().includes(m.accountId)"
+                        (change)="toggleLineup(m.accountId)"
+                      />
+                      <tbca-class-badge [classId]="c.classId" [size]="40" />
+                      <span class="member__who">
+                        <b>{{ c.name }}</b>
+                        <span class="tbca-label-mono"
+                          >{{ t('classes.' + c.classId) }} ·
+                          {{ t('character.level', { level: c.level }) }}</span
+                        >
+                      </span>
+                      <span class="pick__mark" aria-hidden="true"></span>
+                    </label>
+                  }
+                }
+              </fieldset>
+              <tbca-segments [total]="size()" [filled]="lineup().length" [height]="8" />
+              @if (team.captain) {
+                <button
+                  type="button"
+                  class="tbca-button tbca-button--ghost save"
+                  [disabled]="busy() || !ready()"
+                  (click)="saveLineupAsDefault(team)"
+                >
+                  {{ t('teams.saveLineup') }}
                 </button>
               }
+            </div>
+          </section>
+
+          <section
+            class="tbca-panel tbca-panel--flush tbca-gl tbca-gl--f"
+            aria-labelledby="challenge-title"
+          >
+            <i class="tbca-gx" aria-hidden="true"></i>
+            <div class="tbca-ph">
+              <h2 id="challenge-title">{{ t('teams.challenge') }}</h2>
+              <span class="tbca-idx">{{ size() }}v{{ size() }}</span>
+            </div>
+            <div class="pbody">
+              <label class="opt">
+                <span class="tbca-label-mono">{{ t('teams.search') }}</span>
+                <input
+                  class="tbca-input"
+                  type="search"
+                  (input)="search($any($event.target).value)"
+                />
+              </label>
+              <ul class="opponents">
+                @for (o of opponents(); track o.id) {
+                  @if (o.id !== team.id) {
+                    <li class="opponent">
+                      <tbca-team-logo [logo]="o.logo" [tag]="o.tag" [size]="48" />
+                      <div class="opponent__who">
+                        <b>[{{ o.tag }}] {{ o.name }}</b>
+                        <span class="tbca-label-mono">{{
+                          t('teams.summary', {
+                            community: o.community,
+                            members: o.members,
+                            level: o.averageLevel,
+                          })
+                        }}</span>
+                      </div>
+                      <div class="opponent__actions">
+                        <button
+                          type="button"
+                          class="tbca-button"
+                          [disabled]="busy() || !ready()"
+                          (click)="challenge(o, 'rated')"
+                        >
+                          {{ t('pvp.rated') }}
+                        </button>
+                        <button
+                          type="button"
+                          class="tbca-button tbca-button--ghost"
+                          [disabled]="busy() || !ready()"
+                          (click)="challenge(o, 'friendly')"
+                        >
+                          {{ t('pvp.friendly') }}
+                        </button>
+                      </div>
+                    </li>
+                  }
+                }
+              </ul>
+            </div>
+          </section>
+        </div>
+      } @else {
+        <section class="tbca-panel empty">
+          <p>{{ t('crew.noTeam') }}</p>
+          <a class="tbca-button" routerLink="/crew/team">{{ t('teams.new') }}</a>
+        </section>
+      }
+    }
+
+    <!-- ===== Communities ===== -->
+    @if (section() === 'communities') {
+      <section
+        class="tbca-panel tbca-panel--flush tbca-gl tbca-gl--a"
+        aria-labelledby="communities-title"
+      >
+        <i class="tbca-gx" aria-hidden="true"></i>
+        <div class="tbca-ph">
+          <h2 id="communities-title">{{ t('teams.communities') }}</h2>
+          <span class="tbca-idx">{{ communities().length }}</span>
+        </div>
+        <ul class="communities pbody">
+          @for (c of communities(); track c.id) {
+            <li class="community" [class.community--member]="c.member">
+              <span class="community__hex" aria-hidden="true">{{ c.name.slice(0, 1) }}</span>
+              <b>{{ c.name }}</b>
+              <span class="community__state">
+                @if (c.home) {
+                  <span class="tbca-tag tbca-tag--cyan">{{ t('teams.home') }}</span>
+                } @else if (c.member) {
+                  <span class="tbca-tag">{{ t('teams.member') }}</span>
+                }
+                @if (c.role === 'admin' || c.role === 'moderator') {
+                  <a
+                    class="tbca-button tbca-button--ghost tbca-button--sm"
+                    [routerLink]="['/crew/communities', c.id]"
+                    >{{ t('community.manage') }}</a
+                  >
+                }
+                @if (!c.member) {
+                  <button
+                    type="button"
+                    class="tbca-button tbca-button--sm"
+                    [disabled]="busy()"
+                    (click)="joinCommunity(c.id)"
+                  >
+                    {{ t('teams.joinCommunity') }}
+                  </button>
+                }
+              </span>
             </li>
           }
         </ul>
-        <div class="team__actions">
-          <label class="tbca-label">
-            {{ t('teams.focus') }}
-            <select
-              class="tbca-select"
-              [disabled]="!team.captain || busy()"
-              (change)="saveSettings(team, { focus: $any($event.target).value })"
-            >
-              @for (f of focusOptions; track f) {
-                <option [value]="f" [selected]="team.focus === f">
-                  {{ t('tactic.target.' + f) }}
-                </option>
-              }
-            </select>
-          </label>
-          <button
-            type="button"
-            class="tbca-button tbca-button--ghost"
-            [disabled]="busy()"
-            (click)="leave(team)"
-          >
-            {{ t('teams.leave') }}
-          </button>
-        </div>
       </section>
     }
-
-    @if (activeTeam(); as team) {
-      <section class="tbca-panel" aria-labelledby="challenge-title">
-        <h2 id="challenge-title">{{ t('teams.challenge') }}</h2>
-        @if (teams().length > 1) {
-          <label class="tbca-label">
-            {{ t('teams.ownTeam') }}
-            <select class="tbca-select" (change)="activeTeamId.set($any($event.target).value)">
-              @for (x of teams(); track x.id) {
-                <option [value]="x.id" [selected]="x.id === team.id">
-                  [{{ x.tag }}] {{ x.name }}
-                </option>
-              }
-            </select>
-          </label>
-        }
-        <div class="sizes" role="group" [attr.aria-label]="t('teams.size')">
-          @for (s of [2, 3]; track s) {
-            <button
-              type="button"
-              class="speed"
-              [attr.aria-pressed]="size() === s"
-              (click)="setSize($any(s))"
-            >
-              {{ s }}v{{ s }}
-            </button>
-          }
-        </div>
-        <fieldset class="lineup">
-          <legend class="tbca-label">
-            {{ t('teams.lineup', { count: lineup().length, size: size() }) }}
-          </legend>
-          @for (m of team.members; track m.accountId) {
-            @if (m.character; as c) {
-              <label class="pick">
-                <input
-                  type="checkbox"
-                  [checked]="lineup().includes(m.accountId)"
-                  (change)="toggleLineup(m.accountId)"
-                />
-                {{ c.name }}
-                <span class="tbca-hint">{{ t('character.level', { level: c.level }) }}</span>
-              </label>
-            }
-          }
-        </fieldset>
-        @if (team.captain) {
-          <button
-            type="button"
-            class="tbca-button tbca-button--ghost"
-            [disabled]="busy() || !ready()"
-            (click)="saveLineupAsDefault(team)"
-          >
-            {{ t('teams.saveLineup') }}
-          </button>
-        }
-        <label class="tbca-label">
-          {{ t('teams.search') }}
-          <input class="tbca-input" type="search" (input)="search($any($event.target).value)" />
-        </label>
-        <ul class="opponents">
-          @for (o of opponents(); track o.id) {
-            @if (o.id !== team.id) {
-              <li class="opponent">
-                <span class="badge badge--small" aria-hidden="true">{{ glyph[o.logo] }}</span>
-                <div class="opponent__who">
-                  <span class="opponent__name">[{{ o.tag }}] {{ o.name }}</span>
-                  <span class="tbca-hint">{{
-                    t('teams.summary', {
-                      community: o.community,
-                      members: o.members,
-                      level: o.averageLevel,
-                    })
-                  }}</span>
-                </div>
-                <div class="opponent__actions">
-                  <button
-                    type="button"
-                    class="tbca-button"
-                    [disabled]="busy() || !ready()"
-                    (click)="challenge(o, 'rated')"
-                  >
-                    {{ t('pvp.rated') }}
-                  </button>
-                  <button
-                    type="button"
-                    class="tbca-button tbca-button--ghost"
-                    [disabled]="busy() || !ready()"
-                    (click)="challenge(o, 'friendly')"
-                  >
-                    {{ t('pvp.friendly') }}
-                  </button>
-                </div>
-              </li>
-            }
-          }
-        </ul>
-      </section>
-    }
-
-    <section class="tbca-panel" aria-labelledby="new-team-title">
-      <h2 id="new-team-title">{{ t('teams.new') }}</h2>
-      @if (memberCommunities().length === 0) {
-        <p class="tbca-hint">{{ t('teams.joinCommunityFirst') }}</p>
-      } @else {
-        <form class="form" (submit)="$event.preventDefault(); create()">
-          <label class="tbca-label">
-            {{ t('teams.community') }}
-            <select
-              class="tbca-select"
-              (change)="patchForm({ communityId: $any($event.target).value })"
-            >
-              @for (c of memberCommunities(); track c.id) {
-                <option [value]="c.id" [selected]="form().communityId === c.id">
-                  {{ c.name }}
-                </option>
-              }
-            </select>
-          </label>
-          <label class="tbca-label">
-            {{ t('teams.name') }}
-            <input
-              class="tbca-input"
-              maxlength="20"
-              [value]="form().name"
-              (input)="patchForm({ name: $any($event.target).value })"
-            />
-          </label>
-          <label class="tbca-label">
-            {{ t('teams.tag') }}
-            <input
-              class="tbca-input tag"
-              maxlength="5"
-              [value]="form().tag"
-              (input)="patchForm({ tag: $any($event.target).value })"
-            />
-          </label>
-          <label class="tbca-label">
-            {{ t('teams.logo') }}
-            <select class="tbca-select" (change)="patchForm({ logo: $any($event.target).value })">
-              @for (l of logos; track l) {
-                <option [value]="l" [selected]="form().logo === l">
-                  {{ glyph[l] }} {{ t('teams.logos.' + l) }}
-                </option>
-              }
-            </select>
-          </label>
-          <button class="tbca-button" type="submit" [disabled]="busy()">
-            {{ t('teams.create') }}
-          </button>
-        </form>
-      }
-      <form class="form" (submit)="$event.preventDefault(); join()">
-        <label class="tbca-label">
-          {{ t('teams.joinCode') }}
-          <input
-            class="tbca-input tag"
-            maxlength="12"
-            [value]="code()"
-            (input)="code.set($any($event.target).value)"
-          />
-        </label>
-        <button
-          class="tbca-button tbca-button--ghost"
-          type="submit"
-          [disabled]="busy() || code().length < 4"
-        >
-          {{ t('teams.join') }}
-        </button>
-      </form>
-    </section>
-
-    <section class="tbca-panel" aria-labelledby="communities-title">
-      <h2 id="communities-title">{{ t('teams.communities') }}</h2>
-      <ul class="communities">
-        @for (c of communities(); track c.id) {
-          <li>
-            <span>{{ c.name }}</span>
-            @if (c.role === 'admin' || c.role === 'moderator') {
-              <a class="tbca-button tbca-button--ghost" [routerLink]="['/communities', c.id]">{{
-                t('community.manage')
-              }}</a>
-            }
-            @if (c.home) {
-              <span class="chip">{{ t('teams.home') }}</span>
-            } @else if (c.member) {
-              <span class="tbca-hint">{{ t('teams.member') }}</span>
-            } @else {
-              <button
-                type="button"
-                class="tbca-button tbca-button--ghost"
-                [disabled]="busy()"
-                (click)="joinCommunity(c.id)"
-              >
-                {{ t('teams.joinCommunity') }}
-              </button>
-            }
-          </li>
-        }
-      </ul>
-    </section>
   }
 </ng-container>

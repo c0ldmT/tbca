@@ -1,0 +1,123 @@
+/*
+ * Glitch-Akzent (Spezifikation, Abschnitt 18): selten, kurz, sichtbar. Panels, Logo und
+ * große Überschriften verrutschen für 200–400 ms leicht, mit RGB-Split; ein farbiges Band
+ * (.tbca-gx im Panel) verzerrt einen Streifen. Jede Fläche hat eine eigene Periode, damit
+ * nie alles gleichzeitig zuckt. Bei reduzierter Bewegung oder Grafikstufe „niedrig“ aus.
+ *
+ *   <section class="tbca-panel tbca-gl tbca-gl--b"><i class="tbca-gx"></i>…</section>
+ */
+.tbca-gl {
+  animation: tbca-glt var(--gd, 17s) steps(1, end) var(--gdl, 3s) infinite;
+}
+
+.tbca-gl--a {
+  --gd: 13s;
+  --gdl: 2.5s;
+}
+
+.tbca-gl--b {
+  --gd: 19s;
+  --gdl: 7s;
+}
+
+.tbca-gl--c {
+  --gd: 23s;
+  --gdl: 11s;
+}
+
+.tbca-gl--d {
+  --gd: 29s;
+  --gdl: 5s;
+}
+
+.tbca-gl--e {
+  --gd: 31s;
+  --gdl: 16s;
+}
+
+.tbca-gl--f {
+  --gd: 37s;
+  --gdl: 21s;
+}
+
+@keyframes tbca-glt {
+  0%,
+  97.7%,
+  100% {
+    transform: none;
+    text-shadow: none;
+  }
+  97.8% {
+    transform: translate3d(-3px, 0, 0) skewX(-1.6deg);
+    text-shadow:
+      2px 0 rgb(255 42 109 / 0.75),
+      -2px 0 rgb(0 240 255 / 0.75);
+  }
+  98.3% {
+    transform: translate3d(4px, 1px, 0) skewX(1.2deg) scaleY(1.008);
+  }
+  98.8% {
+    transform: translate3d(-1px, 0, 0);
+    text-shadow:
+      -1px 0 rgb(255 42 109 / 0.6),
+      1px 0 rgb(0 240 255 / 0.6);
+  }
+}
+
+.tbca-gx {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 30%;
+  height: 14px;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 6;
+  background: linear-gradient(
+    90deg,
+    rgb(255 42 109 / 0.22),
+    rgb(0 240 255 / 0.28) 55%,
+    rgb(0 240 255 / 0)
+  );
+  -webkit-backdrop-filter: hue-rotate(80deg) brightness(1.6) saturate(1.6);
+  backdrop-filter: hue-rotate(80deg) brightness(1.6) saturate(1.6);
+  animation: tbca-gxb var(--gd, 17s) steps(1, end) var(--gdl, 3s) infinite;
+}
+
+@keyframes tbca-gxb {
+  0%,
+  97.7%,
+  100% {
+    opacity: 0;
+  }
+  97.8% {
+    opacity: 1;
+    top: 22%;
+    height: 10px;
+    transform: translateX(-10px);
+  }
+  98.3% {
+    opacity: 1;
+    top: 63%;
+    height: 20px;
+    transform: translateX(12px);
+  }
+  98.8% {
+    opacity: 0.8;
+    top: 41%;
+    height: 5px;
+    transform: translateX(-4px);
+  }
+}
+
+:root[data-quality='niedrig'] .tbca-gl,
+:root[data-quality='niedrig'] .tbca-gx {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tbca-gl,
+  .tbca-gx {
+    animation: none;
+  }
+}

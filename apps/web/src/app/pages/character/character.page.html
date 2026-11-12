@@ -1,14 +1,14 @@
-<ng-container *transloco="let t">
+<div class="hub" *transloco="let t">
   @if (loadError()) {
-    <section class="tbca-panel">
+    <section class="tbca-panel state">
       <p class="tbca-error" role="alert">{{ t('errors.' + loadError()) }}</p>
       <button class="tbca-button tbca-button--ghost" type="button" (click)="load()">
         {{ t('character.retry') }}
       </button>
     </section>
   } @else if (auth.state() === null) {
-    <section class="tbca-panel">
-      <h1>{{ t('character.title') }}</h1>
+    <section class="tbca-panel state">
+      <h1 class="tbca-title">{{ t('character.title') }}</h1>
       <p>{{ t('character.loginFirst') }}</p>
       <a class="tbca-button" [href]="auth.loginUrl()">{{ t('auth.login') }}</a>
     </section>
@@ -22,63 +22,13 @@
       }
       @default {
         @if (characters.state(); as c) {
-          <header class="sheet-head">
-            <h1>{{ c.name }}</h1>
-            <p class="sheet-head__line">
-              <span>{{ t('classes.' + c.classId) }}</span>
-              <span>{{ t('character.level', { level: c.level }) }}</span>
-              <span class="credits">{{ t('character.credits', { credits: c.credits }) }}</span>
-            </p>
-            <div class="xp">
-              <span class="xp__bar" aria-hidden="true"
-                ><span class="xp__fill" [style.width.%]="xpPercent()"></span
-              ></span>
-              <span class="tbca-hint">
-                @if (c.xpToNext !== null) {
-                  {{ t('character.xp', { xp: c.xpIntoLevel, next: c.xpToNext }) }}
-                } @else {
-                  {{ t('character.maxLevel') }}
-                }
-              </span>
-            </div>
-          </header>
-
-          <section class="tbca-panel" aria-labelledby="class-title">
-            <h2 id="class-title">{{ t('character.class.title') }}</h2>
-            <p class="tbca-hint">{{ t('character.class.hint') }}</p>
-            <div
-              class="class-switch"
-              role="radiogroup"
-              [attr.aria-label]="t('character.class.title')"
-            >
-              @for (id of classIds; track id) {
-                <button
-                  type="button"
-                  role="radio"
-                  class="class-option"
-                  [attr.aria-checked]="c.classId === id"
-                  [disabled]="switching()"
-                  (click)="switchClass(id)"
-                >
-                  <span class="class-option__name">{{ t('classes.' + id) }}</span>
-                  <span class="tbca-hint">{{ t('classRole.' + game.classes[id].role) }}</span>
-                </button>
-              }
-            </div>
-            @if (classError()) {
-              <p class="tbca-error" role="alert">{{ t('errors.' + classError()) }}</p>
-            }
-          </section>
-
-          <div class="columns">
-            <tbca-attributes-panel [character]="c" [config]="game" />
-            <tbca-loadout-editor [character]="c" [config]="game" />
-          </div>
-          <tbca-equipment-panel [character]="c" [config]="game" [testSeason]="testSeason()" />
+          <tbca-character-head [character]="c" [config]="game" [preview]="gear.preview()" />
+          <tbca-hub-tabs [tabs]="tabs" [label]="t('character.areas')" />
+          <router-outlet />
         }
       }
     }
   } @else {
     <p class="tbca-hint" aria-live="polite">{{ t('character.loading') }}</p>
   }
-</ng-container>
+</div>

@@ -7,6 +7,7 @@ import { ApiFailure } from '../../core/api-failure';
 import { AuthService } from '../../core/auth.service';
 import { CharacterService } from '../../core/character.service';
 import { LanguageService } from '../../core/language.service';
+import { PreferencesService, QUALITIES } from '../../core/preferences.service';
 
 /** Konto: verknüpfte Plattformen, Sprache, Umbenennen, Datenexport und Löschen. */
 @Component({
@@ -19,6 +20,8 @@ export class AccountPage {
   protected readonly auth = inject(AuthService);
   protected readonly characters = inject(CharacterService);
   protected readonly language = inject(LanguageService);
+  protected readonly prefs = inject(PreferencesService);
+  protected readonly qualities = QUALITIES;
   private readonly account = inject(AccountService);
   private readonly router = inject(Router);
 

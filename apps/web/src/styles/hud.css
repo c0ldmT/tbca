@@ -1,0 +1,478 @@
+/*
+ * Hologramm-HUD: Glas-Panels mit Cyan-Kante und abgeschrägter Ecke, Kopf-Zeilen, Tabs,
+ * Schaltflächen, Chips und Segment-Schalter. Gilt für alle Seiten.
+ */
+
+/* Glas-Panel. Die Ecke oben links und unten rechts ist abgeschrägt; unten rechts sitzt eine
+   leuchtende Diagonale, oben links eine Lichtkante. */
+.tbca-panel {
+  position: relative;
+  display: grid;
+  gap: var(--tbca-space-4);
+  padding: var(--tbca-space-6);
+  background: linear-gradient(180deg, var(--tbca-glass-top), var(--tbca-glass-bottom));
+  -webkit-backdrop-filter: blur(var(--tbca-glass-blur)) saturate(140%);
+  backdrop-filter: blur(var(--tbca-glass-blur)) saturate(140%);
+  border: 1px solid var(--tbca-edge);
+  clip-path: polygon(
+    16px 0,
+    100% 0,
+    100% calc(100% - 16px),
+    calc(100% - 16px) 100%,
+    0 100%,
+    0 16px
+  );
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    inset 0 0 60px rgb(0 240 255 / 0.035);
+}
+
+.tbca-panel::before {
+  content: '';
+  position: absolute;
+  left: 16px;
+  right: 40%;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, var(--tbca-neon-cyan), transparent);
+  box-shadow: 0 0 10px var(--tbca-neon-cyan);
+  pointer-events: none;
+}
+
+.tbca-panel::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(
+    135deg,
+    transparent calc(50% - 0.5px),
+    rgb(0 240 255 / 0.7) calc(50% - 0.5px),
+    rgb(0 240 255 / 0.7) calc(50% + 0.5px),
+    transparent calc(50% + 0.5px)
+  );
+  pointer-events: none;
+}
+
+/* Panel ohne Innenabstand, wenn Kopfzeile und Inhalt eigene Abstände haben. */
+.tbca-panel--flush {
+  padding: 0;
+  gap: 0;
+  align-content: start;
+}
+
+.tbca-panel > h2,
+.tbca-ph h2 {
+  margin: 0;
+  font: 600 0.8125rem / 1 var(--tbca-font-display);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--tbca-neon-cyan);
+  text-shadow: 0 0 12px rgb(0 240 255 / 0.5);
+}
+
+/* Kopfzeile eines Panels: Titel links, Zusatz rechts. */
+.tbca-ph {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tbca-space-3) var(--tbca-space-4);
+  padding: var(--tbca-space-4) 22px;
+  border-bottom: 1px solid var(--tbca-edge-soft);
+}
+
+.tbca-ph__t {
+  display: flex;
+  align-items: baseline;
+  gap: var(--tbca-space-3);
+}
+
+.tbca-idx {
+  font: 500 0.6875rem / 1 var(--tbca-font-mono);
+  color: var(--tbca-text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tbca-kicker {
+  font: 500 0.6875rem / 1 var(--tbca-font-mono);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--tbca-neon-magenta);
+}
+
+.tbca-label-mono {
+  font: 500 0.625rem / 1 var(--tbca-font-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--tbca-text-muted);
+}
+
+/* Seitentitel eines Hubs */
+.tbca-title {
+  margin: 0;
+  font: 700 2.5rem / 1 var(--tbca-font-display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Schaltflächen: zwei abgeschrägte Ecken, mindestens 44 px hoch. */
+.tbca-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tbca-space-2);
+  min-height: var(--tbca-touch-target);
+  padding: 0 20px;
+  border: 1px solid var(--tbca-neon-cyan);
+  font: 600 0.8125rem / 1 var(--tbca-font-display);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--tbca-bg-void);
+  background: var(--tbca-neon-cyan);
+  box-shadow: 0 0 20px rgb(0 240 255 / 0.45);
+  clip-path: polygon(
+    10px 0,
+    100% 0,
+    100% calc(100% - 10px),
+    calc(100% - 10px) 100%,
+    0 100%,
+    0 10px
+  );
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    background var(--tbca-fast-ms) ease-out,
+    box-shadow var(--tbca-fast-ms) ease-out;
+}
+
+.tbca-button:hover {
+  background: #7df9ff;
+  color: var(--tbca-bg-void);
+}
+
+.tbca-button svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.tbca-button--ghost {
+  color: var(--tbca-neon-cyan);
+  background: rgb(0 240 255 / 0.06);
+  border-color: rgb(0 240 255 / 0.45);
+  box-shadow: none;
+}
+
+.tbca-button--ghost:hover {
+  color: var(--tbca-neon-cyan);
+  background: rgb(0 240 255 / 0.16);
+  box-shadow: 0 0 18px rgb(0 240 255 / 0.35);
+}
+
+.tbca-button--warn {
+  color: var(--tbca-neon-yellow);
+  background: rgb(245 228 0 / 0.06);
+  border-color: rgb(245 228 0 / 0.55);
+  box-shadow: none;
+}
+
+.tbca-button--warn:hover {
+  color: var(--tbca-neon-yellow);
+  background: rgb(245 228 0 / 0.14);
+  box-shadow: 0 0 18px rgb(245 228 0 / 0.3);
+}
+
+.tbca-button--gold {
+  color: var(--tbca-bg-void);
+  background: var(--tbca-neon-yellow);
+  border-color: var(--tbca-neon-yellow);
+  box-shadow: 0 0 20px rgb(245 228 0 / 0.35);
+}
+
+.tbca-button--gold:hover {
+  background: #fff27a;
+  color: var(--tbca-bg-void);
+}
+
+.tbca-button--danger {
+  color: var(--tbca-danger-text);
+  background: rgb(255 42 109 / 0.06);
+  border-color: rgb(255 42 109 / 0.6);
+  box-shadow: none;
+}
+
+.tbca-button--danger:hover {
+  color: var(--tbca-danger-text);
+  background: rgb(255 42 109 / 0.16);
+  box-shadow: 0 0 18px rgb(255 42 109 / 0.35);
+}
+
+.tbca-button--lg {
+  min-height: 56px;
+  padding: 0 28px;
+  font-size: 0.9375rem;
+}
+
+/* Kompakt für Zeilen-Aktionen; Trefferfläche bleibt über das Zeilen-Padding groß genug */
+.tbca-button--sm {
+  min-height: 34px;
+  padding: 0 14px;
+  font-size: 0.6875rem;
+}
+
+.tbca-icon-button {
+  display: inline-grid;
+  place-items: center;
+  min-width: var(--tbca-touch-target);
+  min-height: var(--tbca-touch-target);
+  border: 1px solid rgb(0 240 255 / 0.45);
+  background: rgb(0 240 255 / 0.06);
+  color: var(--tbca-neon-cyan);
+  font: 600 var(--tbca-text-base) / 1 var(--tbca-font-mono);
+  cursor: pointer;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+
+.tbca-icon-button:hover {
+  background: rgb(0 240 255 / 0.16);
+}
+
+.tbca-icon-button:disabled,
+.tbca-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Tabs unter einem Hub-Titel */
+.tbca-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  border-bottom: 1px solid rgb(0 240 255 / 0.16);
+}
+
+.tbca-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tbca-space-2);
+  min-height: 46px;
+  padding: 0 22px;
+  border: 0;
+  background: transparent;
+  font: 600 0.875rem / 1 var(--tbca-font-display);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--tbca-text-muted);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.tbca-tab:hover {
+  color: var(--tbca-text-primary);
+}
+
+.tbca-tab svg {
+  width: 16px;
+  height: 16px;
+}
+
+.tbca-tab--on {
+  color: var(--tbca-text-primary);
+  background: linear-gradient(to top, rgb(0 240 255 / 0.14), transparent);
+}
+
+.tbca-tab--on::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--tbca-neon-cyan);
+  box-shadow: 0 0 12px var(--tbca-neon-cyan);
+}
+
+.tbca-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 5px;
+  font: 700 0.625rem / 1 var(--tbca-font-mono);
+  color: var(--tbca-bg-void);
+  background: var(--tbca-neon-magenta);
+}
+
+/* Chips: kleine Werte-Kästen, z. B. Credits und Materialien */
+.tbca-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tbca-space-2);
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  background: rgb(15 18 32 / 0.7);
+  font: 500 0.8125rem / 1 var(--tbca-font-mono);
+  color: var(--tbca-text-primary);
+  white-space: nowrap;
+}
+
+.tbca-chip small {
+  font-size: 0.625rem;
+  letter-spacing: 0.14em;
+  color: var(--tbca-text-muted);
+  text-transform: uppercase;
+}
+
+.tbca-chip--credits {
+  color: var(--tbca-neon-yellow);
+  border-color: rgb(245 228 0 / 0.3);
+  text-shadow: 0 0 10px rgb(245 228 0 / 0.35);
+}
+
+.tbca-chip i {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  transform: rotate(45deg);
+  background: currentColor;
+}
+
+/* Kleine Kennzeichnungen */
+.tbca-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  font: 500 0.6875rem / 1 var(--tbca-font-mono);
+  border: 1px solid rgb(255 255 255 / 0.1);
+  color: var(--tbca-text-muted);
+}
+
+.tbca-tag--cyan {
+  color: var(--tbca-neon-cyan);
+  border-color: rgb(0 240 255 / 0.35);
+}
+
+.tbca-tag--magenta {
+  color: var(--tbca-danger-text);
+  border-color: rgb(255 42 109 / 0.45);
+}
+
+.tbca-tag--yellow {
+  color: var(--tbca-neon-yellow);
+  border-color: rgb(245 228 0 / 0.4);
+}
+
+/* Segment-Schalter (z. B. Sprache, Grafik, Tempo) */
+.tbca-seg {
+  display: inline-flex;
+  border: 1px solid rgb(0 240 255 / 0.25);
+}
+
+.tbca-seg button {
+  min-width: var(--tbca-touch-target);
+  min-height: 32px;
+  padding: 0 10px;
+  border: 0;
+  background: transparent;
+  font: 500 0.75rem / 1 var(--tbca-font-mono);
+  color: var(--tbca-text-muted);
+  cursor: pointer;
+}
+
+.tbca-seg button[aria-pressed='true'],
+.tbca-seg button[aria-selected='true'] {
+  background: var(--tbca-neon-cyan);
+  color: var(--tbca-bg-void);
+}
+
+/* Filter-Chips */
+.tbca-fchip {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: transparent;
+  font: 500 0.75rem / 1 var(--tbca-font-mono);
+  letter-spacing: 0.06em;
+  color: var(--tbca-text-muted);
+  cursor: pointer;
+}
+
+.tbca-fchip[aria-pressed='true'] {
+  color: var(--tbca-bg-void);
+  background: var(--tbca-neon-cyan);
+  border-color: var(--tbca-neon-cyan);
+}
+
+/* Zeilen mit Wert rechts, z. B. Basiswerte */
+.tbca-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tbca-space-3);
+  min-height: 30px;
+  padding: 0 10px;
+  background: rgb(7 8 13 / 0.42);
+  border-left: 2px solid rgb(0 240 255 / 0.25);
+}
+
+.tbca-row .tbca-mono {
+  color: var(--tbca-text-primary);
+}
+
+.tbca-mono {
+  font-family: var(--tbca-font-mono);
+}
+
+/* Rückmeldungen nach Aktionen */
+.tbca-notice {
+  padding: 10px 14px;
+  font: 500 0.75rem / 1.4 var(--tbca-font-mono);
+  border: 1px solid rgb(61 255 168 / 0.4);
+  color: var(--tbca-success);
+  background: rgb(61 255 168 / 0.06);
+}
+
+.tbca-notice--bad {
+  border-color: rgb(255 42 109 / 0.5);
+  color: var(--tbca-danger-text);
+  background: rgb(255 42 109 / 0.07);
+}
+
+/* Werte-Deltas (grün besser, rot schlechter) */
+.tbca-delta {
+  font: 700 0.6875rem / 1 var(--tbca-font-mono);
+}
+
+.tbca-delta--up {
+  color: var(--tbca-success);
+  text-shadow: 0 0 8px rgb(61 255 168 / 0.5);
+}
+
+.tbca-delta--down {
+  color: var(--tbca-danger-text);
+}
+
+/* Fokus gut sichtbar in Gelb */
+.tbca-button:focus-visible,
+.tbca-icon-button:focus-visible,
+.tbca-tab:focus-visible,
+.tbca-seg button:focus-visible,
+.tbca-fchip:focus-visible {
+  outline: 2px solid var(--tbca-neon-yellow);
+  outline-offset: 2px;
+}
+
+/* Während Drag & Drop: keine Textauswahl, Greif-Cursor */
+.tbca-dragging,
+.tbca-dragging * {
+  user-select: none !important;
+  cursor: grabbing !important;
+}

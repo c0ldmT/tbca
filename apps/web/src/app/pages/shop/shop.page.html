@@ -1,38 +1,39 @@
 <ng-container *transloco="let t">
-  <header class="head">
-    <h1>{{ t('shop.title') }}</h1>
-    <p class="tbca-hint">{{ t('shop.intro') }}</p>
-  </header>
-
-  @if (auth.state() === null) {
-    <section class="tbca-panel">
-      <a class="tbca-button" [href]="auth.loginUrl()">{{ t('auth.login') }}</a>
-    </section>
-  } @else if (characters.state() === null) {
+  @if (characters.state() === null) {
     <section class="tbca-panel">
       <p>{{ t('pvp.characterFirst') }}</p>
       <a class="tbca-button" routerLink="/character">{{ t('character.create.title') }}</a>
     </section>
   } @else if (shop(); as s) {
-    <p class="wallet" aria-live="polite">
-      <span class="wallet__credits">{{ t('character.credits', { credits: s.credits }) }}</span>
+    <div class="purse" aria-live="polite">
+      <span class="tbca-chip tbca-chip--credits"
+        ><small>CR</small>{{ s.credits.toLocaleString() }}</span
+      >
       @for (c of consumables; track c) {
-        <span>{{
-          t('inventory.materialAmount', { amount: s.stacks[c] ?? 0, name: t('consumables.' + c) })
-        }}</span>
+        <span class="tbca-chip" [class]="'tbca-chip res--' + c"
+          ><i aria-hidden="true"></i>{{ t('consumables.' + c) }} <b>{{ s.stacks[c] ?? 0 }}</b></span
+        >
       }
-    </p>
+    </div>
     @if (error()) {
-      <p class="tbca-error" role="alert">{{ t('errors.' + error()) }}</p>
+      <p class="tbca-notice tbca-notice--bad" role="alert">{{ t('errors.' + error()) }}</p>
     }
 
-    <section class="tbca-panel" aria-labelledby="consumables-title">
-      <h2 id="consumables-title">{{ t('shop.consumables') }}</h2>
+    <section
+      class="tbca-panel tbca-panel--flush tbca-gl tbca-gl--a"
+      aria-labelledby="consumables-title"
+    >
+      <i class="tbca-gx" aria-hidden="true"></i>
+      <div class="tbca-ph">
+        <h2 id="consumables-title">{{ t('shop.consumables') }}</h2>
+        <span class="tbca-idx">{{ t('shop.intro') }}</span>
+      </div>
       <ul class="offers">
         @for (o of s.consumables; track o.offerId) {
-          <li class="offer">
-            <div>
-              <p class="offer__name">{{ t('consumables.' + o.consumable) }}</p>
+          <li class="offer" [class]="'offer res--' + o.consumable">
+            <span class="gem" aria-hidden="true"></span>
+            <div class="offer__txt">
+              <b>{{ t('consumables.' + o.consumable) }}</b>
               <p class="tbca-hint">{{ t('consumableInfo.' + o.consumable) }}</p>
             </div>
             <button
@@ -48,15 +49,39 @@
       </ul>
     </section>
 
-    <section class="tbca-panel" aria-labelledby="rotation-title">
-      <h2 id="rotation-title">{{ t('shop.rotation') }}</h2>
-      <p class="tbca-hint">{{ t('shop.rotationHint') }}</p>
+    <section
+      class="tbca-panel tbca-panel--flush tbca-gl tbca-gl--c"
+      aria-labelledby="rotation-title"
+    >
+      <i class="tbca-gx" aria-hidden="true"></i>
+      <div class="tbca-ph">
+        <h2 id="rotation-title">{{ t('shop.rotation') }}</h2>
+        <span class="tbca-idx">{{ t('shop.rotationHint') }}</span>
+      </div>
       <ul class="rotation">
         @for (o of s.rotation; track o.offerId) {
-          <li class="rotation__item">
-            <tbca-item-card [item]="o.item" />
+          <li
+            class="ware"
+            [class]="'ware tier-' + tierOf(o.item.rarity)"
+            [class.ware--sold]="o.sold"
+          >
+            <tbca-item-icon [item]="o.item" [size]="76" />
+            <b class="tbca-tier-text">{{ t('items.' + o.item.templateId) }}</b>
+            <tbca-stars
+              [rarity]="o.item.rarity"
+              [size]="11"
+              [attr.aria-label]="t('inventory.rarity', { rarity: o.item.rarity })"
+            />
+            <span class="meta"
+              >iLvl {{ o.item.itemLevel }} · {{ t('itemCategory.' + o.item.category) }}</span
+            >
+            <span class="affs">
+              @for (a of o.item.affixes; track a.stat) {
+                <span class="tbca-tag">{{ label(a.stat, t) }} +{{ value(a.stat, a.value) }}</span>
+              }
+            </span>
             @if (o.sold) {
-              <span class="tbca-hint">{{ t('shop.sold') }}</span>
+              <span class="tbca-tag tbca-tag--magenta">{{ t('shop.sold') }}</span>
             } @else {
               <button
                 type="button"
@@ -72,7 +97,7 @@
       </ul>
     </section>
   } @else if (error()) {
-    <p class="tbca-error" role="alert">{{ t('errors.' + error()) }}</p>
+    <p class="tbca-notice tbca-notice--bad" role="alert">{{ t('errors.' + error()) }}</p>
   } @else {
     <p class="tbca-hint">{{ t('shop.loading') }}</p>
   }

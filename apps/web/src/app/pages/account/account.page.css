@@ -1,24 +1,42 @@
-:host {
+.hub {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 24px clamp(16px, 3vw, 40px) 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.title {
   display: grid;
-  gap: var(--tbca-space-6);
-  width: min(100%, 48rem);
-  margin-inline: auto;
-  padding: var(--tbca-space-8) clamp(var(--tbca-space-4), 4vw, var(--tbca-space-12));
+  gap: 4px;
 }
 
-h1 {
-  font-size: clamp(2rem, 7vw, 3.5rem);
+.grid {
+  display: grid;
+  gap: 18px;
+  align-items: start;
 }
 
-h3 {
-  font-size: var(--tbca-text-lg);
-  margin-top: var(--tbca-space-4);
+@media (min-width: 64rem) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
 }
 
-.notice {
-  border-left: 3px solid var(--tbca-neon-cyan);
-  padding: var(--tbca-space-2) var(--tbca-space-4);
-  background: var(--tbca-surface-1);
+.col {
+  display: grid;
+  gap: 18px;
+}
+
+.pbody {
+  display: grid;
+  gap: 14px;
+  padding: 18px 22px 22px;
+}
+
+.pbody p {
+  margin: 0;
 }
 
 .platforms {
@@ -26,34 +44,65 @@ h3 {
   margin: 0;
   padding: 0;
   display: grid;
-  gap: var(--tbca-space-2);
+  gap: 6px;
 }
 
 .platforms li {
-  display: flex;
-  gap: var(--tbca-space-3);
-  padding: var(--tbca-space-2) var(--tbca-space-3);
-  background: var(--tbca-surface-2);
+  min-height: 48px;
+  justify-content: flex-start;
+  gap: 14px;
+}
+
+.platforms .tbca-tag {
+  margin-left: auto;
 }
 
 .provider {
-  font-family: var(--tbca-font-mono);
+  font: 500 0.75rem / 1 var(--tbca-font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--tbca-neon-cyan);
-  text-transform: capitalize;
+}
+
+.setting {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgb(255 255 255 / 0.06);
+}
+
+.setting:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
 }
 
 .row {
   display: flex;
   flex-wrap: wrap;
   align-items: end;
-  gap: var(--tbca-space-3);
+  gap: 12px;
 }
 
-[aria-pressed='true'] {
-  border-color: var(--tbca-neon-cyan);
-  color: var(--tbca-neon-cyan);
+.opt {
+  display: grid;
+  gap: 6px;
 }
 
+.grow {
+  flex: 1 1 14rem;
+}
+
+.start {
+  justify-self: start;
+}
+
+/* Gefahrenzone mit magentafarbener Kante */
 .danger {
-  background: var(--tbca-neon-magenta);
+  --tbca-edge: rgb(255 42 109 / 0.55);
+  border-color: rgb(255 42 109 / 0.35);
+}
+
+.danger .tbca-ph h2 {
+  color: var(--tbca-danger-text);
 }

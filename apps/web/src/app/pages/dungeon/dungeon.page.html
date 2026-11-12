@@ -1,174 +1,309 @@
 <ng-container *transloco="let t">
-  <header class="head">
-    <h1>{{ t('dungeon.title') }}</h1>
-    <p class="tbca-hint">{{ t('dungeon.intro') }}</p>
-  </header>
-
-  @if (auth.state() === null) {
-    <section class="tbca-panel">
-      <a class="tbca-button" [href]="auth.loginUrl()">{{ t('auth.login') }}</a>
-    </section>
-  } @else if (characters.state() === null) {
-    <section class="tbca-panel">
-      <p>{{ t('pvp.characterFirst') }}</p>
-      <a class="tbca-button" routerLink="/character">{{ t('character.create.title') }}</a>
-    </section>
-  } @else if (view(); as v) {
-    <p class="runs">
-      <span class="runs__value">{{ v.runsToday }}/{{ v.runsPerDay }}</span>
-      {{ t('dungeon.runsToday') }}
-    </p>
-    @if (error()) {
-      <p class="tbca-error" role="alert">{{ t('errors.' + error()) }}</p>
-    }
-
+  @if (error()) {
+    <p class="tbca-notice tbca-notice--bad" role="alert">{{ t('errors.' + error()) }}</p>
+  }
+  @if (view(); as v) {
     @if (run(); as r) {
       @if (r.status === 'active') {
-        <section class="tbca-panel run" aria-labelledby="run-title">
-          <h2 id="run-title" [tbcaGlitch]="r.floor">
-            {{ t('dungeon.floorCleared', { floor: r.floor }) }}
-          </h2>
-          <div class="vitals">
-            <div>
-              <span class="tbca-hint">HP {{ r.hp }}/{{ r.maxHp }}</span>
-              <span class="bar" aria-hidden="true"
-                ><span class="bar__hp" [style.width.%]="percent(r.hp, r.maxHp)"></span
-              ></span>
-            </div>
-            <div>
-              <span class="tbca-hint">EN {{ r.energy }}/{{ r.maxEnergy }}</span>
-              <span class="bar" aria-hidden="true"
-                ><span class="bar__en" [style.width.%]="percent(r.energy, r.maxEnergy)"></span
-              ></span>
-            </div>
-          </div>
-          <p class="tbca-hint">
-            {{ t('dungeon.supplies', { injectors: r.injectors }) }}
-            @if (r.backupChip) {
-              {{ t('dungeon.chipActive') }}
-            }
-          </p>
-
-          @if (r.next; as n) {
-            <p class="next" [class.next--boss]="n.boss">
-              {{
-                t(n.boss ? 'dungeon.nextBoss' : 'dungeon.next', {
-                  floor: n.floor,
-                  level: n.monsterLevel,
-                })
-              }}
-              @for (m of n.modifiers; track m) {
-                <span class="modifier">{{ t('dungeon.modifier.' + m) }}</span>
+        <div class="dun">
+          <section
+            class="tbca-panel tbca-panel--flush shaft tbca-gl tbca-gl--d"
+            [attr.aria-label]="t('dungeon.shaft')"
+          >
+            <i class="tbca-gx" aria-hidden="true"></i>
+            <span class="tbca-idx shaft__t">{{ t('dungeon.shaft') }}</span>
+            <ol class="floors">
+              @for (f of floors(); track f.floor) {
+                <li
+                  class="fl"
+                  [class]="'fl fl--' + f.state"
+                  [class.fl--boss]="f.boss && f.state !== 'next'"
+                >
+                  @if (f.state === 'next') {
+                    ▶
+                  }
+                  E{{ pad(f.floor) }}
+                  @if (f.boss) {
+                    · BOSS
+                  }
+                  @if (f.state === 'done') {
+                    ✓
+                  }
+                </li>
               }
-            </p>
-          }
+            </ol>
+          </section>
 
-          <div class="actions">
-            <button
-              type="button"
-              class="tbca-button"
-              [disabled]="busy()"
-              (click)="action('continue')"
-            >
-              {{ t('dungeon.continue', { floor: r.floor + 1 }) }}
-            </button>
-            <button
-              type="button"
-              class="tbca-button tbca-button--ghost"
-              [disabled]="busy()"
-              (click)="action('leave')"
-            >
-              {{ t('dungeon.leave') }}
-            </button>
-            <button
-              type="button"
-              class="tbca-button tbca-button--ghost"
-              [disabled]="busy() || r.injectors === 0 || r.hp >= r.maxHp"
-              (click)="action('heal')"
-            >
-              {{ t('dungeon.heal') }}
-            </button>
-          </div>
-          @if (r.decideBy) {
-            <p class="tbca-hint">{{ t('dungeon.decideBy', { time: decideTime(r.decideBy) }) }}</p>
-          }
-          @if (r.lastFightId) {
-            <a class="replay-link" [routerLink]="['/replay', r.lastFightId]">{{
-              t('dungeon.lastFight')
-            }}</a>
-          }
-        </section>
-      } @else {
-        <section class="tbca-panel" aria-live="polite">
-          <h2 class="outcome" [attr.data-status]="r.status" [tbcaGlitch]="r.id">
-            {{ t('dungeon.outcome.' + r.status, { floor: r.floor }) }}
-          </h2>
-          @if (r.lastFightId) {
-            <a class="replay-link" [routerLink]="['/replay', r.lastFightId]">{{
-              t('dungeon.lastFight')
-            }}</a>
-          }
-        </section>
-      }
-
-      @if (r.loot.items.length > 0 || r.loot.credits > 0) {
-        <section class="tbca-panel" aria-labelledby="loot-title">
-          <h2 id="loot-title">
-            {{ t(r.status === 'defeated' ? 'dungeon.lootLost' : 'dungeon.loot') }}
-          </h2>
-          <p class="tbca-hint">
-            {{ t('dungeon.lootSummary', { credits: r.loot.credits, xp: r.xpGained }) }}
-          </p>
-          <ul class="loot" [class.loot--lost]="r.status === 'defeated'">
-            @for (item of r.loot.items; track $index) {
-              <li><tbca-item-card [item]="item" /></li>
+          <section
+            class="tbca-panel tbca-panel--flush run tbca-gl tbca-gl--b"
+            aria-labelledby="run-t"
+          >
+            <i class="tbca-gx" aria-hidden="true"></i>
+            <div class="tbca-ph">
+              <h2 id="run-t">{{ t('dungeon.activeRun') }}</h2>
+              @if (r.backupChip) {
+                <span class="chipon">◆ {{ t('dungeon.chipActive') }}</span>
+              }
+            </div>
+            <div class="floor">
+              <div>
+                <span class="tbca-kicker">{{ t('dungeon.floorDone') }}</span>
+                <div class="big" [tbcaGlitch]="r.floor">{{ r.floor }}</div>
+              </div>
+              <div class="bars">
+                <div class="dbar">
+                  <small
+                    ><span>HP</span><span>{{ r.hp }} / {{ r.maxHp }}</span></small
+                  >
+                  <tbca-bar
+                    variant="auto-hp"
+                    [height]="12"
+                    [slant]="7"
+                    [value]="r.hp"
+                    [max]="r.maxHp"
+                    [ghost]="previousHp()"
+                  />
+                </div>
+                <div class="dbar">
+                  <small
+                    ><span>{{ t('dungeon.energy') }}</span
+                    ><span>{{ r.energy }} / {{ r.maxEnergy }}</span></small
+                  >
+                  <tbca-bar
+                    variant="en"
+                    [seg]="true"
+                    [height]="12"
+                    [slant]="7"
+                    [value]="r.energy"
+                    [max]="r.maxEnergy"
+                  />
+                </div>
+                <div class="dbar">
+                  <small
+                    ><span>{{ t('consumables.heal_injector') }}</span
+                    ><span>{{ r.injectors }} / {{ v.maxInjectors }}</span></small
+                  >
+                  <tbca-segments
+                    variant="g"
+                    [total]="v.maxInjectors"
+                    [filled]="r.injectors"
+                    [pulseNext]="false"
+                  />
+                </div>
+              </div>
+            </div>
+            @if (r.next; as n) {
+              <div class="next" [class.next--boss]="n.boss">
+                <b>{{
+                  n.boss
+                    ? t('dungeon.bossFloor', { floor: n.floor })
+                    : t('dungeon.floorN', { floor: n.floor })
+                }}</b>
+                <span class="tbca-tag">{{
+                  t('dungeon.monsterLevel', { level: n.monsterLevel })
+                }}</span>
+                @for (m of n.modifiers; track m) {
+                  <span class="tbca-tag">{{ t('dungeon.modifier.' + m) }}</span>
+                }
+                @if (n.boss) {
+                  <span class="tbca-tag tbca-tag--yellow">{{ t('dungeon.betterLoot') }}</span>
+                }
+              </div>
             }
-          </ul>
+            <div class="tbca-ph sub">
+              <h2>{{ t('dungeon.runLoot') }}</h2>
+              <span class="tbca-idx">{{
+                t('dungeon.runLootHint', { count: r.loot.items.length, credits: r.loot.credits })
+              }}</span>
+            </div>
+            <div class="loot">
+              @for (item of r.loot.items; track $index) {
+                <span
+                  class="li"
+                  [class]="'li tier-' + tierOf(item.rarity)"
+                  [attr.aria-label]="
+                    t('items.' + item.templateId) +
+                    ', ' +
+                    t('inventory.rarity', { rarity: item.rarity })
+                  "
+                >
+                  <tbca-item-icon [item]="item" [size]="76" />
+                  <b>★{{ item.rarity }}</b>
+                </span>
+              } @empty {
+                <span class="tbca-hint">{{ t('dungeon.noLootYet') }}</span>
+              }
+            </div>
+            <div class="decide">
+              <button
+                type="button"
+                class="tbca-button tbca-button--lg"
+                [disabled]="busy()"
+                (click)="action('continue')"
+              >
+                {{ t('dungeon.continue', { floor: r.floor + 1 }) }}
+              </button>
+              <button
+                type="button"
+                class="tbca-button tbca-button--gold tbca-button--lg"
+                [disabled]="busy()"
+                (click)="action('leave')"
+              >
+                {{ t('dungeon.leave') }}
+              </button>
+              <button
+                type="button"
+                class="tbca-button tbca-button--ghost"
+                [disabled]="busy() || r.injectors === 0 || r.hp >= r.maxHp"
+                (click)="action('heal')"
+              >
+                {{ t('dungeon.heal') }}
+              </button>
+              @if (r.decideBy) {
+                <span class="timer">{{
+                  t('dungeon.decideBy', { time: decideTime(r.decideBy) })
+                }}</span>
+              }
+              @if (r.lastFightId) {
+                <a class="tbca-idx" [routerLink]="['/replay', r.lastFightId]">{{
+                  t('dungeon.lastFight')
+                }}</a>
+              }
+            </div>
+          </section>
+        </div>
+      } @else {
+        <section class="tbca-panel tbca-panel--flush outcome tbca-gl tbca-gl--c" aria-live="polite">
+          <i class="tbca-gx" aria-hidden="true"></i>
+          <div class="tbca-ph">
+            <h2>{{ t('dungeon.lastRun') }}</h2>
+            @if (r.lastFightId) {
+              <a class="tbca-idx" [routerLink]="['/replay', r.lastFightId]">{{
+                t('dungeon.lastFight')
+              }}</a>
+            }
+          </div>
+          <div class="out">
+            <h3 class="out__t" [attr.data-status]="r.status" [tbcaGlitch]="r.id">
+              {{ outcomeTitle() }}
+            </h3>
+            <p class="tbca-hint">
+              {{ t('dungeon.lootSummary', { credits: r.loot.credits, xp: r.xpGained }) }}
+            </p>
+            @if (r.loot.items.length > 0) {
+              <div class="loot" [class.loot--lost]="r.status === 'defeated'">
+                @for (item of r.loot.items; track $index) {
+                  <span class="li" [class]="'li tier-' + tierOf(item.rarity)">
+                    <tbca-item-icon [item]="item" [size]="64" />
+                    <b>★{{ item.rarity }}</b>
+                  </span>
+                }
+              </div>
+              @if (r.status !== 'defeated') {
+                <button
+                  type="button"
+                  class="tbca-button tbca-button--warn"
+                  (click)="revealOpen.set(true)"
+                >
+                  {{ t('reveal.again') }}
+                </button>
+              }
+            }
+          </div>
         </section>
       }
     }
 
     @if (!active()) {
-      <section class="tbca-panel" aria-labelledby="start-title">
-        <h2 id="start-title">{{ t('dungeon.newRun') }}</h2>
-        <p class="tbca-hint">{{ t('dungeon.fee', { fee: v.fee }) }}</p>
-        <div class="start">
-          <label class="tbca-label">
-            {{ t('dungeon.injectors', { owned: ownedInjectors() }) }}
-            <select class="tbca-select" (change)="injectors.set(+$any($event.target).value)">
-              @for (n of injectorOptions(); track n) {
-                <option [value]="n" [selected]="injectors() === n">{{ n }}</option>
-              }
-            </select>
-          </label>
-          <label class="chip">
-            <input
-              type="checkbox"
-              [checked]="backupChip()"
-              [disabled]="ownedChips() === 0"
-              (change)="backupChip.set($any($event.target).checked)"
-            />
-            {{ t('dungeon.useChip', { owned: ownedChips() }) }}
-          </label>
-          <button
-            type="button"
-            class="tbca-button"
-            [disabled]="busy() || v.runsToday >= v.runsPerDay"
-            (click)="start()"
-          >
-            {{ t('dungeon.start') }}
-          </button>
+      <section
+        class="tbca-panel tbca-panel--flush start tbca-gl tbca-gl--a"
+        aria-labelledby="start-t"
+      >
+        <i class="tbca-gx" aria-hidden="true"></i>
+        <div class="tbca-ph">
+          <h2 id="start-t">{{ t('dungeon.newRun') }}</h2>
+          <span class="tbca-idx">{{
+            t('dungeon.runsLeft', { left: v.runsPerDay - v.runsToday, max: v.runsPerDay })
+          }}</span>
         </div>
-        @if (ownedInjectors() === 0 && ownedChips() === 0) {
-          <p class="tbca-hint">
-            {{ t('dungeon.suppliesHint') }} <a routerLink="/shop">{{ t('app.shop') }}</a>
-          </p>
-        }
+        <div class="startb">
+          <p class="tbca-hint">{{ t('dungeon.intro') }}</p>
+          <div class="runs">
+            <span class="tbca-label-mono">{{ t('dungeon.runsToday') }}</span>
+            <tbca-segments variant="y" [total]="v.runsPerDay" [filled]="v.runsToday" />
+          </div>
+          <div class="opts">
+            <div class="opt">
+              <span class="tbca-label-mono">{{
+                t('dungeon.injectors', { owned: ownedInjectors() })
+              }}</span>
+              <span class="tbca-seg" role="group">
+                @for (n of injectorOptions(); track n) {
+                  <button
+                    type="button"
+                    [attr.aria-pressed]="injectors() === n"
+                    (click)="injectors.set(n)"
+                  >
+                    {{ n }}
+                  </button>
+                }
+              </span>
+            </div>
+            <div class="opt">
+              <span class="tbca-label-mono">{{ t('consumables.backup_chip') }}</span>
+              <span class="tbca-seg" role="group">
+                <button
+                  type="button"
+                  [attr.aria-pressed]="!backupChip()"
+                  (click)="backupChip.set(false)"
+                >
+                  {{ t('profile.off') }}
+                </button>
+                <button
+                  type="button"
+                  [attr.aria-pressed]="backupChip()"
+                  [disabled]="ownedChips() === 0"
+                  (click)="backupChip.set(true)"
+                >
+                  {{ t('dungeon.useChipShort', { owned: ownedChips() }) }}
+                </button>
+              </span>
+            </div>
+          </div>
+          <div class="decide">
+            <button
+              type="button"
+              class="tbca-button tbca-button--lg"
+              [disabled]="busy() || v.runsToday >= v.runsPerDay"
+              (click)="start()"
+            >
+              {{ t('dungeon.start') }}
+            </button>
+            <span class="tbca-chip tbca-chip--credits"
+              ><small>CR</small>{{ t('dungeon.feeShort', { fee: v.fee }) }}</span
+            >
+          </div>
+          @if (ownedInjectors() === 0 && ownedChips() === 0) {
+            <p class="tbca-hint">
+              {{ t('dungeon.suppliesHint') }}
+              <a routerLink="/market/shop">{{ t('market.tabs.shop') }}</a>
+            </p>
+          }
+        </div>
       </section>
     }
-  } @else if (error()) {
-    <p class="tbca-error" role="alert">{{ t('errors.' + error()) }}</p>
-  } @else {
+
+    @if (revealOpen()) {
+      @if (run(); as r) {
+        <tbca-loot-reveal
+          [items]="r.loot.items"
+          [credits]="r.loot.credits"
+          [title]="outcomeTitle()"
+          (closed)="revealOpen.set(false)"
+        />
+      }
+    }
+  } @else if (!error()) {
     <p class="tbca-hint">{{ t('dungeon.loading') }}</p>
   }
 </ng-container>

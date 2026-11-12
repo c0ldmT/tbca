@@ -1,9 +1,10 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, input, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 import type { TargetSelector } from '@tbca/game-core';
 import {
   TEAM_FOCUS,
+  TEAM_MAX_MEMBERS,
   TEAM_LOGOS,
   type CommunityView,
   type TeamSummary,
@@ -14,26 +15,20 @@ import { ApiFailure } from '../../core/api-failure';
 import { AuthService } from '../../core/auth.service';
 import { CharacterService } from '../../core/character.service';
 import { TeamService } from '../../core/team.service';
-
-/** Platzhalter-Glyphen bis zu den prozeduralen Logos der Design-Session. */
-export const LOGO_GLYPHS: Record<string, string> = {
-  wolf: 'ᗯ',
-  halo: '◯',
-  skull: '☠',
-  bolt: 'ϟ',
-  eye: '◉',
-  blade: '⟋',
-  chip: '▣',
-  crown: '♛',
-};
+import { ClassBadge } from '../../shared/ui/class-badge';
+import { Segments } from '../../shared/ui/segments';
+import { TeamLogo } from '../../shared/ui/team-logo';
 
 @Component({
   selector: 'tbca-teams-page',
-  imports: [TranslocoDirective, RouterLink],
+  imports: [TranslocoDirective, RouterLink, TeamLogo, ClassBadge, Segments],
   templateUrl: './teams.page.html',
   styleUrl: './teams.page.css',
 })
 export class TeamsPage {
+  /** Abschnitt aus den Routendaten: eigenes Team, Team-Kampf oder Communities. */
+  readonly section = input<'team' | 'challenge' | 'communities'>('team');
+
   protected readonly auth = inject(AuthService);
   protected readonly characters = inject(CharacterService);
   private readonly api = inject(TeamService);
@@ -41,7 +36,7 @@ export class TeamsPage {
 
   protected readonly logos = TEAM_LOGOS;
   protected readonly focusOptions = TEAM_FOCUS;
-  protected readonly glyph = LOGO_GLYPHS;
+  protected readonly maxMembers = TEAM_MAX_MEMBERS;
   protected readonly communities = signal<CommunityView[]>([]);
   protected readonly teams = signal<TeamView[]>([]);
   protected readonly opponents = signal<TeamSummary[]>([]);
@@ -81,6 +76,12 @@ export class TeamsPage {
       const first = communities.find((c) => c.member);
       if (first && !this.form().communityId) this.patchForm({ communityId: first.id });
     });
+  }
+
+  /** Durchschnittslevel der Mitglieder mit Charakter (gerundet). */
+  protected averageLevel(team: TeamView): number {
+    const levels = team.members.flatMap((m) => (m.character ? [m.character.level] : []));
+    return levels.length ? Math.round(levels.reduce((a, b) => a + b, 0) / levels.length) : 0;
   }
 
   protected patchForm(patch: Partial<ReturnType<typeof this.form>>): void {

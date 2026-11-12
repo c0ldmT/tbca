@@ -1,0 +1,174 @@
+/*
+ * Items: Tierfarben, Icon-Boxen mit Glow je Tier, holografischer Rahmen ab Tier 6, Sterne.
+ * Die Tierfarbe steht in --tier; .tier-1 … .tier-6 setzen sie.
+ */
+.tier-0 {
+  --tier: var(--tbca-text-muted);
+}
+
+.tier-1 {
+  --tier: var(--tbca-tier-1);
+}
+
+.tier-2 {
+  --tier: var(--tbca-tier-2);
+}
+
+.tier-3 {
+  --tier: var(--tbca-tier-3);
+}
+
+.tier-4 {
+  --tier: var(--tbca-tier-4);
+}
+
+.tier-5 {
+  --tier: var(--tbca-tier-5);
+}
+
+.tier-6 {
+  --tier: var(--tbca-tier-6);
+}
+
+.tbca-tier-text {
+  color: var(--tier);
+}
+
+.tier-6 .tbca-tier-text,
+.tbca-tier-text.tier-6 {
+  background: linear-gradient(90deg, #7df9ff, #b44cff, #ff2a6d, #f5e400);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Icon-Box */
+.tbca-ibox {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--ib, 62px);
+  height: var(--ib, 62px);
+  background:
+    radial-gradient(
+      circle at 50% 42%,
+      color-mix(in srgb, var(--tier, #8a93b2) 26%, transparent),
+      transparent 70%
+    ),
+    rgb(15 18 32 / 0.85);
+  border: 1px solid color-mix(in srgb, var(--tier, #8a93b2) 60%, transparent);
+  --ibc: calc(var(--ib, 62px) * 0.14);
+  clip-path: polygon(
+    var(--ibc) 0,
+    100% 0,
+    100% calc(100% - var(--ibc)),
+    calc(100% - var(--ibc)) 100%,
+    0 100%,
+    0 var(--ibc)
+  );
+}
+
+.tbca-ibox svg {
+  width: 66%;
+  height: 66%;
+  overflow: visible;
+}
+
+.tbca-ibox .glyph {
+  fill: none;
+  stroke: var(--tier, #8a93b2);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 3px var(--tier, #8a93b2));
+}
+
+.tbca-ibox .trace {
+  fill: none;
+  stroke: var(--tier, #8a93b2);
+  stroke-width: 1;
+  opacity: 0.55;
+}
+
+.tbca-ibox--empty {
+  border-style: dashed;
+  border-color: rgb(138 147 178 / 0.4);
+  background: rgb(7 8 13 / 0.6);
+}
+
+.tbca-ibox--empty .glyph {
+  stroke: rgb(138 147 178 / 0.55);
+  filter: none;
+  stroke-dasharray: 3 3;
+}
+
+.tbca-ibox--blocked {
+  background: repeating-linear-gradient(135deg, rgb(255 42 109 / 0.18) 0 4px, transparent 4px 9px);
+  border-color: rgb(255 42 109 / 0.5);
+}
+
+.tier-4 .tbca-ibox,
+.tbca-ibox.tier-4 {
+  box-shadow: inset 0 0 16px color-mix(in srgb, var(--tier) 40%, transparent);
+}
+
+.tier-5 .tbca-ibox,
+.tbca-ibox.tier-5 {
+  box-shadow: inset 0 0 20px color-mix(in srgb, var(--tier) 50%, transparent);
+  animation: tbca-glow5 2.4s ease-in-out infinite;
+}
+
+@keyframes tbca-glow5 {
+  50% {
+    box-shadow: inset 0 0 28px color-mix(in srgb, var(--tier) 70%, transparent);
+  }
+}
+
+.tier-6 .tbca-ibox,
+.tbca-ibox.tier-6 {
+  border-color: transparent;
+  background:
+    radial-gradient(circle at 50% 42%, rgb(125 249 255 / 0.25), transparent 70%) padding-box,
+    linear-gradient(rgb(15 18 32 / 0.9), rgb(15 18 32 / 0.9)) padding-box,
+    linear-gradient(115deg, #7df9ff, #b44cff, #ff2a6d, #f5e400, #7df9ff) border-box;
+  animation: tbca-holo 5s linear infinite;
+}
+
+@keyframes tbca-holo {
+  to {
+    filter: hue-rotate(360deg);
+  }
+}
+
+/* Sterne: 9 Silhouetten, darüber Overflow in Tierfarbe */
+.tbca-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.tbca-stars svg {
+  width: var(--st, 15px);
+  height: var(--st, 15px);
+}
+
+.tbca-stars .on {
+  fill: var(--tier);
+  filter: drop-shadow(0 0 3px var(--tier));
+}
+
+.tbca-stars .off {
+  fill: none;
+  stroke: rgb(138 147 178 / 0.45);
+  stroke-width: 1;
+}
+
+.tbca-stars__ovf {
+  margin-left: 6px;
+  font: 700 0.75rem / 1 var(--tbca-font-mono);
+  color: var(--tier);
+}
+
+:root[data-quality='niedrig'] .tbca-ibox {
+  animation: none;
+}

@@ -1,57 +1,90 @@
-<section class="tbca-panel" *transloco="let t" aria-labelledby="loadout-title">
-  <h2 id="loadout-title">{{ t('character.loadout.title') }}</h2>
-
-  <h3>
-    {{ t('character.loadout.abilities', { count: abilities().length, max: maxAbilities() }) }}
-  </h3>
-  <ul class="abilities">
-    @for (a of classAbilities(); track a.id) {
-      <li>
-        <label
-          class="ability"
-          [class.ability--active]="abilities().includes(a.id)"
-          [class.ability--locked]="isLocked(a)"
-        >
-          <input
-            type="checkbox"
-            [checked]="abilities().includes(a.id)"
-            [disabled]="
-              isLocked(a) || (!abilities().includes(a.id) && abilities().length >= maxAbilities())
-            "
-            (change)="toggleAbility(a.id)"
-          />
-          <span class="ability__name">{{ t('abilities.' + a.id) }}</span>
-          @if (isLocked(a)) {
-            <span class="tbca-hint">{{
-              t('character.loadout.locked', { level: a.unlockLevel })
-            }}</span>
-          } @else {
-            <span class="ability__cost">
-              <span>{{ t('character.loadout.energy', { value: a.energyCost }) }}</span>
-              <span>{{ t('character.loadout.cooldown', { value: a.cooldown }) }}</span>
+<div class="two" *transloco="let t">
+  <section class="tbca-panel tbca-panel--flush tbca-gl tbca-gl--a" aria-labelledby="ab-t">
+    <i class="tbca-gx" aria-hidden="true"></i>
+    <div class="tbca-ph">
+      <div class="tbca-ph__t">
+        <h2 id="ab-t">{{ t('character.loadout.abilitiesTitle') }}</h2>
+        <span class="tbca-idx">
+          {{ t('classes.' + character().classId) }} ·
+          {{
+            t('character.loadout.activeCount', { count: abilities().length, max: maxAbilities() })
+          }}
+        </span>
+      </div>
+    </div>
+    <ul class="ab">
+      @for (a of classAbilities(); track a.id) {
+        @let active = abilities().includes(a.id);
+        <li>
+          <label class="abc" [class.abc--on]="active" [class.abc--locked]="isLocked(a)">
+            <input
+              class="visually-hidden"
+              type="checkbox"
+              [checked]="active"
+              [disabled]="isLocked(a) || (!active && abilities().length >= maxAbilities())"
+              (change)="toggleAbility(a.id)"
+            />
+            <span class="abc__head">
+              <span class="abc__name">{{ t('abilities.' + a.id) }}</span>
+              <span class="abc__state" aria-hidden="true">{{
+                active ? t('character.loadout.on') : t('character.loadout.off')
+              }}</span>
             </span>
-          }
-          <ul class="ability__effects">
-            @for (line of describe(a); track $index) {
-              <li>{{ t(line.key, line.params) }}</li>
-            }
-          </ul>
-        </label>
-      </li>
-    }
-  </ul>
+            <span class="abm">
+              @if (isLocked(a)) {
+                <span class="tbca-tag tbca-tag--magenta">{{
+                  t('character.loadout.locked', { level: a.unlockLevel })
+                }}</span>
+              } @else {
+                <span class="tbca-tag tbca-tag--cyan">{{
+                  t('character.loadout.energy', { value: a.energyCost })
+                }}</span>
+                <span class="tbca-tag">{{
+                  t('character.loadout.cooldownShort', { value: a.cooldown })
+                }}</span>
+                <span class="tbca-tag">{{
+                  t('character.loadout.fromLevel', { level: a.unlockLevel })
+                }}</span>
+              }
+            </span>
+            <span class="abc__fx">
+              @for (line of describe(a); track $index) {
+                <span>{{ t(line.key, line.params) }}</span>
+              }
+            </span>
+          </label>
+        </li>
+      }
+    </ul>
+  </section>
 
-  <h3>{{ t('character.loadout.tactics', { count: tactics().length, max: maxRules() }) }}</h3>
-  <p class="tbca-hint">{{ t('character.loadout.tacticsHint') }}</p>
-  <ol class="rules">
-    @for (rule of tactics(); track $index; let i = $index, first = $first, last = $last) {
-      <li class="rule">
-        <span class="rule__index" aria-hidden="true">{{ i + 1 }}</span>
-        <label class="tbca-label">
-          {{ t('character.loadout.when') }}
+  <section class="tbca-panel tbca-panel--flush tbca-gl tbca-gl--c" aria-labelledby="tac-t">
+    <i class="tbca-gx" aria-hidden="true"></i>
+    <div class="tbca-ph">
+      <div class="tbca-ph__t">
+        <h2 id="tac-t">{{ t('character.loadout.rulesTitle') }}</h2>
+        <span class="tbca-idx">{{
+          t('character.loadout.rulesCount', { count: tactics().length, max: maxRules() })
+        }}</span>
+      </div>
+      <button
+        type="button"
+        class="tbca-button tbca-button--ghost"
+        [disabled]="tactics().length >= maxRules()"
+        (click)="addRule()"
+      >
+        + {{ t('character.loadout.addRule') }}
+      </button>
+    </div>
+    <ol class="rules">
+      @for (rule of tactics(); track $index; let i = $index, first = $first, last = $last) {
+        <li class="rule">
+          <b class="rule__no"
+            >{{ (i + 1).toString().padStart(2, '0') }} {{ t('character.loadout.when') }}</b
+          >
           <select
-            class="tbca-select"
-            [value]="rule.when.type"
+            class="pill"
+            [attr.aria-label]="t('character.loadout.when')"
             (change)="setConditionType(i, $any($event.target).value)"
           >
             @for (c of conditions; track c) {
@@ -60,34 +93,35 @@
               </option>
             }
           </select>
-        </label>
-        @if (conditionNumber(rule.when) !== null) {
-          <label class="tbca-label">
-            {{ t('tactic.param.' + rule.when.type) }}
+          @if (conditionNumber(rule.when) !== null) {
             <input
-              class="tbca-input rule__number"
+              class="pill pill--num"
               type="number"
               min="0"
+              [attr.aria-label]="t('tactic.param.' + rule.when.type)"
               [value]="conditionNumber(rule.when)"
               (change)="setConditionNumber(i, $any($event.target).value)"
             />
-          </label>
-        }
-        @if (conditionStatus(rule.when); as status) {
-          <label class="tbca-label">
-            {{ t('tactic.param.status') }}
-            <select class="tbca-select" (change)="setConditionStatus(i, $any($event.target).value)">
+          }
+          @if (conditionStatus(rule.when); as status) {
+            <select
+              class="pill"
+              [attr.aria-label]="t('tactic.param.status')"
+              (change)="setConditionStatus(i, $any($event.target).value)"
+            >
               @for (s of statuses; track s) {
                 <option [value]="s" [selected]="s === status">
                   {{ t('battle.statusName.' + s) }}
                 </option>
               }
             </select>
-          </label>
-        }
-        <label class="tbca-label">
-          {{ t('character.loadout.then') }}
-          <select class="tbca-select" (change)="setUse(i, $any($event.target).value)">
+          }
+          <span class="arr" aria-hidden="true">→</span>
+          <select
+            class="pill pill--use"
+            [attr.aria-label]="t('character.loadout.then')"
+            (change)="setUse(i, $any($event.target).value)"
+          >
             <option [value]="basicAttack" [selected]="rule.use === basicAttack">
               {{ t('abilities.basic_attack') }}
             </option>
@@ -95,11 +129,13 @@
               <option [value]="id" [selected]="rule.use === id">{{ t('abilities.' + id) }}</option>
             }
           </select>
-        </label>
-        @if (targetOptions(rule.use).length > 0) {
-          <label class="tbca-label">
-            {{ t('character.loadout.target') }}
-            <select class="tbca-select" (change)="setTarget(i, $any($event.target).value)">
+          @if (targetOptions(rule.use).length > 0) {
+            <span class="arr" aria-hidden="true">→</span>
+            <select
+              class="pill"
+              [attr.aria-label]="t('character.loadout.target')"
+              (change)="setTarget(i, $any($event.target).value)"
+            >
               @for (target of targetOptions(rule.use); track target) {
                 <option
                   [value]="target"
@@ -109,57 +145,51 @@
                 </option>
               }
             </select>
-          </label>
-        }
-        <div class="rule__actions">
-          <button
-            type="button"
-            class="tbca-icon-button"
-            [disabled]="first"
-            [attr.aria-label]="t('character.loadout.up')"
-            (click)="moveRule(i, -1)"
-          >
-            ↑
-          </button>
-          <button
-            type="button"
-            class="tbca-icon-button"
-            [disabled]="last"
-            [attr.aria-label]="t('character.loadout.down')"
-            (click)="moveRule(i, 1)"
-          >
-            ↓
-          </button>
-          <button
-            type="button"
-            class="tbca-icon-button"
-            [attr.aria-label]="t('character.loadout.remove')"
-            (click)="removeRule(i)"
-          >
-            ×
-          </button>
-        </div>
-      </li>
+          }
+          <span class="rule__acts">
+            <button
+              type="button"
+              class="tbca-icon-button"
+              [disabled]="first"
+              [attr.aria-label]="t('character.loadout.up')"
+              (click)="moveRule(i, -1)"
+            >
+              ↑
+            </button>
+            <button
+              type="button"
+              class="tbca-icon-button"
+              [disabled]="last"
+              [attr.aria-label]="t('character.loadout.down')"
+              (click)="moveRule(i, 1)"
+            >
+              ↓
+            </button>
+            <button
+              type="button"
+              class="tbca-icon-button"
+              [attr.aria-label]="t('character.loadout.remove')"
+              (click)="removeRule(i)"
+            >
+              ×
+            </button>
+          </span>
+        </li>
+      } @empty {
+        <li class="tbca-hint">{{ t('character.loadout.noRules') }}</li>
+      }
+    </ol>
+    <p class="hint">{{ t('character.loadout.tacticsHint') }}</p>
+    @if (error()) {
+      <p class="tbca-error hint" role="alert">{{ t('errors.' + error()) }}</p>
     }
-  </ol>
-  <button
-    type="button"
-    class="tbca-button tbca-button--ghost"
-    [disabled]="tactics().length >= maxRules()"
-    (click)="addRule()"
-  >
-    {{ t('character.loadout.addRule') }}
-  </button>
-
-  @if (error()) {
-    <p class="tbca-error" role="alert">{{ t('errors.' + error()) }}</p>
-  }
-  <div class="save" aria-live="polite">
-    <button type="button" class="tbca-button" [disabled]="!dirty() || busy()" (click)="save()">
-      {{ t('character.loadout.save') }}
-    </button>
-    @if (saved() && !dirty()) {
-      <span class="tbca-hint">{{ t('character.loadout.saved') }}</span>
-    }
-  </div>
-</section>
+    <div class="save" aria-live="polite">
+      <button type="button" class="tbca-button" [disabled]="!dirty() || busy()" (click)="save()">
+        {{ t('character.loadout.save') }}
+      </button>
+      @if (saved() && !dirty()) {
+        <span class="tbca-notice">{{ t('character.loadout.saved') }}</span>
+      }
+    </div>
+  </section>
+</div>

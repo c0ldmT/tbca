@@ -1,6 +1,7 @@
 <ng-container *transloco="let t">
   <header class="head">
-    <h1>{{ t('admin.title') }}</h1>
+    <span class="tbca-kicker">{{ t('admin.kicker') }}</span>
+    <h1 class="tbca-title tbca-gl tbca-gl--f">{{ t('admin.title') }}</h1>
   </header>
 
   @if (!isAdmin()) {

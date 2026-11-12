@@ -1,47 +1,151 @@
 <ng-container *transloco="let t">
+  <tbca-city-rain />
   <a class="skip-link" href="#main">{{ t('app.skipToContent') }}</a>
 
-  <header class="bar">
-    <a class="wordmark" routerLink="/" [attr.aria-label]="t('app.home')">TBCA</a>
+  <header class="top tbca-gl tbca-gl--d">
+    <a class="logo" routerLink="/" [attr.aria-label]="t('app.home')">
+      <b class="wordmark">TBCA</b><span aria-hidden="true">TURNBASED<br />CYBER ARENA</span>
+    </a>
 
-    <div class="bar__actions">
-      @if (auth.user()) {
-        <a class="nav-link" routerLink="/pvp" routerLinkActive="nav-link--active">
-          {{ t('app.arena') }}
-        </a>
-        <a class="nav-link" routerLink="/teams" routerLinkActive="nav-link--active">
-          {{ t('app.teams') }}
-        </a>
-        <a class="nav-link" routerLink="/dungeon" routerLinkActive="nav-link--active">
-          {{ t('app.dungeon') }}
-        </a>
-        <a class="nav-link" routerLink="/shop" routerLinkActive="nav-link--active">
-          {{ t('app.shop') }}
-        </a>
-        <a class="nav-link" routerLink="/character" routerLinkActive="nav-link--active">
-          {{ t('app.character') }}
-        </a>
-        @if (auth.user()) {
-          <a class="nav-link" routerLink="/account" routerLinkActive="nav-link--active">{{
-            t('app.account')
-          }}</a>
+    @if (auth.user()) {
+      <nav class="hubs" [attr.aria-label]="t('app.mainNav')">
+        @for (hub of hubs; track hub.key) {
+          <a
+            class="hub"
+            [routerLink]="hub.path"
+            routerLinkActive="hub--on"
+            ariaCurrentWhenActive="page"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <path [attr.d]="hub.icon" />
+            </svg>
+            {{ t('hubs.' + hub.key) }}
+          </a>
         }
-        @if (auth.user()?.account?.globalRole === 'superadmin') {
-          <a class="nav-link" routerLink="/admin" routerLinkActive="nav-link--active">Admin</a>
-        }
+      </nav>
+    }
+
+    <div class="status">
+      @if (characters.state(); as c) {
+        <span
+          class="tbca-chip tbca-chip--credits"
+          [attr.aria-label]="t('character.credits', { credits: c.credits })"
+        >
+          <small aria-hidden="true">CR</small>{{ c.credits.toLocaleString(language.current()) }}
+        </span>
       }
-      <div class="lang" role="group" [attr.aria-label]="t('app.language')">
-        @for (locale of language.locales; track locale) {
+      @if (hud.runs(); as r) {
+        <a
+          class="tbca-chip status__runs"
+          routerLink="/fight/dungeon"
+          [attr.aria-label]="t('hud.runs', { today: r.today, max: r.perDay })"
+        >
+          <small aria-hidden="true">{{ t('app.dungeon') }}</small
+          >{{ r.today }}/{{ r.perDay }}
+        </a>
+      }
+      @if (auth.user()) {
+        <div class="profile">
           <button
             type="button"
-            class="lang__option"
-            [attr.aria-pressed]="language.current() === locale"
-            (click)="setLanguage(locale)"
+            class="avatar"
+            [attr.aria-label]="t('profile.menu')"
+            [attr.aria-expanded]="menuOpen()"
+            aria-controls="profile-menu"
+            (click)="toggleMenu()"
           >
-            {{ locale.toUpperCase() }}
+            {{ initials() }}
           </button>
+          @if (menuOpen()) {
+            <div id="profile-menu" class="tbca-panel menu" [attr.aria-label]="t('profile.menu')">
+              <div class="menu__row">
+                <span class="tbca-label-mono">{{ t('profile.signedInAs') }}</span>
+                <span class="tbca-mono">{{ auth.displayName() }}</span>
+              </div>
+              <div class="menu__sep"></div>
+              <a class="menu__link" routerLink="/account">{{ t('profile.account') }}</a>
+              @if (auth.user()?.account?.globalRole === 'superadmin') {
+                <a class="menu__link" routerLink="/admin">
+                  {{ t('profile.admin') }} <span class="tbca-tag tbca-tag--cyan">Superadmin</span>
+                </a>
+              }
+              <div class="menu__sep"></div>
+              <div class="menu__row">
+                <span class="tbca-label-mono" id="lang-label">{{ t('app.language') }}</span>
+                <span class="tbca-seg" role="group" aria-labelledby="lang-label">
+                  @for (locale of language.locales; track locale) {
+                    <button
+                      type="button"
+                      [attr.aria-pressed]="language.current() === locale"
+                      (click)="setLanguage(locale)"
+                    >
+                      {{ locale.toUpperCase() }}
+                    </button>
+                  }
+                </span>
+              </div>
+              <div class="menu__row">
+                <span class="tbca-label-mono" id="quality-label">{{ t('profile.quality') }}</span>
+                <span class="tbca-seg" role="group" aria-labelledby="quality-label">
+                  @for (q of qualities; track q) {
+                    <button
+                      type="button"
+                      [attr.aria-pressed]="prefs.quality() === q"
+                      (click)="setQuality(q)"
+                    >
+                      {{ t('profile.qualities.' + q) }}
+                    </button>
+                  }
+                </span>
+              </div>
+              <div class="menu__row">
+                <span class="tbca-label-mono" id="sound-label">{{ t('profile.sound') }}</span>
+                <span class="tbca-seg" role="group" aria-labelledby="sound-label">
+                  <button
+                    type="button"
+                    [attr.aria-pressed]="prefs.sound()"
+                    (click)="setSound(true)"
+                  >
+                    {{ t('profile.on') }}
+                  </button>
+                  <button
+                    type="button"
+                    [attr.aria-pressed]="!prefs.sound()"
+                    (click)="setSound(false)"
+                  >
+                    {{ t('profile.off') }}
+                  </button>
+                </span>
+              </div>
+              <div class="menu__sep"></div>
+              <button type="button" class="menu__link" (click)="logout()">
+                {{ t('profile.logout') }}
+              </button>
+            </div>
+          }
+        </div>
+      } @else {
+        <span class="tbca-seg lang" role="group" [attr.aria-label]="t('app.language')">
+          @for (locale of language.locales; track locale) {
+            <button
+              type="button"
+              [attr.aria-pressed]="language.current() === locale"
+              (click)="setLanguage(locale)"
+            >
+              {{ locale.toUpperCase() }}
+            </button>
+          }
+        </span>
+        @if (auth.state() === null) {
+          <a class="tbca-button" [href]="auth.loginUrl()">{{ t('auth.login') }}</a>
         }
-      </div>
+      }
     </div>
   </header>
 
@@ -55,4 +159,23 @@
     }
     <a routerLink="/datenschutz">{{ t('app.privacy') }}</a>
   </footer>
+
+  @if (auth.user()) {
+    <nav class="bottom" [attr.aria-label]="t('app.mainNav')">
+      @for (hub of hubs; track hub.key) {
+        <a [routerLink]="hub.path" routerLinkActive="on" ariaCurrentWhenActive="page">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path [attr.d]="hub.icon" />
+          </svg>
+          {{ t('hubs.' + hub.key) }}
+        </a>
+      }
+    </nav>
+  }
 </ng-container>

@@ -11,7 +11,8 @@
     "shop": "Shop",
     "dungeon": "Dungeon",
     "teams": "Teams",
-    "account": "Konto"
+    "account": "Konto",
+    "mainNav": "Hauptbereiche"
   },
   "auth": {
     "login": "Mit Discord anmelden",
@@ -26,7 +27,7 @@
   },
   "home": {
     "tagline": "Rundenbasierte Kämpfe für deine Community – auf Discord, Twitch und im Web.",
-    "status": "Die Arena ist im Aufbau. Charaktere, Dungeon und PvP folgen in Phase 1.",
+    "status": "Vier Klassen, Dungeon, Arena und Teams – jeder Kampf wird Runde für Runde vom Server berechnet und lässt sich als Replay ansehen.",
     "demo": {
       "title": "Testkampf",
       "description": "Berechnet von derselben Engine wie auf dem Server, hier direkt in deinem Browser. Gleicher Seed, gleicher Verlauf.",
@@ -35,6 +36,13 @@
       "fingerprint": "Fingerabdruck",
       "hp": "{{ hp }} von {{ max }} HP",
       "log": "Kampfverlauf"
+    },
+    "kicker": "Rundenbasiert · Cyberpunk · Community",
+    "jump": {
+      "character": "Ausrüstung, Werkstatt, Taktik",
+      "fight": "Arena, Dungeon, Training",
+      "crew": "Team, Team-Kampf, Communities",
+      "market": "Verbrauchsgüter und Tagesware"
     }
   },
   "battle": {
@@ -162,11 +170,14 @@
       "name": "Name",
       "nameRules": "3–20 Zeichen: Buchstaben, Ziffern, Leerzeichen, Punkt, Binde- und Unterstrich.",
       "class": "Startklasse",
-      "submit": "Charakter erstellen"
+      "submit": "Charakter erstellen",
+      "step": "Uplink · Schritt 1 von 1",
+      "later": "Die Klasse kannst du später jederzeit wechseln."
     },
     "class": {
       "title": "Klasse",
-      "hint": "Wechsel jederzeit außerhalb von Kämpfen. Das Loadout jeder Klasse bleibt gespeichert."
+      "hint": "Wechsel jederzeit außerhalb von Kämpfen. Das Loadout jeder Klasse bleibt gespeichert.",
+      "keeps": "Wechsel behält Level & Items"
     },
     "attributes": {
       "title": "Attribute",
@@ -175,7 +186,10 @@
       "add": "{{ attr }} erhöhen",
       "save": "Punkte verteilen",
       "respec": "Umskillen",
-      "respecHint": "Umskillen setzt alle freien Punkte zurück und kostet {{ cost }} Credits."
+      "respecHint": "Umskillen setzt alle freien Punkte zurück und kostet {{ cost }} Credits.",
+      "base": "Basis",
+      "items": "Items",
+      "triangle": "Attributs-Dreieck: STR schlägt DEX, DEX schlägt INT, INT schlägt STR. KON skaliert HP."
     },
     "loadout": {
       "title": "Loadout",
@@ -193,9 +207,36 @@
       "remove": "Regel entfernen",
       "addRule": "Regel hinzufügen",
       "save": "Loadout speichern",
-      "saved": "Gespeichert."
+      "saved": "Gespeichert.",
+      "abilitiesTitle": "Fähigkeiten",
+      "activeCount": "{{ count }} von {{ max }} aktiv",
+      "cooldownShort": "CD {{ value }}",
+      "fromLevel": "ab Lv {{ level }}",
+      "on": "AKTIV",
+      "off": "AUS",
+      "rulesTitle": "Taktik-Regeln",
+      "rulesCount": "{{ count }} von {{ max }} · von oben geprüft",
+      "noRules": "Noch keine Regeln – der Charakter nutzt den Basisangriff."
     },
-    "credits": "{{ credits }} Credits"
+    "credits": "{{ credits }} Credits",
+    "areas": "Charakter-Bereiche",
+    "stats": "Kampfwerte",
+    "tabs": {
+      "gear": "Ausrüstung",
+      "workshop": "Werkstatt",
+      "loadout": "Fähigkeiten & Taktik",
+      "build": "Attribute & Klasse"
+    },
+    "head": {
+      "maxHp": "HP",
+      "damage": "Schaden",
+      "armor": "Rüstung",
+      "firewall": "Firewall",
+      "accuracy": "Genauigk.",
+      "evasion": "Ausweichen",
+      "critChance": "Crit %",
+      "initiative": "Initiative"
+    }
   },
   "classRole": {
     "tank": "Tank, Nahkampf",
@@ -426,7 +467,23 @@
       "team_rated": "Gewertete Team-Herausforderung",
       "team_friendly": "Team-Freundschaftskampf"
     },
-    "winnerTeam": "{{ name }} gewinnen nach {{ rounds }} Runden"
+    "winnerTeam": "{{ name }} gewinnen nach {{ rounds }} Runden",
+    "turnOrder": "Zugreihenfolge",
+    "stepBack": "Schritt zurück",
+    "stepForward": "Schritt vor",
+    "monster": "Monster",
+    "uses": "{{ name }} setzt ein",
+    "stunned": "Betäubt",
+    "ending": {
+      "won": "Sieg",
+      "lost": "Niederlage",
+      "draw": "Remis"
+    },
+    "fullLog": "Ganzer Verlauf",
+    "abilities": "Fähigkeiten",
+    "abilitiesOf": "{{ name }} · Fähigkeiten",
+    "now": "JETZT",
+    "ready": "BEREIT"
   },
   "inventory": {
     "title": "Ausrüstung",
@@ -566,7 +623,22 @@
     "useChip": "Backup-Chip einsetzen (du hast {{ owned }})",
     "start": "Run starten",
     "suppliesHint": "Heil-Injektoren und Backup-Chips gibt es im",
-    "loading": "Lade Dungeon …"
+    "loading": "Lade Dungeon …",
+    "shaft": "Schacht · Tiefe",
+    "activeRun": "Aktiver Run",
+    "floorDone": "Etage geschafft",
+    "energy": "Energie",
+    "floorN": "Etage {{ floor }}",
+    "bossFloor": "Boss-Etage {{ floor }}",
+    "monsterLevel": "Monster-Level {{ level }}",
+    "betterLoot": "Besseres Loot garantiert",
+    "runLoot": "Loot dieses Runs",
+    "runLootHint": "{{ count }} Items · {{ credits }} CR · bei Niederlage verloren",
+    "noLootYet": "Noch kein Loot.",
+    "lastRun": "Letzter Run",
+    "runsLeft": "{{ left }} von {{ max }} Runs übrig",
+    "useChipShort": "Einsetzen ({{ owned }})",
+    "feeShort": "Gebühr {{ fee }}"
   },
   "monsters": {
     "drone": "Drohne",
@@ -712,7 +784,8 @@
       "applyJson": "JSON übernehmen",
       "saved": "Entwurf gespeichert und geprüft.",
       "published": "Veröffentlicht – gilt ab sofort für neue Kämpfe und Items."
-    }
+    },
+    "kicker": "Superadmin · Werkzeuge"
   },
   "account": {
     "title": "Konto",
@@ -741,7 +814,11 @@
       "deleteInfo": "Löscht Konto, Charaktere, Items, Teams-Mitgliedschaften und Sessions endgültig. In Replays anderer erscheinst du als „Gelöschter Spieler“. Zur Bestätigung LÖSCHEN eingeben.",
       "confirm": "Bestätigung",
       "delete": "Konto endgültig löschen"
-    }
+    },
+    "kicker": "Profil & Einstellungen",
+    "settings": "Einstellungen",
+    "linked": "Verknüpft",
+    "deviceHint": "Grafik und Sound gelten nur für dieses Gerät."
   },
   "community": {
     "title": "Community",
@@ -756,5 +833,229 @@
     },
     "roleSaved": "Rolle gespeichert.",
     "xpSaved": "XP korrigiert."
+  },
+  "hubs": {
+    "character": "Charakter",
+    "fight": "Kampf",
+    "crew": "Crew",
+    "market": "Markt"
+  },
+  "hud": {
+    "runs": "Dungeon-Runs heute: {{ today }} von {{ max }}"
+  },
+  "profile": {
+    "menu": "Profilmenü",
+    "signedInAs": "Angemeldet als",
+    "account": "Konto & Daten",
+    "admin": "Admin-Bereich",
+    "quality": "Grafik",
+    "qualities": {
+      "auto": "Auto",
+      "hoch": "Hoch",
+      "mittel": "Mittel",
+      "niedrig": "Niedrig"
+    },
+    "sound": "Sound",
+    "on": "An",
+    "off": "Aus",
+    "logout": "Abmelden"
+  },
+  "gear": {
+    "title": "Ausrüstung",
+    "slotsUsed": "10 Slots · {{ count }} belegt",
+    "totalPower": "Item-Power gesamt",
+    "blocked": "Blockiert",
+    "byTwoHanded": "durch Zweihänder",
+    "dragHere": "Item hierher ziehen",
+    "hint": "Items aus dem Inventar auf einen Slot ziehen · ohne Maus: Item wählen, dann markierten Slot oder „Ausrüsten“",
+    "details": "Item-Details",
+    "equippedIn": "Ausgerüstet · {{ slot }}",
+    "fromInventory": "Inventar",
+    "emptySlot": "Leerer Slot",
+    "starTier": "Stern {{ rarity }} · Tier {{ tier }}",
+    "accountBound": "Account-gebunden",
+    "base": "Basiswerte",
+    "noBase": "Cyberware ohne Basiswerte – das Budget steckt in den Affixen",
+    "affixes": "Affixe · {{ count }}",
+    "noAffixes": "Keine Affixe",
+    "compareWith": "Vergleich mit {{ item }} ★{{ rarity }} ({{ slot }})",
+    "compareEmpty": "Vergleich mit leerem Slot ({{ slot }})",
+    "noChange": "Keine Änderung",
+    "upgrade": "Aufwertung",
+    "itemPower": "Item-Power",
+    "equipTo": "Ausrüsten · {{ slot }}",
+    "toWorkshop": "In Werkstatt",
+    "sell": "Verkaufen · {{ credits }} CR",
+    "offHandBlocked": "Nebenhand blockiert",
+    "offHandBlockedText": "Ein Zweihänder belegt beide Hände. Lege ihn ab, um die Nebenhand zu nutzen.",
+    "slotEmpty": "{{ slot }} · leer",
+    "fittingItems": "Passende Items im Inventar. Antippen zum Ansehen oder direkt auf den Slot ziehen.",
+    "noFittingItems": "Kein passendes Item im Inventar.",
+    "itemCount": "{{ count }} Items",
+    "filter": {
+      "all": "Alle",
+      "weapon": "Waffen",
+      "armor": "Rüstung",
+      "cyber": "Cyberware"
+    },
+    "sort": "Sortieren",
+    "sortBy": {
+      "rarity": "Rarität",
+      "level": "Item-Level",
+      "new": "Neueste"
+    },
+    "dropToUnequip": "Hier ablegen, um auszuziehen",
+    "new": "NEU",
+    "resources": "Materialien und Verbrauchsgüter",
+    "inventory": "Inventar"
+  },
+  "itemCategory": {
+    "head": "Rüstung · Kopf",
+    "torso": "Rüstung · Torso",
+    "legs": "Rüstung · Beine",
+    "feet": "Rüstung · Füße",
+    "hands": "Rüstung · Hände",
+    "weapon_1h": "Waffe · Einhand",
+    "weapon_2h": "Waffe · Zweihand, blockiert Nebenhand",
+    "shield": "Nebenhand · Schild",
+    "implant": "Cyberware · Implantat",
+    "core_implant": "Cyberware · Kern-Implantat"
+  },
+  "workshop": {
+    "resources": "Ressourcen",
+    "items": "Items",
+    "selection": "Auswahl",
+    "filter": {
+      "all": "Alle",
+      "equipped": "Ausgerüstet",
+      "inventory": "Inventar"
+    },
+    "bench": "Werkbank",
+    "multiSalvage": "Mehrfach-Zerlegen",
+    "ofMax": "VON +10",
+    "noItem": "Kein Item vorhanden.",
+    "valuesTable": "Werte vorher und nachher",
+    "value": "Wert",
+    "now": "Jetzt",
+    "after": "Danach",
+    "chance": "Erfolgschance",
+    "upgradeRisk": "Bei Fehlschlag sinkt die Stufe auf +{{ level }}. Das Item wird nie zerstört.",
+    "upgradeSafe": "Bis +5 gelingt jede Aufwertung.",
+    "rerollRange": "Ein Affix · neuer Wert 70–100 %",
+    "noAffixesToReroll": "Dieses Item hat keine Affixe.",
+    "chooseAffix": "Affix wählen",
+    "possibleAffixes": "Möglicher neuer Affix (ohne vorhandene)",
+    "lastRoll": "Letzter Wurf",
+    "rerollAction": "Neu würfeln",
+    "rerollResult": "{{ from }} → {{ to }} {{ value }} ({{ quality }} %)",
+    "targetHas": "Ziel hat {{ count }} Affixe",
+    "targetFull": "Ziel ist voll",
+    "targetFullText": "Das Item hat die Höchstzahl an Affixen. Erst einen Affix neu würfeln oder links ein anderes Ziel wählen.",
+    "step1": "1 · Spender wählen (wird geopfert)",
+    "step2": "2 · Affix wählen",
+    "donorAffix": "Affix des Spenders",
+    "problem": {
+      "notAllowed": "passt nicht",
+      "present": "schon da"
+    },
+    "transferChance": "Erfolgschance bei {{ count }} vorhandenen Affixen",
+    "donorLost": "Der Spender wird in jedem Fall zerstört.",
+    "transferKeeps": "Bei Erfolg übernimmt das Ziel den Affix mit gleicher Würfelqualität.",
+    "transferAction": "Übertragen",
+    "selected": "{{ count }} ausgewählt",
+    "salvageHint": "Items links antippen, um sie auszuwählen. Ausgerüstete Items sind gesperrt. Zerlegte Items sind endgültig weg.",
+    "selectLow": "Alle Stern 1–3",
+    "selectMid": "Alle Stern 4–6",
+    "clear": "Auswahl leeren",
+    "salvageCount": "Zerlegen · {{ count }} Items",
+    "action": "Aktion",
+    "actions": "Werkstatt-Aktionen",
+    "op": {
+      "upgrade": "Aufwerten",
+      "reroll": "Neu würfeln",
+      "transfer": "Übertragen",
+      "salvage": "Zerlegen"
+    },
+    "opText": {
+      "upgrade": "+3 % auf alle Werte je Stufe, bis +10",
+      "reroll": "Einen Affix neu auswürfeln",
+      "transfer": "Affix von einem Spender-Item übernehmen",
+      "salvage": "Items zu Material, auch mehrere auf einmal"
+    },
+    "log": "Protokoll",
+    "logEmpty": "Noch keine Aktion in dieser Sitzung.",
+    "flashUp": "Erfolg · +{{ level }}",
+    "flashFail": "Fehlschlag · +{{ level }}",
+    "flashFailShort": "Fehlschlag",
+    "flashTransfer": "Übertragen",
+    "flashQuality": "{{ quality }} % Qualität",
+    "logUp": "{{ item }} +{{ from }} → +{{ to }} · Erfolg",
+    "logUpFail": "{{ item }} +{{ from }} → +{{ to }} · Fehlschlag",
+    "logTransfer": "{{ stat }} von {{ donor }} → {{ item }} · Erfolg",
+    "logTransferFail": "{{ stat }} von {{ donor }} → {{ item }} · Fehlschlag, Spender verloren",
+    "logSalvage": "{{ count }} zerlegt · {{ gained }}"
+  },
+  "fight": {
+    "tabs": {
+      "arena": "Arena",
+      "dungeon": "Dungeon",
+      "training": "Training",
+      "history": "Verlauf"
+    },
+    "today": "Heute",
+    "reset": "Reset 00:00",
+    "all": "Alle",
+    "replay": "Replay",
+    "result": {
+      "won": "Sieg",
+      "lost": "Niederl.",
+      "draw": "Remis"
+    },
+    "trainingTag": "Keine Belohnung · kein Limit",
+    "historyTag": "Einzel · Team · Dungeon"
+  },
+  "reveal": {
+    "title": "Loot-Reveal",
+    "progress": "Kapsel {{ n }} von {{ total }}",
+    "summary": "{{ count }} Items · {{ credits }} CR",
+    "capsule": "DATEN-<br>KAPSEL<br>▼",
+    "open": "Enthüllen",
+    "next": "Nächste Kapsel",
+    "toSummary": "Zur Übersicht",
+    "showAll": "Alle zeigen",
+    "close": "Schließen",
+    "done": "Fertig",
+    "again": "Loot-Reveal ansehen",
+    "fullReveal": "Voller Reveal",
+    "tierName": {
+      "1": "Gewöhnlich",
+      "2": "Verbessert",
+      "3": "Selten",
+      "4": "Episch",
+      "5": "Legendär",
+      "6": "Holografisch"
+    }
+  },
+  "crew": {
+    "kicker": "Teams & Communities",
+    "tabs": {
+      "team": "Mein Team",
+      "challenge": "Team-Kampf",
+      "communities": "Communities"
+    },
+    "noTeam": "Du bist noch in keinem Team. Gründe eins oder tritt mit einem Code bei – unter „Mein Team“.",
+    "myTeam": "Mein Team",
+    "members": "Mitglieder",
+    "avgLevel": "Ø Level",
+    "toChallenge": "Zum Team-Kampf",
+    "lineup": "Aufstellung",
+    "create": "Team gründen",
+    "joinTitle": "Per Code beitreten"
+  },
+  "market": {
+    "kicker": "Credits ausgeben",
+    "tabs": {
+      "shop": "Shop"
+    }
   }
 }

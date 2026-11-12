@@ -1,0 +1,177 @@
+/*
+ * Balken: Parallelogramm mit abgekanteten Enden, die Füllung hat dieselbe Schräge.
+ * Varianten über CSS-Variablen: --bh Höhe, --bk Schräge, --bf Füllung, --bgl Leuchten.
+ *
+ *   <span class="tbca-bar tbca-bar--hp"><span class="tbca-bar__t">
+ *     <span class="tbca-bar__g" style="width: 80%"></span>
+ *     <span class="tbca-bar__f" style="width: 58%"></span>
+ *   </span></span>
+ */
+.tbca-bar {
+  display: block;
+  position: relative;
+  filter: drop-shadow(0 0 5px var(--bgl, rgb(0 240 255 / 0.45)));
+}
+
+.tbca-bar__t {
+  position: relative;
+  display: block;
+  height: var(--bh, 8px);
+  background: rgb(255 255 255 / 0.08);
+  clip-path: polygon(var(--bk, 5px) 0, 100% 0, calc(100% - var(--bk, 5px)) 100%, 0 100%);
+}
+
+.tbca-bar__f,
+.tbca-bar__g,
+.tbca-bar__i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  display: block;
+  clip-path: polygon(0 0, 100% 0, calc(100% - var(--bk, 5px)) 100%, 0 100%);
+}
+
+.tbca-bar__f {
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.4) 0 1px, transparent 1px),
+    var(--bf, linear-gradient(90deg, #00b8c8, #00f0ff 70%, #9afbff));
+  transition: width 0.5s ease;
+}
+
+/* Nachlauf: zeigt kurz, wie viel gerade verloren ging. */
+.tbca-bar__g {
+  background: rgb(255 255 255 / 0.55);
+  transition: width 0.9s ease 0.35s;
+}
+
+/* Anteil aus Items hinter dem Basiswert (Attribute). */
+.tbca-bar__i {
+  background: linear-gradient(90deg, #8a3bd6, #b44cff);
+}
+
+.tbca-bar--seg .tbca-bar__t::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: skewX(-32deg);
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0 calc(10% - 2px),
+    rgb(7 8 13 / 0.9) calc(10% - 2px) 10%
+  );
+}
+
+.tbca-bar--xp {
+  --bf: linear-gradient(90deg, #00f0ff, #b44cff 60%, #ff2a6d);
+  --bgl: rgb(180 76 255 / 0.5);
+}
+
+.tbca-bar--hp {
+  --bf: linear-gradient(90deg, #14b877, #3dffa8);
+  --bgl: rgb(61 255 168 / 0.45);
+}
+
+.tbca-bar--low {
+  --bf: linear-gradient(90deg, #c8104a, #ff2a6d);
+  --bgl: rgb(255 42 109 / 0.55);
+}
+
+.tbca-bar--en {
+  --bf: linear-gradient(90deg, #7a2fc4, #b44cff);
+  --bgl: rgb(180 76 255 / 0.5);
+}
+
+.tbca-bar--y {
+  --bf: linear-gradient(90deg, #b8a800, #f5e400);
+  --bgl: rgb(245 228 0 / 0.45);
+}
+
+.tbca-bar--tier {
+  --bf: linear-gradient(90deg, color-mix(in srgb, var(--tier) 55%, #07080d), var(--tier));
+  --bgl: color-mix(in srgb, var(--tier) 50%, transparent);
+}
+
+/* Schild über dem HP-Balken */
+.tbca-bar__s {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    135deg,
+    rgb(125 249 255 / 0.85) 0 3px,
+    rgb(125 249 255 / 0.35) 3px 6px
+  );
+}
+
+/* Zähler aus schrägen Einzelsegmenten; das nächste pulsiert. */
+.tbca-segs {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 3px;
+  filter: drop-shadow(0 0 4px rgb(0 240 255 / 0.45));
+}
+
+.tbca-segs i {
+  display: block;
+  height: var(--sh, 10px);
+  background: rgb(255 255 255 / 0.08);
+  clip-path: polygon(4px 0, 100% 0, calc(100% - 4px) 100%, 0 100%);
+}
+
+.tbca-segs i.f {
+  background: linear-gradient(180deg, #9afbff, #00f0ff 40%, #00b8c8);
+}
+
+.tbca-segs i.n {
+  animation: tbca-seg-next 1.6s ease-in-out infinite;
+}
+
+@keyframes tbca-seg-next {
+  50% {
+    background: rgb(0 240 255 / 0.32);
+  }
+}
+
+.tbca-segs--y {
+  filter: drop-shadow(0 0 4px rgb(245 228 0 / 0.45));
+}
+
+.tbca-segs--y i.f {
+  background: linear-gradient(180deg, #fff59a, #f5e400 40%, #b8a800);
+}
+
+.tbca-segs--g {
+  filter: drop-shadow(0 0 4px rgb(61 255 168 / 0.45));
+}
+
+.tbca-segs--g i.f {
+  background: linear-gradient(180deg, #b6ffe0, #3dffa8 45%, #14b877);
+}
+
+/* Risiko-Anzeige: Erfolg (cyan) gegen Fehlschlag (schraffiert magenta) */
+.tbca-risk {
+  display: flex;
+  gap: 3px;
+  filter: drop-shadow(0 0 4px rgb(0 240 255 / 0.35));
+}
+
+.tbca-risk i {
+  display: block;
+  height: 12px;
+  clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+}
+
+.tbca-risk .ok {
+  background: linear-gradient(180deg, #9afbff, #00f0ff 40%, #00b8c8);
+}
+
+.tbca-risk .no {
+  background: repeating-linear-gradient(
+    135deg,
+    rgb(255 42 109 / 0.8) 0 4px,
+    rgb(255 42 109 / 0.35) 4px 8px
+  );
+}

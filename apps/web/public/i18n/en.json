@@ -11,7 +11,8 @@
     "shop": "Shop",
     "dungeon": "Dungeon",
     "teams": "Teams",
-    "account": "Account"
+    "account": "Account",
+    "mainNav": "Main areas"
   },
   "auth": {
     "login": "Sign in with Discord",
@@ -26,7 +27,7 @@
   },
   "home": {
     "tagline": "Turn-based fights for your community – on Discord, Twitch and the web.",
-    "status": "The arena is under construction. Characters, dungeon and PvP arrive in phase 1.",
+    "status": "Four classes, dungeon, arena and teams – every fight is computed round by round on the server and can be watched as a replay.",
     "demo": {
       "title": "Test fight",
       "description": "Computed by the same engine as on the server, right here in your browser. Same seed, same fight.",
@@ -35,6 +36,13 @@
       "fingerprint": "Fingerprint",
       "hp": "{{ hp }} of {{ max }} HP",
       "log": "Fight log"
+    },
+    "kicker": "Turn-based · Cyberpunk · Community",
+    "jump": {
+      "character": "Gear, workshop, tactics",
+      "fight": "Arena, dungeon, training",
+      "crew": "Team, team fights, communities",
+      "market": "Consumables and daily wares"
     }
   },
   "battle": {
@@ -162,11 +170,14 @@
       "name": "Name",
       "nameRules": "3–20 characters: letters, digits, spaces, dot, hyphen and underscore.",
       "class": "Starting class",
-      "submit": "Create character"
+      "submit": "Create character",
+      "step": "Uplink · step 1 of 1",
+      "later": "You can switch class any time later."
     },
     "class": {
       "title": "Class",
-      "hint": "Switch any time outside of fights. Each class keeps its own loadout."
+      "hint": "Switch any time outside of fights. Each class keeps its own loadout.",
+      "keeps": "Switching keeps level & items"
     },
     "attributes": {
       "title": "Attributes",
@@ -175,7 +186,10 @@
       "add": "Increase {{ attr }}",
       "save": "Assign points",
       "respec": "Respec",
-      "respecHint": "Respec resets all assigned points and costs {{ cost }} credits."
+      "respecHint": "Respec resets all assigned points and costs {{ cost }} credits.",
+      "base": "Base",
+      "items": "Items",
+      "triangle": "Attribute triangle: STR beats DEX, DEX beats INT, INT beats STR. CON scales HP."
     },
     "loadout": {
       "title": "Loadout",
@@ -193,9 +207,36 @@
       "remove": "Remove rule",
       "addRule": "Add rule",
       "save": "Save loadout",
-      "saved": "Saved."
+      "saved": "Saved.",
+      "abilitiesTitle": "Abilities",
+      "activeCount": "{{ count }} of {{ max }} active",
+      "cooldownShort": "CD {{ value }}",
+      "fromLevel": "from Lv {{ level }}",
+      "on": "ACTIVE",
+      "off": "OFF",
+      "rulesTitle": "Tactic rules",
+      "rulesCount": "{{ count }} of {{ max }} · checked top-down",
+      "noRules": "No rules yet – the character uses the basic attack."
     },
-    "credits": "{{ credits }} credits"
+    "credits": "{{ credits }} credits",
+    "areas": "Character areas",
+    "stats": "Combat stats",
+    "tabs": {
+      "gear": "Gear",
+      "workshop": "Workshop",
+      "loadout": "Abilities & tactics",
+      "build": "Attributes & class"
+    },
+    "head": {
+      "maxHp": "HP",
+      "damage": "Damage",
+      "armor": "Armor",
+      "firewall": "Firewall",
+      "accuracy": "Accuracy",
+      "evasion": "Evasion",
+      "critChance": "Crit %",
+      "initiative": "Initiative"
+    }
   },
   "classRole": {
     "tank": "Tank, melee",
@@ -426,7 +467,23 @@
       "team_rated": "Rated team challenge",
       "team_friendly": "Friendly team fight"
     },
-    "winnerTeam": "{{ name }} win after {{ rounds }} rounds"
+    "winnerTeam": "{{ name }} win after {{ rounds }} rounds",
+    "turnOrder": "Turn order",
+    "stepBack": "Step back",
+    "stepForward": "Step forward",
+    "monster": "Monster",
+    "uses": "{{ name }} uses",
+    "stunned": "Stunned",
+    "ending": {
+      "won": "Victory",
+      "lost": "Defeat",
+      "draw": "Draw"
+    },
+    "fullLog": "Full log",
+    "abilities": "Abilities",
+    "abilitiesOf": "{{ name }} · abilities",
+    "now": "NOW",
+    "ready": "READY"
   },
   "inventory": {
     "title": "Equipment",
@@ -566,7 +623,22 @@
     "useChip": "Use backup chip (you have {{ owned }})",
     "start": "Start run",
     "suppliesHint": "Heal injectors and backup chips are sold in the",
-    "loading": "Loading dungeon …"
+    "loading": "Loading dungeon …",
+    "shaft": "Shaft · depth",
+    "activeRun": "Active run",
+    "floorDone": "Floor cleared",
+    "energy": "Energy",
+    "floorN": "Floor {{ floor }}",
+    "bossFloor": "Boss floor {{ floor }}",
+    "monsterLevel": "Monster level {{ level }}",
+    "betterLoot": "Better loot guaranteed",
+    "runLoot": "Loot of this run",
+    "runLootHint": "{{ count }} items · {{ credits }} CR · lost on defeat",
+    "noLootYet": "No loot yet.",
+    "lastRun": "Last run",
+    "runsLeft": "{{ left }} of {{ max }} runs left",
+    "useChipShort": "Use ({{ owned }})",
+    "feeShort": "Fee {{ fee }}"
   },
   "monsters": {
     "drone": "Drone",
@@ -712,7 +784,8 @@
       "applyJson": "Apply JSON",
       "saved": "Draft saved and validated.",
       "published": "Published – applies to new fights and items right away."
-    }
+    },
+    "kicker": "Superadmin · tools"
   },
   "account": {
     "title": "Account",
@@ -741,7 +814,11 @@
       "deleteInfo": "Permanently deletes account, characters, items, team memberships and sessions. In other players' replays you appear as “Deleted player”. Type LÖSCHEN to confirm.",
       "confirm": "Confirmation",
       "delete": "Delete account permanently"
-    }
+    },
+    "kicker": "Profile & settings",
+    "settings": "Settings",
+    "linked": "Linked",
+    "deviceHint": "Graphics and sound apply to this device only."
   },
   "community": {
     "title": "Community",
@@ -756,5 +833,229 @@
     },
     "roleSaved": "Role saved.",
     "xpSaved": "XP corrected."
+  },
+  "hubs": {
+    "character": "Character",
+    "fight": "Fight",
+    "crew": "Crew",
+    "market": "Market"
+  },
+  "hud": {
+    "runs": "Dungeon runs today: {{ today }} of {{ max }}"
+  },
+  "profile": {
+    "menu": "Profile menu",
+    "signedInAs": "Signed in as",
+    "account": "Account & data",
+    "admin": "Admin area",
+    "quality": "Graphics",
+    "qualities": {
+      "auto": "Auto",
+      "hoch": "High",
+      "mittel": "Medium",
+      "niedrig": "Low"
+    },
+    "sound": "Sound",
+    "on": "On",
+    "off": "Off",
+    "logout": "Sign out"
+  },
+  "gear": {
+    "title": "Gear",
+    "slotsUsed": "10 slots · {{ count }} used",
+    "totalPower": "Total item power",
+    "blocked": "Blocked",
+    "byTwoHanded": "by two-hander",
+    "dragHere": "Drag an item here",
+    "hint": "Drag items from the inventory onto a slot · without a mouse: pick an item, then a highlighted slot or “Equip”",
+    "details": "Item details",
+    "equippedIn": "Equipped · {{ slot }}",
+    "fromInventory": "Inventory",
+    "emptySlot": "Empty slot",
+    "starTier": "Star {{ rarity }} · tier {{ tier }}",
+    "accountBound": "Account-bound",
+    "base": "Base stats",
+    "noBase": "Cyberware has no base stats – the budget is in the affixes",
+    "affixes": "Affixes · {{ count }}",
+    "noAffixes": "No affixes",
+    "compareWith": "Compared with {{ item }} ★{{ rarity }} ({{ slot }})",
+    "compareEmpty": "Compared with empty slot ({{ slot }})",
+    "noChange": "No change",
+    "upgrade": "Upgrade",
+    "itemPower": "Item power",
+    "equipTo": "Equip · {{ slot }}",
+    "toWorkshop": "To workshop",
+    "sell": "Sell · {{ credits }} CR",
+    "offHandBlocked": "Off hand blocked",
+    "offHandBlockedText": "A two-hander occupies both hands. Unequip it to use the off hand.",
+    "slotEmpty": "{{ slot }} · empty",
+    "fittingItems": "Matching items in your inventory. Tap to inspect or drag onto the slot.",
+    "noFittingItems": "No matching item in your inventory.",
+    "itemCount": "{{ count }} items",
+    "filter": {
+      "all": "All",
+      "weapon": "Weapons",
+      "armor": "Armor",
+      "cyber": "Cyberware"
+    },
+    "sort": "Sort",
+    "sortBy": {
+      "rarity": "Rarity",
+      "level": "Item level",
+      "new": "Newest"
+    },
+    "dropToUnequip": "Drop here to unequip",
+    "new": "NEW",
+    "resources": "Materials and consumables",
+    "inventory": "Inventory"
+  },
+  "itemCategory": {
+    "head": "Armor · head",
+    "torso": "Armor · torso",
+    "legs": "Armor · legs",
+    "feet": "Armor · feet",
+    "hands": "Armor · hands",
+    "weapon_1h": "Weapon · one-handed",
+    "weapon_2h": "Weapon · two-handed, blocks off hand",
+    "shield": "Off hand · shield",
+    "implant": "Cyberware · implant",
+    "core_implant": "Cyberware · core implant"
+  },
+  "workshop": {
+    "resources": "Resources",
+    "items": "Items",
+    "selection": "Selection",
+    "filter": {
+      "all": "All",
+      "equipped": "Equipped",
+      "inventory": "Inventory"
+    },
+    "bench": "Workbench",
+    "multiSalvage": "Bulk salvage",
+    "ofMax": "OF +10",
+    "noItem": "No item available.",
+    "valuesTable": "Values before and after",
+    "value": "Stat",
+    "now": "Now",
+    "after": "After",
+    "chance": "Success chance",
+    "upgradeRisk": "On failure the level drops to +{{ level }}. The item is never destroyed.",
+    "upgradeSafe": "Every upgrade up to +5 succeeds.",
+    "rerollRange": "One affix · new value 70–100 %",
+    "noAffixesToReroll": "This item has no affixes.",
+    "chooseAffix": "Choose affix",
+    "possibleAffixes": "Possible new affix (excluding existing)",
+    "lastRoll": "Last roll",
+    "rerollAction": "Reroll",
+    "rerollResult": "{{ from }} → {{ to }} {{ value }} ({{ quality }} %)",
+    "targetHas": "Target has {{ count }} affixes",
+    "targetFull": "Target is full",
+    "targetFullText": "The item has the maximum number of affixes. Reroll one first or pick another target on the left.",
+    "step1": "1 · Choose donor (will be sacrificed)",
+    "step2": "2 · Choose affix",
+    "donorAffix": "Donor affix",
+    "problem": {
+      "notAllowed": "not allowed",
+      "present": "already present"
+    },
+    "transferChance": "Success chance with {{ count }} existing affixes",
+    "donorLost": "The donor is destroyed either way.",
+    "transferKeeps": "On success the target gains the affix with the same roll quality.",
+    "transferAction": "Transfer",
+    "selected": "{{ count }} selected",
+    "salvageHint": "Tap items on the left to select them. Equipped items are locked. Salvaged items are gone for good.",
+    "selectLow": "All stars 1–3",
+    "selectMid": "All stars 4–6",
+    "clear": "Clear selection",
+    "salvageCount": "Salvage · {{ count }} items",
+    "action": "Action",
+    "actions": "Workshop actions",
+    "op": {
+      "upgrade": "Upgrade",
+      "reroll": "Reroll",
+      "transfer": "Transfer",
+      "salvage": "Salvage"
+    },
+    "opText": {
+      "upgrade": "+3 % to all stats per level, up to +10",
+      "reroll": "Reroll a single affix",
+      "transfer": "Take an affix from a donor item",
+      "salvage": "Turn items into materials, several at once"
+    },
+    "log": "Log",
+    "logEmpty": "No action in this session yet.",
+    "flashUp": "Success · +{{ level }}",
+    "flashFail": "Failed · +{{ level }}",
+    "flashFailShort": "Failed",
+    "flashTransfer": "Transferred",
+    "flashQuality": "{{ quality }} % quality",
+    "logUp": "{{ item }} +{{ from }} → +{{ to }} · success",
+    "logUpFail": "{{ item }} +{{ from }} → +{{ to }} · failed",
+    "logTransfer": "{{ stat }} from {{ donor }} → {{ item }} · success",
+    "logTransferFail": "{{ stat }} from {{ donor }} → {{ item }} · failed, donor lost",
+    "logSalvage": "{{ count }} salvaged · {{ gained }}"
+  },
+  "fight": {
+    "tabs": {
+      "arena": "Arena",
+      "dungeon": "Dungeon",
+      "training": "Training",
+      "history": "History"
+    },
+    "today": "Today",
+    "reset": "Reset 00:00",
+    "all": "All",
+    "replay": "Replay",
+    "result": {
+      "won": "Win",
+      "lost": "Loss",
+      "draw": "Draw"
+    },
+    "trainingTag": "No reward · no limit",
+    "historyTag": "Solo · team · dungeon"
+  },
+  "reveal": {
+    "title": "Loot reveal",
+    "progress": "Capsule {{ n }} of {{ total }}",
+    "summary": "{{ count }} items · {{ credits }} CR",
+    "capsule": "DATA<br>CAPSULE<br>▼",
+    "open": "Reveal",
+    "next": "Next capsule",
+    "toSummary": "To summary",
+    "showAll": "Show all",
+    "close": "Close",
+    "done": "Done",
+    "again": "View loot reveal",
+    "fullReveal": "Full reveal",
+    "tierName": {
+      "1": "Common",
+      "2": "Enhanced",
+      "3": "Rare",
+      "4": "Epic",
+      "5": "Legendary",
+      "6": "Holographic"
+    }
+  },
+  "crew": {
+    "kicker": "Teams & communities",
+    "tabs": {
+      "team": "My team",
+      "challenge": "Team fight",
+      "communities": "Communities"
+    },
+    "noTeam": "You are not in a team yet. Found one or join with a code – under “My team”.",
+    "myTeam": "My team",
+    "members": "Members",
+    "avgLevel": "Avg. level",
+    "toChallenge": "To team fights",
+    "lineup": "Lineup",
+    "create": "Found a team",
+    "joinTitle": "Join with a code"
+  },
+  "market": {
+    "kicker": "Spend credits",
+    "tabs": {
+      "shop": "Shop"
+    }
   }
 }

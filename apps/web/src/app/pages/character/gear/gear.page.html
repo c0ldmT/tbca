@@ -1,0 +1,432 @@
+<ng-container *transloco="let t">
+  @if (gear.error(); as e) {
+    <p class="tbca-notice tbca-notice--bad" role="alert">{{ t('errors.' + e) }}</p>
+  }
+
+  <div class="editor">
+    <section class="tbca-panel tbca-panel--flush doll tbca-gl tbca-gl--a" aria-labelledby="doll-t">
+      <i class="tbca-gx" aria-hidden="true"></i>
+      <div class="tbca-ph">
+        <div class="tbca-ph__t">
+          <h2 id="doll-t">{{ t('gear.title') }}</h2>
+          <span class="tbca-idx">{{ t('gear.slotsUsed', { count: equippedCount() }) }}</span>
+        </div>
+        <span class="tbca-idx">
+          {{ t('gear.totalPower') }}
+          <b class="power">{{ totalPower().toLocaleString(locale()) }}</b>
+        </span>
+      </div>
+
+      <div class="dgrid">
+        @for (col of [left, right]; track $index; let isLeft = $first) {
+          <div class="col" [class.col--l]="isLeft" [class.col--r]="!isLeft">
+            @for (slot of col; track slot) {
+              @let v = slotView(slot);
+              <button
+                type="button"
+                class="slot"
+                [class]="'slot tier-' + (v.item ? tierOf(v.item.rarity) : 0)"
+                [class.slot--sel]="v.selected"
+                [class.slot--valid]="v.valid"
+                [class.slot--dim]="v.dim"
+                [class.slot--over]="v.over"
+                [class.slot--empty]="!v.item"
+                [attr.data-drop]="slot"
+                [attr.aria-label]="
+                  t('slots.' + slot) +
+                  ': ' +
+                  (v.item
+                    ? t('items.' + v.item.templateId) +
+                      ', ' +
+                      t('inventory.rarity', { rarity: v.item.rarity })
+                    : t('inventory.empty'))
+                "
+                [attr.aria-pressed]="v.selected"
+                (pointerdown)="startDrag($event, v.item, slot)"
+                (click)="clickSlot(slot)"
+              >
+                <tbca-item-icon [item]="v.item" [slot]="slot" [blocked]="v.blocked" [size]="62" />
+                <span class="stxt">
+                  <span class="tbca-label-mono">{{ t('slots.' + slot) }}</span>
+                  @if (v.item; as it) {
+                    <span class="sname tbca-tier-text">{{ t('items.' + it.templateId) }}</span>
+                    <span class="smeta">
+                      ★{{ it.rarity }} · iLvl {{ it.itemLevel }}
+                      @if (it.upgrade) {
+                        · <b>+{{ it.upgrade }}</b>
+                      }
+                    </span>
+                  } @else if (v.blocked) {
+                    <span class="sname blocked">{{ t('gear.blocked') }}</span>
+                    <span class="smeta">{{ t('gear.byTwoHanded') }}</span>
+                  } @else {
+                    <span class="sname empty">{{ t('inventory.empty') }}</span>
+                    <span class="smeta">{{ t('gear.dragHere') }}</span>
+                  }
+                </span>
+              </button>
+            }
+          </div>
+          @if (isLeft) {
+            <div class="fig" aria-hidden="true">
+              @for (cls of [character()?.classId]; track cls) {
+                <tbca-silhouette class="fig__body" [classId]="cls ?? null" />
+              }
+              <svg class="fig__nodes" [attr.viewBox]="viewBox" preserveAspectRatio="xMidYMid meet">
+                @for (n of nodes(); track $index) {
+                  <circle [attr.class]="n.cls" [attr.cx]="n.x" [attr.cy]="n.y" [attr.r]="n.r" />
+                }
+              </svg>
+              <div class="scanbar"></div>
+              <div class="pad"></div>
+            </div>
+          }
+        }
+      </div>
+      <div class="dfoot">
+        <span>{{ t('gear.hint') }}</span>
+      </div>
+    </section>
+
+    <section class="tbca-panel tbca-panel--flush detail tbca-gl tbca-gl--c" aria-labelledby="det-t">
+      <i class="tbca-gx" aria-hidden="true"></i>
+      <div class="tbca-ph">
+        <div class="tbca-ph__t">
+          <h2 id="det-t">{{ t('gear.details') }}</h2>
+          <span class="tbca-idx">
+            @if (selectedItem(); as it) {
+              @if (it.equippedIn) {
+                {{ t('gear.equippedIn', { slot: t('slots.' + it.equippedIn) }) }}
+              } @else {
+                {{ t('gear.fromInventory') }}
+              }
+            } @else {
+              {{ t('gear.emptySlot') }}
+            }
+          </span>
+        </div>
+      </div>
+      <div class="dbody" aria-live="polite">
+        @if (notice(); as n) {
+          <p class="tbca-notice" role="status">{{ t('workbench.sold', { credits: n }) }}</p>
+        }
+        @if (detail(); as d) {
+          <div class="dcontent" [class]="'dcontent tier-' + d.tier">
+            <div class="hero">
+              <div class="hbox">
+                <tbca-item-icon [item]="d.item" [size]="118" />
+                <span class="ring"></span>
+              </div>
+              <div class="hero__txt">
+                <h3 class="dname tbca-tier-text">
+                  {{ t('items.' + d.item.templateId) }}
+                  @if (d.up) {
+                    <span class="up">+{{ d.up }}</span>
+                  }
+                </h3>
+                <div class="dsub">{{ t('itemCategory.' + d.item.category) }}</div>
+                <tbca-stars
+                  class="dstars"
+                  [rarity]="d.item.rarity"
+                  [attr.aria-label]="t('inventory.rarity', { rarity: d.item.rarity })"
+                />
+                <div class="tags">
+                  <span class="tbca-tag tbca-tag--cyan">iLvl {{ d.item.itemLevel }}</span>
+                  <span class="tbca-tag">{{
+                    t('gear.starTier', { rarity: d.item.rarity, tier: d.tier })
+                  }}</span>
+                  <span class="tbca-tag">{{ t('gear.accountBound') }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="sec">
+              <h3>{{ t('gear.base') }}</h3>
+              @for (b of d.base; track b.stat) {
+                <div class="tbca-row">
+                  <span>{{ stat(b.stat, t) }}</span>
+                  <span class="tbca-mono">
+                    {{ b.value }}
+                    @if (d.up) {
+                      <small class="muted">({{ b.raw }} +{{ d.up * 3 }} %)</small>
+                    }
+                  </span>
+                </div>
+              } @empty {
+                <div class="tbca-row">
+                  <span class="muted">{{ t('gear.noBase') }}</span>
+                </div>
+              }
+            </div>
+
+            <div class="sec">
+              <h3>{{ t('gear.affixes', { count: d.affixes.length }) }}</h3>
+              @for (a of d.affixes; track a.stat) {
+                <div class="tbca-row row--a">
+                  <span>{{ stat(a.stat, t) }}</span>
+                  <span class="q">
+                    <tbca-bar
+                      class="qbar"
+                      variant="tier"
+                      [value]="a.quality"
+                      [height]="5"
+                      [slant]="3"
+                    />
+                    <span class="tbca-mono">+{{ a.value }}</span>
+                  </span>
+                </div>
+              } @empty {
+                <div class="tbca-row">
+                  <span class="muted">{{ t('gear.noAffixes') }}</span>
+                </div>
+              }
+            </div>
+
+            @if (compare(); as cmp) {
+              <div class="sec cmp">
+                <h3>
+                  @if (cmp.against; as other) {
+                    {{
+                      t('gear.compareWith', {
+                        item: t('items.' + other.templateId),
+                        rarity: other.rarity,
+                        slot: t('slots.' + cmp.slot),
+                      })
+                    }}
+                  } @else {
+                    {{ t('gear.compareEmpty', { slot: t('slots.' + cmp.slot) }) }}
+                  }
+                </h3>
+                <div class="cmp__grid">
+                  @for (r of cmp.rows; track r.key) {
+                    <span>
+                      {{ t('character.head.' + r.key) }}
+                      <span
+                        [class]="
+                          r.delta > 0 ? 'tbca-delta tbca-delta--up' : 'tbca-delta tbca-delta--down'
+                        "
+                        >{{ r.text }}</span
+                      >
+                    </span>
+                  } @empty {
+                    <span class="muted">{{ t('gear.noChange') }}</span>
+                  }
+                </div>
+              </div>
+            }
+
+            <div class="upg">
+              <div class="upg__h">
+                <span>{{ t('gear.upgrade') }}</span>
+                <span
+                  ><b>+{{ d.up }}</b> / +10 · {{ t('gear.itemPower') }}
+                  <b class="power">{{ d.power }}</b></span
+                >
+              </div>
+              <tbca-segments [total]="10" [filled]="d.up" [pulseNext]="d.up < 10" />
+            </div>
+
+            <div class="acts">
+              @if (d.item.equippedIn === null) {
+                @for (slot of d.targets; track slot) {
+                  <button
+                    type="button"
+                    class="tbca-button"
+                    [disabled]="gear.busy()"
+                    (click)="equip(d.item, slot)"
+                  >
+                    {{
+                      d.targets.length > 1
+                        ? t('gear.equipTo', { slot: t('slots.' + slot) })
+                        : t('inventory.equip')
+                    }}
+                  </button>
+                }
+              } @else {
+                <button
+                  type="button"
+                  class="tbca-button tbca-button--ghost"
+                  [disabled]="gear.busy()"
+                  (click)="unequip(d.item.equippedIn)"
+                >
+                  {{ t('inventory.unequip') }}
+                </button>
+              }
+              <a
+                class="tbca-button tbca-button--warn"
+                routerLink="/character/workshop"
+                [queryParams]="{ item: d.item.id }"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  aria-hidden="true"
+                >
+                  <path [attr.d]="wrench" />
+                </svg>
+                {{ t('gear.toWorkshop') }}
+              </a>
+              @if (d.item.equippedIn === null) {
+                <button
+                  type="button"
+                  class="tbca-button tbca-button--ghost"
+                  [disabled]="gear.busy()"
+                  (click)="sell(d.item, d.sellPrice)"
+                >
+                  {{ t('gear.sell', { credits: d.sellPrice }) }}
+                </button>
+              }
+            </div>
+          </div>
+        } @else {
+          @let sel = selection();
+          @if (sel.kind === 'slot') {
+            <div class="empty">
+              <h3 class="dname">
+                {{
+                  sel.slot === 'off_hand' && twoHanded()
+                    ? t('gear.offHandBlocked')
+                    : t('gear.slotEmpty', { slot: t('slots.' + sel.slot) })
+                }}
+              </h3>
+              <p>
+                @if (sel.slot === 'off_hand' && twoHanded()) {
+                  {{ t('gear.offHandBlockedText') }}
+                } @else if (fitting().length) {
+                  {{ t('gear.fittingItems') }}
+                } @else {
+                  {{ t('gear.noFittingItems') }}
+                }
+              </p>
+              <div class="mini">
+                @for (it of fitting(); track it.id) {
+                  <button
+                    type="button"
+                    class="minib"
+                    [class]="'minib tier-' + tierOf(it.rarity)"
+                    (click)="clickItem(it)"
+                  >
+                    <tbca-item-icon [item]="it" [size]="36" />
+                    <span class="tbca-tier-text"
+                      >{{ t('items.' + it.templateId) }} ★{{ it.rarity }}</span
+                    >
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        }
+      </div>
+    </section>
+  </div>
+
+  <section
+    class="tbca-panel tbca-panel--flush inv tbca-gl tbca-gl--f"
+    aria-labelledby="inv-t"
+    data-drop="inventory"
+  >
+    <i class="tbca-gx" aria-hidden="true"></i>
+    <div class="tbca-ph">
+      <div class="tbca-ph__t">
+        <h2 id="inv-t">{{ t('gear.inventory') }}</h2>
+        <span class="tbca-idx">{{ t('gear.itemCount', { count: backpackCount() }) }}</span>
+      </div>
+      <div class="filters">
+        @for (f of filters; track f) {
+          <button
+            type="button"
+            class="tbca-fchip"
+            [attr.aria-pressed]="filter() === f"
+            (click)="filter.set(f)"
+          >
+            {{ t('gear.filter.' + f) }}
+          </button>
+        }
+        <label class="tbca-idx sortl" for="gear-sort">{{ t('gear.sort') }}</label>
+        <select id="gear-sort" class="tbca-select" (change)="sort.set($any($event.target).value)">
+          <option value="rarity" [selected]="sort() === 'rarity'">
+            {{ t('gear.sortBy.rarity') }}
+          </option>
+          <option value="level" [selected]="sort() === 'level'">
+            {{ t('gear.sortBy.level') }}
+          </option>
+          <option value="new" [selected]="sort() === 'new'">{{ t('gear.sortBy.new') }}</option>
+        </select>
+        @if (testSeason()) {
+          <button
+            type="button"
+            class="tbca-button tbca-button--ghost"
+            [disabled]="gear.busy()"
+            (click)="testLoot()"
+            [title]="t('inventory.testLootHint')"
+          >
+            {{ t('inventory.testLoot') }}
+          </button>
+        }
+      </div>
+    </div>
+    @if (drag()?.active && drag()?.from) {
+      <div class="drop" [class.drop--over]="over() === 'inventory'">
+        {{ t('gear.dropToUnequip') }}
+      </div>
+    }
+    <div class="grid">
+      @for (it of backpack(); track it.id) {
+        @let sel = selection();
+        <button
+          type="button"
+          class="tile"
+          [class]="'tile tier-' + tierOf(it.rarity)"
+          [class.tile--sel]="sel.kind === 'item' && sel.id === it.id"
+          [class.tile--drag]="drag()?.active && drag()?.item?.id === it.id"
+          [attr.aria-pressed]="sel.kind === 'item' && sel.id === it.id"
+          [attr.aria-label]="
+            t('items.' + it.templateId) +
+            ', ' +
+            t('inventory.rarity', { rarity: it.rarity }) +
+            ', ' +
+            t('inventory.itemLevel', { level: it.itemLevel })
+          "
+          (pointerdown)="startDrag($event, it, null)"
+          (click)="clickItem(it)"
+        >
+          @if (isNew(it)) {
+            <span class="new">{{ t('gear.new') }}</span>
+          }
+          <tbca-item-icon [item]="it" [size]="64" />
+          <span class="tname tbca-tier-text">{{ t('items.' + it.templateId) }}</span>
+          <tbca-stars [rarity]="it.rarity" [size]="9" />
+          <span class="smeta">
+            iLvl {{ it.itemLevel }}
+            @if (it.upgrade) {
+              · <b>+{{ it.upgrade }}</b>
+            }
+          </span>
+        </button>
+      } @empty {
+        <p class="tbca-hint">{{ t('inventory.noItems') }}</p>
+      }
+    </div>
+    <div class="res" [attr.aria-label]="t('gear.resources')">
+      @for (m of materials; track m) {
+        <span class="tbca-chip" [class]="'tbca-chip res--' + m">
+          <i aria-hidden="true"></i>
+          {{
+            t(m === 'heal_injector' || m === 'backup_chip' ? 'consumables.' + m : 'materials.' + m)
+          }}
+          <b>{{ (gear.stacks()[m] ?? 0).toLocaleString(locale()) }}</b>
+        </span>
+      }
+    </div>
+  </section>
+
+  @if (drag(); as d) {
+    @if (d.active) {
+      <div class="ghost" [style.left.px]="d.x" [style.top.px]="d.y" aria-hidden="true">
+        <tbca-item-icon [item]="d.item" [size]="64" />
+      </div>
+    }
+  }
+</ng-container>

@@ -9,12 +9,14 @@ import { AuthService } from '../../core/auth.service';
 import { CharacterService } from '../../core/character.service';
 import { EconomyService } from '../../core/economy.service';
 import { GameConfigService } from '../../core/game-config.service';
-import { ItemCard } from '../character/item-card';
+import { statLabel, statValue, tier } from '../../shared/item-format';
+import { ItemIcon } from '../../shared/ui/item-icon';
+import { Stars } from '../../shared/ui/stars';
 
-/** Shop: Verbrauchsgüter und tägliche Rotation an Ausrüstung auf dem eigenen Level. */
+/** Shop (Markt): Verbrauchsgüter und tägliche Rotation an Ausrüstung auf dem eigenen Level. */
 @Component({
   selector: 'tbca-shop-page',
-  imports: [TranslocoDirective, RouterLink, ItemCard],
+  imports: [TranslocoDirective, RouterLink, ItemIcon, Stars],
   templateUrl: './shop.page.html',
   styleUrl: './shop.page.css',
 })
@@ -27,6 +29,9 @@ export class ShopPage {
   protected readonly consumables = CONSUMABLES;
   protected readonly shop = signal<ShopView | null>(null);
   protected readonly busy = signal(false);
+  protected readonly label = statLabel;
+  protected readonly value = statValue;
+  protected readonly tierOf = tier;
   protected readonly error = signal<string | null>(null);
 
   constructor() {

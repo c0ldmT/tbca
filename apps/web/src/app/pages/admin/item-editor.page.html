@@ -1,7 +1,8 @@
 <ng-container *transloco="let t">
   <header class="head">
     <a routerLink="/admin" class="back">← {{ t('admin.title') }}</a>
-    <h1>{{ t('admin.items.title') }}</h1>
+    <span class="tbca-kicker">{{ t('admin.kicker') }}</span>
+    <h1 class="tbca-title tbca-gl tbca-gl--f">{{ t('admin.items.title') }}</h1>
     @if (draft(); as d) {
       <p class="tbca-hint">
         {{ t('admin.items.version', { version: d.version }) }} ·

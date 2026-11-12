@@ -1,114 +1,213 @@
 <div class="hud" *transloco="let t">
-  <p class="hud__round">{{ t('battle.round', { round: frame().round }) }}</p>
+  <div class="bar tbca-gl tbca-gl--d">
+    <div class="order" [attr.aria-label]="t('replay.turnOrder')">
+      <span class="tbca-label-mono">{{ t('battle.round', { round: frame().round }) }}</span>
+      @for (id of turnOrder(); track id) {
+        <span class="oc" [class.oc--now]="frame().actor === id" [class.oc--foe]="!isOwn(id)">{{
+          nameOf(id)
+        }}</span>
+      }
+    </div>
+    <div class="controls">
+      <button type="button" class="ctl" [attr.aria-label]="t('replay.restart')" (click)="restart()">
+        ⟲
+      </button>
+      <button type="button" class="ctl" [attr.aria-label]="t('replay.stepBack')" (click)="step(-1)">
+        ◀
+      </button>
+      @if (playing()) {
+        <button type="button" class="ctl ctl--p" (click)="pause()">{{ t('replay.pause') }}</button>
+      } @else {
+        <button type="button" class="ctl ctl--p" (click)="play()">{{ t('replay.play') }}</button>
+      }
+      <button
+        type="button"
+        class="ctl"
+        [attr.aria-label]="t('replay.stepForward')"
+        (click)="step(1)"
+      >
+        ▶
+      </button>
+      <button type="button" class="ctl" [attr.aria-label]="t('replay.end')" (click)="toEnd()">
+        ⏭
+      </button>
+      <span class="tbca-label-mono tempo">{{ t('replay.speed') }}</span>
+      <span class="tbca-seg" role="group" [attr.aria-label]="t('replay.speed')">
+        @for (s of speeds; track s) {
+          <button type="button" [attr.aria-pressed]="speed() === s" (click)="setSpeed(s)">
+            {{ s }}×
+          </button>
+        }
+      </span>
+      <span class="progress">{{ frameIndex() + 1 }}/{{ frames().length }}</span>
+    </div>
+  </div>
 
   <div class="arena">
-    @for (team of teamOrder(); track team.index) {
+    @for (team of teamOrderLr(); track team.index; let center = $first) {
       <section
-        class="team"
-        [class.team--own]="team.index === ownTeam()"
+        class="side"
+        [class.side--own]="team.index === ownTeam()"
         [attr.aria-label]="t('replay.team', { team: team.index + 1 })"
       >
         @for (c of team.members; track c.id) {
           @let state = frame().units[c.id]!;
+          @let before = previous().units[c.id]!;
           @let hit = frame().hit[c.id];
           <article
-            class="unit"
-            [class.unit--active]="frame().actor === c.id"
-            [class.unit--down]="state.hp === 0"
-            [class.unit--hit]="hit === 'hit'"
-            [class.unit--crit]="hit === 'crit'"
+            class="fighter"
+            [class.fighter--act]="frame().actor === c.id"
+            [class.fighter--hit]="hit === 'hit'"
+            [class.fighter--crit]="hit === 'crit'"
+            [class.fighter--down]="state.hp === 0"
+            [class.fighter--compact]="team.members.length > 1"
+            [style.--c]="tint(team.index)"
           >
-            <header class="unit__head">
-              <span class="unit__name">{{ displayName(c) }}</span>
-              <span class="unit__meta">
-                {{ c.classId ? t('classes.' + c.classId) : '' }}
-                {{ t('character.level', { level: c.level }) }}
+            <header class="fn">
+              <tbca-class-badge [classId]="c.classId" [size]="team.members.length > 1 ? 40 : 56" />
+              <span>
+                <b>{{ displayName(c) }}</b>
+                <small
+                  >{{ c.classId ? t('classes.' + c.classId) : t('replay.monster') }} · LV
+                  {{ c.level }}</small
+                >
               </span>
             </header>
-            <div class="bar bar--hp" aria-hidden="true">
-              <span class="bar__fill" [style.width.%]="percent(state.hp, c.maxHp)"></span>
-              @if (state.shield > 0) {
-                <span class="bar__shield" [style.width.%]="percent(state.shield, c.maxHp)"></span>
-              }
+            <div class="hb">
+              <small
+                ><span>HP</span><b>{{ state.hp }} / {{ c.maxHp }}</b></small
+              >
+              <tbca-bar
+                variant="auto-hp"
+                [height]="14"
+                [slant]="8"
+                [value]="state.hp"
+                [max]="c.maxHp"
+                [ghost]="before.hp"
+                [shield]="state.shield"
+              />
             </div>
-            <p class="unit__numbers">
-              <span>{{ state.hp }}/{{ c.maxHp }} HP</span>
-              <span class="unit__energy">{{ state.energy }} EN</span>
-            </p>
-            <div class="bar bar--energy" aria-hidden="true">
-              <span class="bar__fill" [style.width.%]="percent(state.energy, c.energyMax)"></span>
+            <div class="hb">
+              <small
+                ><span>{{ t('dungeon.energy') }}</span
+                ><b>{{ state.energy }} / {{ c.energyMax }}</b></small
+              >
+              <tbca-bar
+                [variant]="team.index === ownTeam() ? 'en' : 'y'"
+                [seg]="true"
+                [height]="8"
+                [slant]="5"
+                [value]="state.energy"
+                [max]="c.energyMax"
+              />
             </div>
-            @if (state.statuses.length > 0) {
-              <ul class="statuses">
-                @for (s of state.statuses; track $index) {
-                  <li class="status" [attr.data-kind]="s.kind">
-                    {{ t('battle.statusName.' + s.kind) }}
-                  </li>
-                }
-              </ul>
-            }
-            <div class="popups" aria-hidden="true">
-              @for (p of frame().popups; track $index) {
-                @if (p.target === c.id) {
-                  <span class="popup" [attr.data-kind]="p.kind">{{ p.text }}</span>
-                }
+            <ul class="sts">
+              @for (s of state.statuses; track $index) {
+                <li class="st" [attr.data-kind]="s.kind">
+                  {{ t('battle.statusName.' + s.kind) }} · {{ s.turns }}
+                </li>
               }
+            </ul>
+            <div class="sil">
+              <tbca-silhouette
+                class="sil__fig"
+                [class.sil__fig--mirror]="team.index !== ownTeam()"
+                [classId]="c.classId"
+                [tint]="tint(team.index)"
+                [wire]="false"
+              />
+              <div class="popups" aria-hidden="true">
+                @for (p of frame().popups; track $index) {
+                  @if (p.target === c.id) {
+                    @for (k of [frameIndex()]; track k) {
+                      <span class="popup" [attr.data-kind]="p.kind">{{ p.text }}</span>
+                    }
+                  }
+                }
+              </div>
             </div>
           </article>
         }
       </section>
+      @if (center) {
+        <div class="mid" aria-live="polite">
+          @if (ending(); as end) {
+            @for (k of [frameIndex()]; track k) {
+              <div class="win" [attr.data-result]="end">{{ t('replay.ending.' + end) }}</div>
+            }
+          } @else if (action(); as a) {
+            @for (k of [frameIndex()]; track k) {
+              <span class="tbca-label-mono">{{ t('replay.uses', { name: nameOf(a.actor) }) }}</span>
+              <div class="act" [class.act--foe]="!isOwn(a.actor)">
+                {{ abilityName(a.ability, t) }}
+              </div>
+            }
+          }
+          <p class="sub">
+            @if (caption(); as line) {
+              {{ text(line, t) }}
+            }
+          </p>
+        </div>
+      }
     }
   </div>
 
-  <p class="caption" aria-hidden="true">
-    @if (caption(); as line) {
-      {{ text(line, t) }}
-    }
-  </p>
-
-  <div class="controls">
-    <button
-      type="button"
-      class="tbca-icon-button"
-      [attr.aria-label]="t('replay.restart')"
-      (click)="restart()"
-    >
-      ⟲
-    </button>
-    @if (playing()) {
-      <button type="button" class="tbca-button" (click)="pause()">{{ t('replay.pause') }}</button>
-    } @else {
-      <button type="button" class="tbca-button" (click)="play()">{{ t('replay.play') }}</button>
-    }
-    <button
-      type="button"
-      class="tbca-icon-button"
-      [attr.aria-label]="t('replay.end')"
-      (click)="toEnd()"
-    >
-      ⏭
-    </button>
-    <div class="speeds" role="group" [attr.aria-label]="t('replay.speed')">
-      @for (s of speeds; track s) {
+  <div class="lower">
+    <section class="panel log-panel tbca-gl tbca-gl--b" [attr.aria-label]="t('home.demo.log')">
+      <i class="tbca-gx" aria-hidden="true"></i>
+      <div class="lp-head">
+        <span class="tbca-label-mono">{{ t('home.demo.log') }}</span>
         <button
           type="button"
-          class="speed"
-          [attr.aria-pressed]="speed() === s"
-          (click)="setSpeed(s)"
+          class="tbca-seg-btn"
+          [attr.aria-expanded]="logOpen()"
+          (click)="logOpen.set(!logOpen())"
         >
-          {{ s }}×
+          {{ t('replay.fullLog') }}
         </button>
+      </div>
+      <ol class="mini-log" aria-hidden="true">
+        @for (l of recentLines(); track $index) {
+          <li [class.cur]="l.current">{{ text(l.line, t) }}</li>
+        }
+      </ol>
+      @if (logOpen()) {
+        <ol class="log">
+          @for (line of log(); track $index) {
+            <li class="log__line" [attr.data-tone]="line.tone">{{ text(line, t) }}</li>
+          }
+        </ol>
       }
-    </div>
-    <span class="progress">{{ frameIndex() + 1 }}/{{ frames().length }}</span>
+    </section>
+    @if (cooldowns().length > 0) {
+      <section class="panel ab-panel tbca-gl tbca-gl--f" [attr.aria-label]="t('replay.abilities')">
+        <i class="tbca-gx" aria-hidden="true"></i>
+        <span class="tbca-label-mono">{{ t('replay.abilitiesOf', { name: ownName() }) }}</span>
+        <div class="abs">
+          @for (a of cooldowns(); track a.id) {
+            <div class="ab">
+              <span class="abx" [attr.data-state]="a.state">
+                {{
+                  a.state === 'now'
+                    ? t('replay.now')
+                    : a.state === 'cd'
+                      ? a.left
+                      : t('replay.ready')
+                }}
+              </span>
+              <small>{{ t('abilities.' + a.id) }}</small>
+            </div>
+          }
+        </div>
+      </section>
+    }
   </div>
 
-  <details class="log-box">
-    <summary>{{ t('home.demo.log') }}</summary>
-    <ol class="log">
-      @for (line of log(); track $index) {
-        <li class="log__line" [attr.data-tone]="line.tone">{{ text(line, t) }}</li>
-      }
-    </ol>
-  </details>
+  <!-- Vollständiger Verlauf für Screenreader -->
+  <ol class="visually-hidden">
+    @for (line of log(); track $index) {
+      <li>{{ text(line, t) }}</li>
+    }
+  </ol>
 </div>

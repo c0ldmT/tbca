@@ -1,0 +1,87 @@
+<div class="scrim" *transloco="let t">
+  <div class="box tbca-panel tbca-panel--flush">
+    <div class="tbca-ph">
+      <div class="tbca-ph__t">
+        <span class="tbca-kicker">{{ title() }}</span>
+        <h2 class="tbca-gl tbca-gl--a">{{ t('reveal.title') }}</h2>
+      </div>
+      <span class="tbca-idx">
+        @if (!summary()) {
+          {{ t('reveal.progress', { n: index() + 1, total: items().length }) }}
+        } @else {
+          {{ t('reveal.summary', { count: items().length, credits: credits() }) }}
+        }
+      </span>
+    </div>
+
+    @if (!summary()) {
+      @if (current(); as item) {
+        <div class="stage" [class]="'stage tier-' + currentTier() + ' fx' + currentTier()">
+          @if (!open()) {
+            <div class="tbca-gl tbca-gl--a">
+              <div class="cap"><span [innerHTML]="t('reveal.capsule')"></span></div>
+            </div>
+          } @else {
+            @for (i of [index()]; track i) {
+              <div class="rays" aria-hidden="true"></div>
+              @if (currentTier() >= 5) {
+                @for (p of particles; track p) {
+                  <span [class]="'pa pa' + p" aria-hidden="true"></span>
+                }
+              }
+              <div class="card" role="status">
+                <span class="tbca-kicker tier-label"
+                  >{{ t('reveal.tierName.' + currentTier()) }} · TIER {{ currentTier() }}</span
+                >
+                <tbca-item-icon [item]="item" [size]="120" />
+                <h3 class="name tbca-tier-text">{{ t('items.' + item.templateId) }}</h3>
+                <tbca-stars
+                  [rarity]="item.rarity"
+                  [size]="18"
+                  [attr.aria-label]="t('inventory.rarity', { rarity: item.rarity })"
+                />
+                <span class="meta">
+                  iLvl {{ item.itemLevel }} · {{ t('gear.affixes', { count: affixCount(item) }) }}
+                </span>
+                <span class="affs">
+                  @for (a of item.affixes; track a.stat) {
+                    <span class="tbca-tag">{{ label(a.stat, t) }}</span>
+                  }
+                </span>
+                @if (currentTier() >= 6) {
+                  <span class="snd">♪ {{ t('reveal.fullReveal') }}</span>
+                }
+              </div>
+            }
+          }
+        </div>
+      }
+      <div class="actions">
+        <button type="button" class="tbca-button tbca-button--lg go" (click)="reveal()">
+          {{ !open() ? t('reveal.open') : last() ? t('reveal.toSummary') : t('reveal.next') }}
+        </button>
+        <button type="button" class="tbca-button tbca-button--ghost" (click)="showAll()">
+          {{ t('reveal.showAll') }}
+        </button>
+        <button type="button" class="tbca-button tbca-button--ghost" (click)="closed.emit()">
+          {{ t('reveal.close') }}
+        </button>
+      </div>
+    } @else {
+      <div class="grid">
+        @for (item of items(); track $index) {
+          <div class="sum" [class]="'sum tier-' + tierOf(item.rarity)">
+            <tbca-item-icon [item]="item" [size]="64" />
+            <span class="tbca-tier-text">{{ t('items.' + item.templateId) }}</span>
+            <tbca-stars [rarity]="item.rarity" [size]="9" />
+          </div>
+        }
+      </div>
+      <div class="actions">
+        <button type="button" class="tbca-button tbca-button--lg go" (click)="closed.emit()">
+          {{ t('reveal.done') }}
+        </button>
+      </div>
+    }
+  </div>
+</div>

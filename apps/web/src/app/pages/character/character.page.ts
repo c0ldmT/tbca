@@ -1,18 +1,32 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
-import { CLASS_IDS, type ClassId } from '@tbca/game-core';
 
 import { AuthService } from '../../core/auth.service';
 import { ApiFailure, CharacterService } from '../../core/character.service';
 import { GameConfigService } from '../../core/game-config.service';
-import { AttributesPanel } from './attributes-panel';
+import { HubTabs, type HubTab } from '../../shared/ui/hub-tabs';
+import { CharacterHead } from './character-head';
 import { CreateCharacter } from './create-character';
-import { EquipmentPanel } from './equipment-panel';
-import { LoadoutEditor } from './loadout-editor';
+import { GearState } from './gear/gear-state';
 
+export const WRENCH_ICON = 'M14 6l4 4 M4 20l9-9 M13 5l3-3 5 5-3 3z';
+
+const TABS: HubTab[] = [
+  { path: '/character/gear', label: 'character.tabs.gear' },
+  { path: '/character/workshop', label: 'character.tabs.workshop', icon: WRENCH_ICON },
+  { path: '/character/loadout', label: 'character.tabs.loadout' },
+  { path: '/character/build', label: 'character.tabs.build' },
+];
+
+/**
+ * Charakter-Hub: Kopf mit Kampfwerten, darunter Ausrüstung, Werkstatt, Fähigkeiten & Taktik
+ * sowie Attribute & Klasse als Tabs. Ohne Charakter erscheint das Erstellen.
+ */
 @Component({
   selector: 'tbca-character-page',
-  imports: [TranslocoDirective, CreateCharacter, AttributesPanel, LoadoutEditor, EquipmentPanel],
+  imports: [TranslocoDirective, RouterOutlet, CreateCharacter, CharacterHead, HubTabs],
+  providers: [GearState],
   templateUrl: './character.page.html',
   styleUrl: './character.page.css',
 })
@@ -20,21 +34,20 @@ export class CharacterPage {
   protected readonly auth = inject(AuthService);
   protected readonly characters = inject(CharacterService);
   protected readonly gameConfig = inject(GameConfigService);
+  protected readonly gear = inject(GearState);
 
-  protected readonly classIds = CLASS_IDS;
+  protected readonly tabs = TABS;
   protected readonly loadError = signal<string | null>(null);
-  protected readonly classError = signal<string | null>(null);
-  protected readonly switching = signal(false);
-
   protected readonly config = computed(() => this.gameConfig.current()?.game ?? null);
-  protected readonly testSeason = computed(() => this.gameConfig.current()?.season.isTest ?? false);
-  protected readonly xpPercent = computed(() => {
-    const c = this.characters.state();
-    return c && c.xpToNext ? Math.min(100, (c.xpIntoLevel / c.xpToNext) * 100) : 100;
-  });
 
   constructor() {
     void this.load();
+    // Neuer Charakter oder Klassenwechsel: Inventar (neu) laden.
+    effect(() => {
+      const id = this.characters.state()?.id;
+      const cls = this.characters.state()?.classId;
+      if (id && cls) untracked(() => void this.gear.load());
+    });
   }
 
   protected async load(): Promise<void> {
@@ -42,21 +55,10 @@ export class CharacterPage {
     try {
       await this.gameConfig.load();
       if (this.auth.state() === undefined) await this.auth.refresh();
-      if (this.auth.user()) await this.characters.refresh();
+      if (this.auth.user() && this.characters.state() === undefined)
+        await this.characters.refresh();
     } catch (error) {
       this.loadError.set(error instanceof ApiFailure ? error.code : 'unavailable');
-    }
-  }
-
-  protected async switchClass(classId: ClassId): Promise<void> {
-    this.switching.set(true);
-    this.classError.set(null);
-    try {
-      await this.characters.switchClass(classId);
-    } catch (error) {
-      this.classError.set(error instanceof ApiFailure ? error.code : 'unknown');
-    } finally {
-      this.switching.set(false);
     }
   }
 }

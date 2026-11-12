@@ -5,6 +5,9 @@ import { TranslocoDirective } from '@jsverse/transloco';
 import { AuthService } from '../../core/auth.service';
 import { LanguageService } from '../../core/language.service';
 import { GlitchDirective } from '../../shared/glitch.directive';
+import { HUBS } from '../../shared/hubs';
+import { Bar } from '../../shared/ui/bar';
+import { ClassBadge } from '../../shared/ui/class-badge';
 import { translateLine, type LogLine } from '../../shared/battle-log';
 import { DEMO_FIGHTERS, DEMO_SEED, runDemoBattle, toDemoLogLines } from './demo-battle';
 
@@ -13,7 +16,7 @@ type LoginResult = (typeof LOGIN_RESULTS)[number];
 
 @Component({
   selector: 'tbca-home-page',
-  imports: [TranslocoDirective, GlitchDirective, RouterLink],
+  imports: [TranslocoDirective, GlitchDirective, RouterLink, Bar, ClassBadge],
   templateUrl: './home.page.html',
   styleUrl: './home.page.css',
 })
@@ -29,6 +32,9 @@ export class HomePage {
     return result === 'success' && !this.auth.user() ? null : result;
   });
   protected readonly logoutFailed = signal(false);
+  protected readonly hubs = HUBS;
+  /** Versetzte Glitch-Takte, damit die Kacheln nicht gleichzeitig zucken. */
+  protected readonly glitch = ['a', 'c', 'e', 'b'];
 
   protected readonly seed = signal(DEMO_SEED);
   protected readonly result = computed(() => runDemoBattle(this.seed()));

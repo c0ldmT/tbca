@@ -1,63 +1,124 @@
 :host {
-  display: grid;
-  gap: var(--tbca-space-6);
-  width: min(100%, 60rem);
-  margin-inline: auto;
-  padding: var(--tbca-space-8) clamp(var(--tbca-space-4), 4vw, var(--tbca-space-12));
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
-.head {
-  display: grid;
-  gap: var(--tbca-space-2);
-}
-
-h1 {
-  font-size: clamp(2rem, 7vw, 3.5rem);
-}
-
-.wallet {
+.purse {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--tbca-space-6);
-  font: var(--tbca-text-sm) var(--tbca-font-mono);
-  color: var(--tbca-text-muted);
+  gap: 8px;
 }
 
-.wallet__credits {
-  font: 700 var(--tbca-text-2xl) / 1 var(--tbca-font-mono);
-  color: var(--tbca-neon-yellow);
+.res--heal_injector {
+  --rc: #3dffa8;
+}
+
+.res--backup_chip {
+  --rc: #f5e400;
+}
+
+.purse i {
+  color: var(--rc);
 }
 
 .offers,
 .rotation {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 18px 22px 22px;
   display: grid;
-  gap: var(--tbca-space-3);
+  gap: 10px;
 }
 
+.offers {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
+}
+
+/* Edelstein links, Text rechts, Kauf-Button darunter */
 .offer {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--tbca-space-3);
-  padding: var(--tbca-space-3) var(--tbca-space-4);
-  background: var(--tbca-surface-2);
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  grid-template-areas:
+    'gem txt'
+    'gem buy';
+  align-items: start;
+  column-gap: 16px;
+  row-gap: 12px;
+  padding: 14px;
+  background: rgb(7 8 13 / 0.5);
+  border: 1px solid rgb(255 255 255 / 0.08);
 }
 
-.offer__name {
-  font: 700 var(--tbca-text-lg) / 1.2 var(--tbca-font-display);
+.gem {
+  grid-area: gem;
+  align-self: center;
+  width: 30px;
+  height: 30px;
+  margin: 0 auto;
+  transform: rotate(45deg);
+  border: 1px solid var(--rc);
+  background: color-mix(in srgb, var(--rc) 20%, transparent);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--rc) 50%, transparent);
+}
+
+.offer__txt {
+  grid-area: txt;
+}
+
+.offer__txt p {
+  margin: 4px 0 0;
+}
+
+.offer > .tbca-button {
+  grid-area: buy;
+  justify-self: start;
+}
+
+.offer__txt b {
+  font: 600 1rem / 1.2 var(--tbca-font-display);
 }
 
 .rotation {
-  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 }
 
-.rotation__item {
-  display: grid;
-  gap: var(--tbca-space-2);
-  align-content: start;
+.ware {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px;
+  text-align: center;
+  background: rgb(7 8 13 / 0.58);
+  border: 1px solid color-mix(in srgb, var(--tier) 40%, transparent);
+}
+
+.ware b {
+  font: 600 1rem / 1.2 var(--tbca-font-display);
+}
+
+.ware--sold {
+  opacity: 0.5;
+}
+
+.meta {
+  font: 500 0.6875rem / 1.3 var(--tbca-font-mono);
+  color: var(--tbca-text-muted);
+}
+
+.affs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: flex-start;
+  align-items: flex-start;
+  gap: 4px;
+  flex: 1;
+}
+
+.ware > .tbca-button {
+  width: 100%;
+  white-space: nowrap;
+  padding-inline: 10px;
 }

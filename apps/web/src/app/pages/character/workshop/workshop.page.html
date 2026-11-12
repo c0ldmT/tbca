@@ -1,0 +1,497 @@
+<ng-container *transloco="let t">
+  <div class="purse" [attr.aria-label]="t('workshop.resources')">
+    <span class="tbca-chip tbca-chip--credits"
+      ><small>CR</small>{{ credits().toLocaleString(locale()) }}</span
+    >
+    @for (m of materials; track m) {
+      <span class="tbca-chip" [class]="'tbca-chip res--' + m">
+        <i aria-hidden="true"></i>{{ t('materials.' + m) }}
+        <b>{{ (gear.stacks()[m] ?? 0).toLocaleString(locale()) }}</b>
+      </span>
+    }
+  </div>
+
+  @if (error(); as e) {
+    <p class="tbca-notice tbca-notice--bad" role="alert">{{ t('errors.' + e) }}</p>
+  }
+
+  <div class="ws">
+    <!-- Liste -->
+    <section class="tbca-panel tbca-panel--flush tbca-gl tbca-gl--a" aria-labelledby="il-t">
+      <i class="tbca-gx" aria-hidden="true"></i>
+      <div class="tbca-ph">
+        <div class="tbca-ph__t">
+          <h2 id="il-t">
+            {{ op() === 'salvage' ? t('workshop.selection') : t('workshop.items') }}
+          </h2>
+          <span class="tbca-idx">{{ t('gear.itemCount', { count: list().length }) }}</span>
+        </div>
+        <div class="filters">
+          @for (f of filters; track f) {
+            <button
+              type="button"
+              class="tbca-fchip"
+              [attr.aria-pressed]="filter() === f"
+              (click)="filter.set(f)"
+            >
+              {{ t('workshop.filter.' + f) }}
+            </button>
+          }
+        </div>
+      </div>
+      <div class="ilist">
+        @for (it of list(); track it.id) {
+          @let salvaging = op() === 'salvage';
+          @let checked = salvageIds().has(it.id);
+          @let selected = !salvaging && item()?.id === it.id;
+          <button
+            type="button"
+            class="ili"
+            [class]="'ili tier-' + tierOf(it.rarity)"
+            [class.ili--sel]="selected"
+            [class.ili--chk]="salvaging && checked"
+            [class.ili--off]="salvaging && it.equippedIn !== null"
+            [disabled]="salvaging && it.equippedIn !== null"
+            [attr.aria-pressed]="salvaging ? checked : selected"
+            [attr.aria-label]="
+              t('items.' + it.templateId) +
+              ', ' +
+              t('inventory.rarity', { rarity: it.rarity }) +
+              (it.equippedIn
+                ? ', ' + t('gear.equippedIn', { slot: t('slots.' + it.equippedIn) })
+                : '')
+            "
+            (click)="clickListItem(it)"
+          >
+            <span
+              class="mark"
+              [class.mark--on]="salvaging && checked"
+              [class.mark--eq]="!salvaging && it.equippedIn"
+              aria-hidden="true"
+            >
+              {{ salvaging ? (checked ? '✓' : '') : it.equippedIn ? 'EQ' : '' }}
+            </span>
+            <tbca-item-icon [item]="it" [size]="46" />
+            <span class="ili__txt">
+              <b class="tbca-tier-text">{{ t('items.' + it.templateId) }}</b>
+              <small>
+                ★{{ it.rarity }} · iLvl {{ it.itemLevel }}
+                @if (it.equippedIn) {
+                  · {{ t('slots.' + it.equippedIn) }}
+                }
+              </small>
+            </span>
+            <em>{{ it.upgrade ? '+' + it.upgrade : '' }}</em>
+          </button>
+        } @empty {
+          <p class="tbca-hint">{{ t('inventory.noItems') }}</p>
+        }
+      </div>
+    </section>
+
+    <!-- Werkbank -->
+    <section
+      class="tbca-panel tbca-panel--flush bench tbca-gl tbca-gl--c"
+      aria-labelledby="bench-t"
+    >
+      <i class="tbca-gx" aria-hidden="true"></i>
+      <div class="tbca-ph">
+        <div class="tbca-ph__t">
+          <h2 id="bench-t">{{ t('workshop.bench') }}</h2>
+          <span class="tbca-idx">
+            @if (op() === 'salvage') {
+              {{ t('workshop.multiSalvage') }}
+            } @else if (view(); as v) {
+              {{ t('items.' + v.item.templateId) }} · Tier {{ v.tier }}
+            }
+          </span>
+        </div>
+      </div>
+
+      @if (op() !== 'salvage') {
+        @if (view(); as v) {
+          <div class="stage" [class]="'stage tier-' + v.tier">
+            <div class="beam" aria-hidden="true"></div>
+            <div class="pad2" aria-hidden="true"></div>
+            <div class="sname2">
+              <span class="tbca-kicker" [style.color]="'var(--tier)'">
+                @if (v.item.equippedIn) {
+                  {{ t('gear.equippedIn', { slot: t('slots.' + v.item.equippedIn) }) }}
+                } @else {
+                  {{ t('gear.fromInventory') }} · {{ t('itemCategory.' + v.item.category) }}
+                }
+              </span>
+              <h3 class="tbca-tier-text">{{ t('items.' + v.item.templateId) }}</h3>
+              <tbca-stars
+                [rarity]="v.item.rarity"
+                [attr.aria-label]="t('inventory.rarity', { rarity: v.item.rarity })"
+              />
+              <span class="dsub">
+                iLvl {{ v.item.itemLevel }} · {{ t('gear.affixes', { count: v.affixCount }) }} ·
+                {{ t('gear.itemPower') }} {{ v.power }}
+              </span>
+            </div>
+            <div class="lvlbig">
+              <b>+{{ v.up }}</b
+              ><span>{{ t('workshop.ofMax') }}</span>
+            </div>
+            <div class="float">
+              <span class="orb2" aria-hidden="true"></span>
+              <span class="orb" aria-hidden="true"></span>
+              <tbca-item-icon [item]="v.item" [size]="150" />
+            </div>
+            @if (flash(); as f) {
+              @for (tick of [f.tick]; track tick) {
+                <div
+                  class="flash"
+                  [class.flash--ok]="f.ok"
+                  [class.flash--bad]="!f.ok"
+                  role="status"
+                >
+                  <b>{{ f.text }}</b>
+                </div>
+              }
+            }
+          </div>
+        } @else {
+          <p class="tbca-hint opbody">{{ t('workshop.noItem') }}</p>
+        }
+      }
+
+      <div class="opbody">
+        @switch (op()) {
+          @case ('upgrade') {
+            @if (upgrade(); as u) {
+              <div class="ophead">
+                <h3>{{ t('workbench.upgrade') }}</h3>
+                @if (!u.maxed) {
+                  <span class="arrow"
+                    >+{{ view()?.up }} <span>→ +{{ u.next }}</span></span
+                  >
+                }
+              </div>
+              <tbca-segments [total]="10" [filled]="view()?.up ?? 0" [pulseNext]="!u.maxed" />
+              @if (!u.maxed) {
+                <div class="tbl" role="table" [attr.aria-label]="t('workshop.valuesTable')">
+                  <div role="row" class="tr">
+                    <span role="columnheader" class="h">{{ t('workshop.value') }}</span>
+                    <span role="columnheader" class="h r">{{ t('workshop.now') }}</span>
+                    <span class="h" aria-hidden="true"></span>
+                    <span role="columnheader" class="h r">{{ t('workshop.after') }}</span>
+                  </div>
+                  @for (r of u.rows; track $index) {
+                    <div role="row" class="tr">
+                      <span role="cell">{{ stat(r.stat, t) }}</span>
+                      <span role="cell" class="r">{{ r.now }}</span>
+                      <span class="ar" aria-hidden="true">→</span>
+                      <span role="cell" class="up">{{ r.after }}</span>
+                    </div>
+                  }
+                </div>
+                <div class="chance">
+                  <div class="chance__h">
+                    <span>{{ t('workshop.chance') }}</span
+                    ><b>{{ u.chance }} %</b>
+                  </div>
+                  <div class="tbca-risk" aria-hidden="true">
+                    <i class="ok" [style.flex]="u.chance"></i>
+                    @if (u.chance < 100) {
+                      <i class="no" [style.flex]="100 - u.chance"></i>
+                    }
+                  </div>
+                  <p class="note">
+                    {{
+                      u.chance < 100
+                        ? t('workshop.upgradeRisk', { level: u.failTo })
+                        : t('workshop.upgradeSafe')
+                    }}
+                  </p>
+                </div>
+                <div class="cta">
+                  <button
+                    type="button"
+                    class="tbca-button tbca-button--lg"
+                    [disabled]="busy() || !u.enoughCredits || !u.enoughMaterial"
+                    (click)="doUpgrade()"
+                  >
+                    {{ t('workbench.upgrade') }}
+                  </button>
+                  <div class="cost2">
+                    <span [class]="u.enoughCredits ? 'y' : 'lack'"
+                      >{{ u.credits.toLocaleString(locale()) }} CR</span
+                    >
+                    <span [class.lack]="!u.enoughMaterial">{{
+                      t('inventory.materialAmount', {
+                        amount: u.amount,
+                        name: t('materials.' + u.material),
+                      })
+                    }}</span>
+                  </div>
+                </div>
+              } @else {
+                <p class="note">{{ t('workbench.maxUpgrade') }}</p>
+              }
+            }
+          }
+          @case ('reroll') {
+            @if (reroll(); as r) {
+              <div class="ophead">
+                <h3>{{ t('workbench.reroll') }}</h3>
+                <span class="tbca-idx">{{ t('workshop.rerollRange') }}</span>
+              </div>
+              @if (r.rows.length === 0) {
+                <p class="note">{{ t('workshop.noAffixesToReroll') }}</p>
+              } @else {
+                <div class="choice" role="radiogroup" [attr.aria-label]="t('workshop.chooseAffix')">
+                  @for (row of r.rows; track row.stat) {
+                    <button
+                      type="button"
+                      role="radio"
+                      class="chb"
+                      [attr.aria-checked]="row.stat === r.selected"
+                      (click)="rerollStat.set(row.stat)"
+                    >
+                      <span class="rd" aria-hidden="true"></span>
+                      <span>{{ stat(row.stat, t) }}</span>
+                      <tbca-bar variant="tier" [value]="row.quality" [height]="6" [slant]="3" />
+                      <span class="rv">+{{ row.value }}</span>
+                    </button>
+                  }
+                </div>
+                <div class="pool">
+                  <span class="tbca-label-mono">{{ t('workshop.possibleAffixes') }}</span>
+                  <div class="pool__tags">
+                    @for (s of r.pool; track s) {
+                      <span class="tbca-tag tbca-tag--cyan">{{ stat(s, t) }}</span>
+                    }
+                  </div>
+                </div>
+                @if (lastReroll(); as last) {
+                  <div class="cmp">
+                    <h3>{{ t('workshop.lastRoll') }}</h3>
+                    <p>{{ last }}</p>
+                  </div>
+                }
+                <div class="cta">
+                  <button
+                    type="button"
+                    class="tbca-button tbca-button--lg"
+                    [disabled]="busy() || !r.selected || !r.enoughCredits || !r.enoughMaterial"
+                    (click)="doReroll()"
+                  >
+                    {{ t('workshop.rerollAction') }}
+                  </button>
+                  <div class="cost2">
+                    <span [class]="r.enoughCredits ? 'y' : 'lack'"
+                      >{{ r.credits.toLocaleString(locale()) }} CR</span
+                    >
+                    <span [class.lack]="!r.enoughMaterial">{{
+                      t('inventory.materialAmount', {
+                        amount: r.amount,
+                        name: t('materials.' + r.material),
+                      })
+                    }}</span>
+                  </div>
+                </div>
+              }
+            }
+          }
+          @case ('transfer') {
+            @if (transfer(); as tr) {
+              <div class="ophead">
+                <h3>{{ t('workbench.transfer') }}</h3>
+                <span class="tbca-idx">{{
+                  t('workshop.targetHas', { count: view()?.affixCount ?? 0 })
+                }}</span>
+              </div>
+              @if (tr.full) {
+                <div class="cmp cmp--bad">
+                  <h3>{{ t('workshop.targetFull') }}</h3>
+                  <p>{{ t('workshop.targetFullText') }}</p>
+                </div>
+              }
+              <span class="tbca-label-mono">{{ t('workshop.step1') }}</span>
+              <div class="donors">
+                @for (d of tr.donors; track d.id) {
+                  <button
+                    type="button"
+                    class="donor"
+                    [class]="'donor tier-' + tierOf(d.rarity)"
+                    [attr.aria-pressed]="tr.donor?.id === d.id"
+                    (click)="donorId.set(d.id); donorStat.set(null)"
+                  >
+                    <tbca-item-icon [item]="d" [size]="40" />
+                    <span>
+                      <span class="tbca-tier-text"
+                        >{{ t('items.' + d.templateId) }} ★{{ d.rarity }}</span
+                      >
+                      <small>
+                        @for (a of d.affixes; track a.stat; let last = $last) {
+                          {{ stat(a.stat, t) }}{{ last ? '' : ' · ' }}
+                        }
+                      </small>
+                    </span>
+                  </button>
+                } @empty {
+                  <p class="note">{{ t('workbench.noDonors') }}</p>
+                }
+              </div>
+              @if (tr.donor) {
+                <span class="tbca-label-mono">{{ t('workshop.step2') }}</span>
+                <div class="choice" role="radiogroup" [attr.aria-label]="t('workshop.donorAffix')">
+                  @for (a of tr.affixes; track a.stat) {
+                    <button
+                      type="button"
+                      role="radio"
+                      class="chb"
+                      [class]="'chb tier-' + tierOf(tr.donor.rarity)"
+                      [attr.aria-checked]="donorStat() === a.stat"
+                      [disabled]="a.problem !== null"
+                      (click)="donorStat.set(a.stat)"
+                    >
+                      <span class="rd" aria-hidden="true"></span>
+                      <span>{{ stat(a.stat, t) }} +{{ a.value }}</span>
+                      <tbca-bar variant="tier" [value]="a.quality" [height]="6" [slant]="3" />
+                      <span class="rv">{{
+                        a.problem ? t('workshop.problem.' + a.problem) : ''
+                      }}</span>
+                    </button>
+                  }
+                </div>
+              }
+              <div class="chance">
+                <div class="chance__h">
+                  <span>{{ t('workshop.transferChance', { count: view()?.affixCount ?? 0 }) }}</span
+                  ><b>{{ tr.chance }} %</b>
+                </div>
+                <div class="tbca-risk" aria-hidden="true">
+                  @if (tr.chance > 0) {
+                    <i class="ok" [style.flex]="tr.chance"></i>
+                  }
+                  <i class="no" [style.flex]="100 - tr.chance"></i>
+                </div>
+                <p class="note">
+                  <b>{{ t('workshop.donorLost') }}</b> {{ t('workshop.transferKeeps') }}
+                </p>
+              </div>
+              <div class="cta">
+                <button
+                  type="button"
+                  class="tbca-button tbca-button--lg"
+                  [disabled]="busy() || tr.full || !tr.donor || !donorStat() || !tr.enoughCredits"
+                  (click)="doTransfer()"
+                >
+                  {{ t('workshop.transferAction') }}
+                </button>
+                <div class="cost2">
+                  <span [class]="tr.enoughCredits ? 'y' : 'lack'"
+                    >{{ tr.credits.toLocaleString(locale()) }} CR</span
+                  >
+                </div>
+              </div>
+            }
+          }
+          @case ('salvage') {
+            <div class="ophead">
+              <h3>{{ t('workbench.salvage') }}</h3>
+              <span class="tbca-idx">{{ t('workshop.selected', { count: salvage().count }) }}</span>
+            </div>
+            <p class="note">{{ t('workshop.salvageHint') }}</p>
+            <div class="quick">
+              <button
+                type="button"
+                class="tbca-button tbca-button--ghost"
+                (click)="selectRange(1, 3)"
+              >
+                {{ t('workshop.selectLow') }}
+              </button>
+              <button
+                type="button"
+                class="tbca-button tbca-button--ghost"
+                (click)="selectRange(4, 6)"
+              >
+                {{ t('workshop.selectMid') }}
+              </button>
+              <button type="button" class="tbca-button tbca-button--ghost" (click)="clearSalvage()">
+                {{ t('workshop.clear') }}
+              </button>
+            </div>
+            <div class="yield">
+              @for (m of materials; track m) {
+                <div class="ycard" [class]="'ycard res--' + m">
+                  <span>{{ t('materials.' + m) }}</span>
+                  <b>+{{ salvage().total[m] }}</b>
+                </div>
+              }
+            </div>
+            <div class="cta">
+              <button
+                type="button"
+                class="tbca-button tbca-button--danger tbca-button--lg"
+                [disabled]="busy() || salvage().count === 0"
+                (click)="doSalvage()"
+              >
+                {{
+                  salvage().count
+                    ? t('workshop.salvageCount', { count: salvage().count })
+                    : t('workbench.salvage')
+                }}
+              </button>
+            </div>
+          }
+        }
+      </div>
+    </section>
+
+    <!-- Aktionen und Protokoll -->
+    <div class="side">
+      <section class="tbca-panel tbca-panel--flush tbca-gl tbca-gl--b" aria-labelledby="op-t">
+        <i class="tbca-gx" aria-hidden="true"></i>
+        <div class="tbca-ph">
+          <div class="tbca-ph__t">
+            <h2 id="op-t">{{ t('workshop.action') }}</h2>
+          </div>
+        </div>
+        <div class="ops" role="tablist" [attr.aria-label]="t('workshop.actions')">
+          @for (o of ops; track o.id) {
+            <button
+              type="button"
+              role="tab"
+              class="opb"
+              [class.opb--d]="o.id === 'salvage'"
+              [attr.aria-selected]="op() === o.id"
+              (click)="setOp(o.id)"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <path [attr.d]="o.icon" />
+              </svg>
+              <strong>{{ t('workshop.op.' + o.id) }}</strong>
+              <span>{{ t('workshop.opText.' + o.id) }}</span>
+            </button>
+          }
+        </div>
+      </section>
+      <section class="tbca-panel tbca-panel--flush tbca-gl tbca-gl--f" aria-labelledby="lg-t">
+        <i class="tbca-gx" aria-hidden="true"></i>
+        <div class="tbca-ph">
+          <div class="tbca-ph__t">
+            <h2 id="lg-t">{{ t('workshop.log') }}</h2>
+          </div>
+        </div>
+        <ol class="log2" aria-live="polite">
+          @for (l of log(); track $index) {
+            <li [class]="l.tone">{{ l.text }}</li>
+          } @empty {
+            <li>{{ t('workshop.logEmpty') }}</li>
+          }
+        </ol>
+      </section>
+    </div>
+  </div>
+</ng-container>

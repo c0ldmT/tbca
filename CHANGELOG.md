@@ -8,9 +8,47 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ### Hinzugefügt
 
+- Website, Design „Hologramm“: halbtransparente Glas-Panels mit Cyan-Kante und abgeschrägter
+  HUD-Ecke, Scanlines und seltene, kurze Glitch-Verzerrungen (je Fläche eigene Periode,
+  bei `prefers-reduced-motion` und Grafikstufe „Niedrig“ aus). Balken und Zähler sind abgekantete
+  Parallelogramme, Zähler wie „Belohnte Kämpfe“ und „Dungeon-Runs“ schräge Segmente.
+- Website: Hintergrund als ruhige Cyberpunk-Stadt im Regen (Canvas 2D) mit sichtbaren Aufschlägen
+  am Boden; Grafikstufen Auto/Hoch/Mittel/Niedrig (Niedrig zeigt ein Standbild).
+- Website: Navigation in vier Hubs mit Tabs – Charakter (Ausrüstung, Werkstatt, Fähigkeiten &
+  Taktik, Attribute & Klasse), Kampf (Arena, Dungeon, Training, Verlauf), Crew (Mein Team,
+  Team-Kampf, Communities), Markt (Shop). Kopfleiste mit Credits und Dungeon-Runs, Profil-Menü mit
+  Konto, Sprache, Grafik, Sound, Admin und Abmelden; mobil eine Bottom-Bar. Alte Pfade (`/pvp`,
+  `/dungeon`, `/teams`, `/shop`) leiten weiter.
+- Charakter-Editor in zwei Spalten: Slots rund um eine Klassen-Silhouette, Item-Details mit
+  Affix-Qualität, Vergleich und Aufwertungsstufe, Inventar mit Filtern und Sortierung. Items lassen
+  sich per Drag & Drop (Maus/Stift) in Slots ziehen, auf Touch und Tastatur per Auswahl und Tippen
+  auf einen markierten Slot. Kampfwerte zeigen beim Ziehen die Veränderung.
+- Werkstatt als eigener Tab (aus jedem Item-Detail erreichbar): Aufwerten, Neu würfeln, Affix
+  übertragen und Mehrfach-Zerlegen mit Chancen und Kosten aus der Season-Konfiguration.
+- `@tbca/assets`: prozedurale Item-Icons je Vorlage und Kategorie, Leiterbahn-Muster je Item,
+  Silhouetten je Klasse (Bruiser, Gunner, Netrunner, Medtech) samt Slot-Punkten, Team-Embleme und
+  Teamfarben aus dem Kürzel.
+- Website: Loot-Reveal nach dem Dungeon mit Effekten je Tier, Kampf-HUD für Replays (Zugreihenfolge,
+  HP- und Energiebalken, Status, Schadenszahlen, Abklingzeiten, Schritt vor/zurück), neue
+  Charaktererstellung mit Klassenbühne, neu gestaltete Seiten für Arena, Dungeon, Training,
+  Verlauf, Crew, Shop, Konto und Startseite.
+- Website: prozedurale UI-Klänge über die Web-Audio-API (ohne Audiodateien), im Profil-Menü
+  abschaltbar. Grafikstufe und Sound gelten je Gerät.
 - `legal.json` kennt den Modus `private` für Instanzen in einem geschlossenen Kreis: kein Impressum
   (Link entfällt, `/impressum` leitet zur Datenschutzerklärung), kein Hinweis auf fehlende
   Betreiberangaben; die Datenschutzerklärung bleibt mit einem Hinweis auf die private Instanz.
+
+### Geändert
+
+- Website: Die Komponenten `EquipmentPanel`, `Workbench` und `ItemCard` sind durch Ausrüstungs- und
+  Werkstatt-Tab ersetzt. Kampfdaten im Verlauf folgen der eingestellten Sprache.
+
+### Hinweise
+
+- Nicht mit echter API und echten Geräten geprüft: Die Oberfläche wurde gegen einen Mock der API in
+  Chromium (Desktop 1440 px, Mobil 390 px) durchgeklickt; Klänge, Performance des Regens auf
+  schwachen Geräten, Safari/Firefox und Touch-Drag auf echten Geräten sind ungetestet.
+- Monster haben noch keine eigenen Silhouetten; das Kampf-HUD zeigt für sie eine Platzhalterform.
 
 ## [0.1.0] – 2026-11-24
 

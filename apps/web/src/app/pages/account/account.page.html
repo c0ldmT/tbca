@@ -1,6 +1,7 @@
-<ng-container *transloco="let t">
-  <header class="head">
-    <h1>{{ t('account.title') }}</h1>
+<div class="hub" *transloco="let t">
+  <header class="title">
+    <span class="tbca-kicker">{{ t('account.kicker') }}</span>
+    <h1 class="tbca-title tbca-gl tbca-gl--c">{{ t('account.title') }}</h1>
   </header>
 
   @if (auth.state() === null) {
@@ -9,108 +10,186 @@
     </section>
   } @else if (auth.user(); as me) {
     @if (error()) {
-      <p class="tbca-error" role="alert">
+      <p class="tbca-notice tbca-notice--bad" role="alert">
         {{ t(error()!.startsWith('invalid_name') ? 'errors.invalid_name' : 'errors.' + error()) }}
       </p>
     }
     @if (notice()) {
-      <p class="notice" role="status">{{ t(notice()!) }}</p>
+      <p class="tbca-notice" role="status">{{ t(notice()!) }}</p>
     }
 
-    <section class="tbca-panel" aria-labelledby="platforms-title">
-      <h2 id="platforms-title">{{ t('account.platforms') }}</h2>
-      <ul class="platforms">
-        @for (i of me.identities; track i.provider) {
-          <li>
-            <span class="provider">{{ i.provider }}</span>
-            <span>{{ i.displayName }}</span>
-          </li>
-        }
-      </ul>
-      <p class="tbca-hint">{{ t('account.linkLater') }}</p>
-    </section>
-
-    <section class="tbca-panel" aria-labelledby="lang-title">
-      <h2 id="lang-title">{{ t('account.language') }}</h2>
-      <p class="tbca-hint">{{ t('account.languageHint') }}</p>
-      <div class="row" role="group" [attr.aria-label]="t('account.language')">
-        @for (l of language.locales; track l) {
-          <button
-            type="button"
-            class="tbca-button tbca-button--ghost"
-            [attr.aria-pressed]="language.current() === l"
-            [disabled]="busy()"
-            (click)="setLocale(l)"
-          >
-            {{ t('account.locales.' + l) }}
-          </button>
-        }
-      </div>
-    </section>
-
-    @if (characters.state(); as c) {
-      <section class="tbca-panel" aria-labelledby="rename-title">
-        <h2 id="rename-title">{{ t('account.rename.title') }}</h2>
-        <p class="tbca-hint">
-          {{ t('account.rename.info', { name: c.name, cost: c.rename.cost }) }}
-        </p>
-        @if (renameLocked(); as at) {
-          <p class="tbca-hint">{{ t('account.rename.locked', { date: formatDate(at) }) }}</p>
-        } @else {
-          <form class="row" (submit)="$event.preventDefault(); rename()">
-            <label class="tbca-label">
-              {{ t('account.rename.new') }}
-              <input
-                class="tbca-input"
-                maxlength="20"
-                [value]="newName()"
-                (input)="newName.set($any($event.target).value)"
-              />
-            </label>
-            <button
-              class="tbca-button"
-              type="submit"
-              [disabled]="busy() || newName().trim().length < 3 || c.credits < c.rename.cost"
-            >
-              {{ t('account.rename.submit', { cost: c.rename.cost }) }}
-            </button>
-          </form>
-        }
-      </section>
-    }
-
-    <section class="tbca-panel" aria-labelledby="data-title">
-      <h2 id="data-title">{{ t('account.data.title') }}</h2>
-      <p class="tbca-hint">{{ t('account.data.exportInfo') }}</p>
-      <button
-        type="button"
-        class="tbca-button tbca-button--ghost"
-        [disabled]="busy()"
-        (click)="export()"
-      >
-        {{ t('account.data.export') }}
-      </button>
-
-      <h3>{{ t('account.data.deleteTitle') }}</h3>
-      <p class="tbca-hint">{{ t('account.data.deleteInfo') }}</p>
-      <form class="row" (submit)="$event.preventDefault(); remove()">
-        <label class="tbca-label">
-          {{ t('account.data.confirm') }}
-          <input
-            class="tbca-input"
-            autocomplete="off"
-            [value]="confirmation()"
-            (input)="confirmation.set($any($event.target).value)"
-          />
-        </label>
-        <button
-          class="tbca-button danger"
-          type="submit"
-          [disabled]="busy() || confirmation() !== 'LÖSCHEN'"
+    <div class="grid">
+      <div class="col">
+        <section
+          class="tbca-panel tbca-panel--flush tbca-gl tbca-gl--a"
+          aria-labelledby="platforms-title"
         >
-          {{ t('account.data.delete') }}
-        </button>
-      </form>
-    </section>
+          <i class="tbca-gx" aria-hidden="true"></i>
+          <div class="tbca-ph">
+            <h2 id="platforms-title">{{ t('account.platforms') }}</h2>
+          </div>
+          <div class="pbody">
+            <ul class="platforms">
+              @for (i of me.identities; track i.provider) {
+                <li class="tbca-row">
+                  <span class="provider">{{ i.provider }}</span>
+                  <b>{{ i.displayName }}</b>
+                  <span class="tbca-tag tbca-tag--cyan">{{ t('account.linked') }}</span>
+                </li>
+              }
+            </ul>
+            <p class="tbca-hint">{{ t('account.linkLater') }}</p>
+          </div>
+        </section>
+
+        <section class="tbca-panel tbca-panel--flush" aria-labelledby="lang-title">
+          <div class="tbca-ph">
+            <h2 id="lang-title">{{ t('account.settings') }}</h2>
+          </div>
+          <div class="pbody">
+            <div class="setting">
+              <span class="tbca-label-mono" id="lang-label">{{ t('account.language') }}</span>
+              <span class="tbca-seg" role="group" aria-labelledby="lang-label">
+                @for (l of language.locales; track l) {
+                  <button
+                    type="button"
+                    [attr.aria-pressed]="language.current() === l"
+                    [disabled]="busy()"
+                    (click)="setLocale(l)"
+                  >
+                    {{ t('account.locales.' + l) }}
+                  </button>
+                }
+              </span>
+              <span class="tbca-hint">{{ t('account.languageHint') }}</span>
+            </div>
+            <div class="setting">
+              <span class="tbca-label-mono" id="quality-label">{{ t('profile.quality') }}</span>
+              <span class="tbca-seg" role="group" aria-labelledby="quality-label">
+                @for (q of qualities; track q) {
+                  <button
+                    type="button"
+                    [attr.aria-pressed]="prefs.quality() === q"
+                    (click)="prefs.setQuality(q)"
+                  >
+                    {{ t('profile.qualities.' + q) }}
+                  </button>
+                }
+              </span>
+              <span class="tbca-hint">{{ t('account.deviceHint') }}</span>
+            </div>
+            <div class="setting">
+              <span class="tbca-label-mono" id="sound-label">{{ t('profile.sound') }}</span>
+              <span class="tbca-seg" role="group" aria-labelledby="sound-label">
+                <button
+                  type="button"
+                  [attr.aria-pressed]="prefs.sound()"
+                  (click)="prefs.setSound(true)"
+                >
+                  {{ t('profile.on') }}
+                </button>
+                <button
+                  type="button"
+                  [attr.aria-pressed]="!prefs.sound()"
+                  (click)="prefs.setSound(false)"
+                >
+                  {{ t('profile.off') }}
+                </button>
+              </span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="col">
+        @if (characters.state(); as c) {
+          <section
+            class="tbca-panel tbca-panel--flush tbca-gl tbca-gl--d"
+            aria-labelledby="rename-title"
+          >
+            <i class="tbca-gx" aria-hidden="true"></i>
+            <div class="tbca-ph">
+              <h2 id="rename-title">{{ t('account.rename.title') }}</h2>
+              <span class="tbca-chip tbca-chip--credits"
+                ><small aria-hidden="true">CR</small>{{ c.rename.cost }}</span
+              >
+            </div>
+            <div class="pbody">
+              <p class="tbca-hint">
+                {{ t('account.rename.info', { name: c.name, cost: c.rename.cost }) }}
+              </p>
+              @if (renameLocked(); as at) {
+                <p class="tbca-notice">
+                  {{ t('account.rename.locked', { date: formatDate(at) }) }}
+                </p>
+              } @else {
+                <form class="row" (submit)="$event.preventDefault(); rename()">
+                  <label class="opt grow">
+                    <span class="tbca-label-mono">{{ t('account.rename.new') }}</span>
+                    <input
+                      class="tbca-input"
+                      maxlength="20"
+                      [value]="newName()"
+                      (input)="newName.set($any($event.target).value)"
+                    />
+                  </label>
+                  <button
+                    class="tbca-button"
+                    type="submit"
+                    [disabled]="busy() || newName().trim().length < 3 || c.credits < c.rename.cost"
+                  >
+                    {{ t('account.rename.submit', { cost: c.rename.cost }) }}
+                  </button>
+                </form>
+              }
+            </div>
+          </section>
+        }
+
+        <section class="tbca-panel tbca-panel--flush" aria-labelledby="data-title">
+          <div class="tbca-ph">
+            <h2 id="data-title">{{ t('account.data.title') }}</h2>
+          </div>
+          <div class="pbody">
+            <p class="tbca-hint">{{ t('account.data.exportInfo') }}</p>
+            <button
+              type="button"
+              class="tbca-button tbca-button--ghost start"
+              [disabled]="busy()"
+              (click)="export()"
+            >
+              {{ t('account.data.export') }}
+            </button>
+          </div>
+        </section>
+
+        <section class="tbca-panel tbca-panel--flush danger" aria-labelledby="delete-title">
+          <div class="tbca-ph">
+            <h2 id="delete-title">{{ t('account.data.deleteTitle') }}</h2>
+          </div>
+          <div class="pbody">
+            <p class="tbca-hint">{{ t('account.data.deleteInfo') }}</p>
+            <form class="row" (submit)="$event.preventDefault(); remove()">
+              <label class="opt grow">
+                <span class="tbca-label-mono">{{ t('account.data.confirm') }}</span>
+                <input
+                  class="tbca-input"
+                  autocomplete="off"
+                  [value]="confirmation()"
+                  (input)="confirmation.set($any($event.target).value)"
+                />
+              </label>
+              <button
+                class="tbca-button tbca-button--danger"
+                type="submit"
+                [disabled]="busy() || confirmation() !== 'LÖSCHEN'"
+              >
+                {{ t('account.data.delete') }}
+              </button>
+            </form>
+          </div>
+        </section>
+      </div>
+    </div>
   }
-</ng-container>
+</div>

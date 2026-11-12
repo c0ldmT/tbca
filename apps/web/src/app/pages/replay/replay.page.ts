@@ -18,13 +18,16 @@ import { ReplayPlayer } from './replay-player';
       @if (error()) {
         <section class="tbca-panel">
           <p class="tbca-error" role="alert">{{ t('errors.' + error()) }}</p>
-          <a class="tbca-button tbca-button--ghost" routerLink="/pvp">{{ t('replay.back') }}</a>
+          <a class="tbca-button tbca-button--ghost" routerLink="/fight/arena">{{
+            t('replay.back')
+          }}</a>
         </section>
       } @else if (fight(); as f) {
         <header class="head">
-          <h1 [tbcaGlitch]="f.id">{{ title(f) }}</h1>
-          <p class="tbca-hint">{{ t('replay.kind.' + f.kind) }}</p>
-          <p>
+          <a class="back tbca-idx" routerLink="/fight/history">← {{ t('fight.tabs.history') }}</a>
+          <span class="tbca-kicker">{{ t('replay.kind.' + f.kind) }} · Replay</span>
+          <h1 class="tbca-gl tbca-gl--e" [tbcaGlitch]="f.id">{{ title(f) }}</h1>
+          <p class="outcome">
             @if (f.winner === null) {
               {{ t('replay.draw', { rounds: f.rounds }) }}
             } @else {
@@ -66,11 +69,11 @@ import { ReplayPlayer } from './replay-player';
             }
           </ul>
         }
-        <section class="tbca-panel">
-          <tbca-replay-player [fight]="f" [ownTeam]="ownTeam()" />
-        </section>
+        <tbca-replay-player [fight]="f" [ownTeam]="ownTeam()" />
         <div class="actions">
-          <a class="tbca-button tbca-button--ghost" routerLink="/pvp">{{ t('replay.back') }}</a>
+          <a class="tbca-button tbca-button--ghost" routerLink="/fight/arena">{{
+            t('replay.back')
+          }}</a>
           <button type="button" class="tbca-button tbca-button--ghost" (click)="copyLink()">
             {{ copied() ? t('replay.copied') : t('replay.share') }}
           </button>
@@ -83,21 +86,32 @@ import { ReplayPlayer } from './replay-player';
   styles: `
     :host {
       display: grid;
-      gap: var(--tbca-space-6);
-      width: min(100%, 72rem);
+      gap: 18px;
+      max-width: 1440px;
       margin-inline: auto;
-      padding: var(--tbca-space-8) clamp(var(--tbca-space-4), 4vw, var(--tbca-space-12));
+      padding: 24px clamp(16px, 3vw, 40px) 56px;
     }
     h1 {
-      font-size: clamp(1.6rem, 6vw, 2.6rem);
+      font: 700 clamp(1.6rem, 5vw, 2.5rem) / 1.05 var(--tbca-font-display);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
     }
     .head {
       display: grid;
-      gap: var(--tbca-space-2);
+      gap: 8px;
+      justify-items: start;
+    }
+    .back {
+      text-decoration: none;
+    }
+    .outcome {
+      font: 500 0.875rem / 1.4 var(--tbca-font-mono);
+      color: var(--tbca-text-muted);
     }
     .reward {
       font: 600 var(--tbca-text-lg) / 1.3 var(--tbca-font-display);
       color: var(--tbca-neon-yellow);
+      text-shadow: 0 0 12px rgb(245 228 0 / 0.35);
     }
     .reward strong {
       margin-left: var(--tbca-space-3);
@@ -107,6 +121,7 @@ import { ReplayPlayer } from './replay-player';
       margin: 0;
       padding: 0;
       list-style: none;
+      font: 500 0.8125rem / 1.5 var(--tbca-font-mono);
       color: var(--tbca-neon-yellow);
     }
     .actions {

@@ -1,0 +1,93 @@
+<form
+  class="uplink"
+  *transloco="let t"
+  [style.--acc]="accent()"
+  (submit)="$event.preventDefault(); submit()"
+>
+  <!-- Bühne: die gewählte Klasse materialisiert sich -->
+  <section class="tbca-panel tbca-panel--flush stage tbca-gl tbca-gl--b" aria-hidden="true">
+    <i class="tbca-gx"></i>
+    <div class="stage__grid"></div>
+    <div class="stage__fig">
+      @for (cls of [classId()]; track cls) {
+        <tbca-silhouette class="stage__body" [classId]="cls" />
+      }
+      <div class="stage__scan"></div>
+      <div class="stage__pad"></div>
+    </div>
+    <div class="stage__plate">
+      <span class="tbca-label-mono"
+        >{{ t('classes.' + classId()) }} ·
+        {{ t('classRole.' + config().classes[classId()].role) }}</span
+      >
+      <b class="stage__name">{{ name().trim() || '— — —' }}</b>
+      <span class="tbca-label-mono">LV 1</span>
+    </div>
+  </section>
+
+  <section class="tbca-panel tbca-panel--flush setup tbca-gl tbca-gl--e">
+    <i class="tbca-gx" aria-hidden="true"></i>
+    <div class="tbca-ph">
+      <h2>{{ t('character.create.title') }}</h2>
+      <span class="tbca-idx">{{ t('character.create.step') }}</span>
+    </div>
+    <div class="setup__body">
+      <p class="intro">{{ t('character.create.intro') }}</p>
+
+      <label class="field">
+        <span class="tbca-label-mono">{{ t('character.create.name') }}</span>
+        <input
+          class="tbca-input name"
+          name="name"
+          autocomplete="off"
+          maxlength="20"
+          [value]="name()"
+          (input)="setName($any($event.target).value)"
+          [attr.aria-invalid]="problem() !== null"
+          aria-describedby="name-hint"
+        />
+      </label>
+      <p id="name-hint" [class]="problem() ? 'tbca-error' : 'tbca-hint'" aria-live="polite">
+        {{ problem() ? t('errors.name_' + problem()) : t('character.create.nameRules') }}
+      </p>
+
+      <fieldset class="classes">
+        <legend class="tbca-label-mono">{{ t('character.create.class') }}</legend>
+        @for (id of classIds; track id) {
+          <label class="class" [class.class--on]="classId() === id">
+            <input
+              type="radio"
+              name="class"
+              [value]="id"
+              [checked]="classId() === id"
+              (change)="pick(id)"
+            />
+            <tbca-class-badge [classId]="id" [size]="46" />
+            <span class="class__head">
+              <b>{{ t('classes.' + id) }}</b>
+              <span class="tbca-label-mono"
+                >{{ t('classRole.' + config().classes[id].role) }} ·
+                {{ config().classes[id].primary.toUpperCase() }}</span
+              >
+            </span>
+            <span class="class__text">{{ t('classInfo.' + id) }}</span>
+          </label>
+        }
+      </fieldset>
+
+      @if (error()) {
+        <p class="tbca-notice tbca-notice--bad" role="alert">{{ t('errors.' + error()) }}</p>
+      }
+      <div class="foot">
+        <button
+          class="tbca-button tbca-button--lg"
+          type="submit"
+          [disabled]="busy() || problem() !== null"
+        >
+          {{ t('character.create.submit') }}
+        </button>
+        <span class="tbca-hint">{{ t('character.create.later') }}</span>
+      </div>
+    </div>
+  </section>
+</form>

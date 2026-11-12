@@ -1,52 +1,83 @@
 <ng-container *transloco="let t">
   <section class="hero">
-    <h1 class="hero__title" tbcaGlitch>{{ t('app.name') }}</h1>
-    <p class="hero__tagline">{{ t('home.tagline') }}</p>
+    <div class="hero__copy">
+      <span class="tbca-kicker">{{ t('home.kicker') }}</span>
+      <h1 class="hero__title" tbcaGlitch>{{ t('app.name') }}</h1>
+      <p class="hero__tagline">{{ t('home.tagline') }}</p>
 
-    @if (loginResult(); as result) {
-      <p class="notice" [class.notice--error]="result === 'failed'" role="status">
-        {{ t('auth.result.' + result) }}
-      </p>
-    }
-    @if (logoutFailed()) {
-      <p class="notice notice--error" role="alert">{{ t('auth.logoutFailed') }}</p>
-    }
-
-    <div class="hero__auth" aria-live="polite">
-      @if (auth.state() === null) {
-        <a class="tbca-button" [href]="auth.loginUrl()">{{ t('auth.login') }}</a>
-      } @else if (auth.user(); as user) {
-        <p class="hero__user">{{ t('auth.signedInAs', { name: auth.displayName() }) }}</p>
-        <a class="tbca-button" routerLink="/character">{{ t('app.character') }}</a>
-        <button type="button" class="tbca-button tbca-button--ghost" (click)="logout()">
-          {{ t('auth.logout') }}
-        </button>
+      @if (loginResult(); as result) {
+        <p class="tbca-notice" [class.tbca-notice--bad]="result === 'failed'" role="status">
+          {{ t('auth.result.' + result) }}
+        </p>
       }
+      @if (logoutFailed()) {
+        <p class="tbca-notice tbca-notice--bad" role="alert">{{ t('auth.logoutFailed') }}</p>
+      }
+
+      <div class="hero__auth" aria-live="polite">
+        @if (auth.state() === null) {
+          <a class="tbca-button tbca-button--lg" [href]="auth.loginUrl()">{{ t('auth.login') }}</a>
+        } @else if (auth.user()) {
+          <span class="tbca-label-mono hero__user">{{
+            t('auth.signedInAs', { name: auth.displayName() })
+          }}</span>
+          <button type="button" class="tbca-button tbca-button--ghost" (click)="logout()">
+            {{ t('auth.logout') }}
+          </button>
+        }
+      </div>
+
+      <p class="hero__status">{{ t('home.status') }}</p>
     </div>
 
-    <p class="hero__status">{{ t('home.status') }}</p>
+    @if (auth.user()) {
+      <!-- Schnellzugriff auf die vier Hubs -->
+      <nav class="jump" [attr.aria-label]="t('app.mainNav')">
+        @for (hub of hubs; track hub.key; let i = $index) {
+          <a [class]="'jump__tile tbca-gl tbca-gl--' + glitch[i]" [routerLink]="hub.path">
+            <span class="tbca-idx">0{{ i + 1 }}</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="hub.icon" /></svg>
+            <b>{{ t('hubs.' + hub.key) }}</b>
+            <span class="jump__hint">{{ t('home.jump.' + hub.key) }}</span>
+          </a>
+        }
+      </nav>
+    }
   </section>
 
-  <section class="arena" aria-labelledby="arena-title">
-    <div class="arena__intro">
+  <section
+    class="tbca-panel tbca-panel--flush arena tbca-gl tbca-gl--d"
+    aria-labelledby="arena-title"
+  >
+    <i class="tbca-gx" aria-hidden="true"></i>
+    <div class="tbca-ph">
       <h2 id="arena-title">{{ t('home.demo.title') }}</h2>
-      <p>{{ t('home.demo.description') }}</p>
+      <span class="tbca-idx">{{ t('home.demo.description') }}</span>
     </div>
 
-    <div class="arena__panel">
+    <div class="arena__body">
       <ul class="fighters">
-        @for (fighter of fighters(); track fighter.name) {
-          <li class="fighter" [class.fighter--down]="fighter.hp === 0">
+        @for (fighter of fighters(); track fighter.name; let i = $index) {
+          <li
+            class="fighter"
+            [class.fighter--down]="fighter.hp === 0"
+            [class.fighter--foe]="i % 2 === 1"
+          >
+            <tbca-class-badge [classId]="fighter.classId" [size]="44" />
             <span class="fighter__name">
               {{ fighter.name }}
-              <span class="fighter__class">{{ t('classes.' + fighter.classId) }}</span>
+              <span class="tbca-label-mono">{{ t('classes.' + fighter.classId) }}</span>
             </span>
-            <span class="fighter__bar" aria-hidden="true">
-              <span class="fighter__fill" [style.width.%]="fighter.percent"></span>
-            </span>
-            <span class="fighter__hp">{{
+            <span class="fighter__hp tbca-mono">{{
               t('home.demo.hp', { hp: fighter.hp, max: fighter.max })
             }}</span>
+            <tbca-bar
+              class="fighter__bar"
+              [value]="fighter.hp"
+              [max]="fighter.max"
+              variant="auto-hp"
+              [height]="10"
+            />
           </li>
         }
       </ul>
@@ -66,20 +97,21 @@
         }
       </ol>
 
-      <dl class="meta">
-        <div>
-          <dt>{{ t('home.demo.seed') }}</dt>
-          <dd>{{ seed() }}</dd>
-        </div>
-        <div>
-          <dt>{{ t('home.demo.fingerprint') }}</dt>
-          <dd>{{ result().logHash }}</dd>
-        </div>
-      </dl>
-
-      <button type="button" class="tbca-button tbca-button--ghost" (click)="rerun()">
-        {{ t('home.demo.rerun') }}
-      </button>
+      <div class="arena__foot">
+        <dl class="meta">
+          <div>
+            <dt class="tbca-label-mono">{{ t('home.demo.seed') }}</dt>
+            <dd>{{ seed() }}</dd>
+          </div>
+          <div>
+            <dt class="tbca-label-mono">{{ t('home.demo.fingerprint') }}</dt>
+            <dd>{{ result().logHash }}</dd>
+          </div>
+        </dl>
+        <button type="button" class="tbca-button tbca-button--ghost" (click)="rerun()">
+          {{ t('home.demo.rerun') }}
+        </button>
+      </div>
     </div>
   </section>
 </ng-container>

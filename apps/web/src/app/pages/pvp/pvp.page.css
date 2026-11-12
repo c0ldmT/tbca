@@ -1,138 +1,133 @@
-:host {
-  display: grid;
-  gap: var(--tbca-space-6);
-  width: min(100%, 60rem);
-  margin-inline: auto;
-  padding: var(--tbca-space-8) clamp(var(--tbca-space-4), 4vw, var(--tbca-space-12));
-}
-
-.head {
-  display: grid;
-  gap: var(--tbca-space-2);
-}
-
-h1 {
-  font-size: clamp(2rem, 7vw, 3.5rem);
-}
-
-.status {
+.cols {
   display: flex;
-  align-items: baseline;
-  gap: var(--tbca-space-3);
+  flex-wrap: wrap;
+  gap: 18px;
+  align-items: flex-start;
 }
 
-.status__value {
-  font: 700 var(--tbca-text-2xl) / 1 var(--tbca-font-mono);
-  color: var(--tbca-neon-yellow);
+.main {
+  flex: 1.6 1 640px;
+  min-width: 0;
 }
 
-.opponents,
-.recent {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: var(--tbca-space-2);
+.side {
+  flex: 1 1 360px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
-.opponent {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: var(--tbca-space-2) var(--tbca-space-4);
+.search {
+  display: flex;
   align-items: center;
-  padding: var(--tbca-space-3) var(--tbca-space-4);
-  background: var(--tbca-surface-2);
+  gap: 10px;
 }
 
-@media (min-width: 40rem) {
-  .opponent {
-    grid-template-columns: 1fr auto auto;
-  }
+.search .tbca-input {
+  width: 240px;
 }
 
-.opponent__who {
+.intro,
+.pad {
+  padding: 12px 22px;
+}
+
+.opp {
   display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) 90px auto;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 22px;
+  border-bottom: 1px solid rgb(255 255 255 / 0.05);
 }
 
-.opponent__name {
-  font: 700 var(--tbca-text-lg) / 1.2 var(--tbca-font-display);
+.opp:hover {
+  background: rgb(0 240 255 / 0.04);
 }
 
-.opponent__reward {
-  font: 600 var(--tbca-text-sm) / 1.2 var(--tbca-font-mono);
-  color: var(--tbca-neon-yellow);
+.on {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
 }
 
-.opponent__reward--none {
+.on b {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: 600 1.0625rem / 1.1 var(--tbca-font-display);
+}
+
+.on span {
+  font: 500 0.6875rem / 1.3 var(--tbca-font-mono);
   color: var(--tbca-text-muted);
 }
 
-.opponent__actions {
-  display: flex;
-  gap: var(--tbca-space-2);
-  grid-column: 1 / -1;
+.on .rw--ok {
+  color: var(--tbca-success);
 }
 
-@media (min-width: 40rem) {
-  .opponent__actions {
-    grid-column: auto;
-  }
+.lv {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: right;
 }
 
-.fight {
+.lv b {
+  font: 500 1.125rem / 1 var(--tbca-font-mono);
+}
+
+.lv small {
+  font: 500 0.625rem / 1 var(--tbca-font-mono);
+  color: var(--tbca-text-muted);
+  letter-spacing: 0.12em;
+}
+
+.acts {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--tbca-space-2) var(--tbca-space-4);
-  min-height: var(--tbca-touch-target);
-  padding: var(--tbca-space-2) var(--tbca-space-4);
-  background: var(--tbca-surface-2);
+  gap: 6px;
+}
+
+.meter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px 22px;
+}
+
+.meter__row {
+  display: flex;
+  justify-content: space-between;
+  font: 500 0.75rem / 1 var(--tbca-font-mono);
+  color: var(--tbca-text-muted);
+}
+
+.meter__row b {
   color: var(--tbca-text-primary);
-  text-decoration: none;
+  font-weight: 500;
 }
 
-.fight:hover {
-  box-shadow: inset 3px 0 0 var(--tbca-neon-cyan);
+.gap {
+  margin-top: 8px;
 }
 
-.fight__result {
-  font: 700 var(--tbca-text-sm) / 1.6 var(--tbca-font-mono);
-  min-width: 6rem;
-}
+@media (max-width: 760px) {
+  .opp {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
 
-.fight__result[data-result='won'] {
-  color: var(--tbca-neon-cyan);
-}
+  .opp .lv {
+    display: none;
+  }
 
-.fight__result[data-result='lost'] {
-  color: var(--tbca-neon-magenta);
-}
+  .opp .acts {
+    grid-column: 2;
+  }
 
-.fight__vs {
-  flex: 1;
-}
-
-.fight__xp {
-  font: var(--tbca-text-sm) var(--tbca-font-mono);
-  color: var(--tbca-neon-yellow);
-}
-
-.bot-chip {
-  margin-left: var(--tbca-space-2);
-  padding: 0 var(--tbca-space-2);
-  border: 1px solid var(--tbca-line);
-  font: 500 0.75rem / 1.6 var(--tbca-font-mono);
-  color: var(--tbca-text-muted);
-  vertical-align: middle;
-}
-
-.training {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: end;
-  gap: var(--tbca-space-3);
-}
-
-.training__level {
-  width: 6rem;
+  .search .tbca-input {
+    width: 160px;
+  }
 }
