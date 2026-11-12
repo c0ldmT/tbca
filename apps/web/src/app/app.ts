@@ -12,6 +12,8 @@ import { LanguageService } from './core/language.service';
 import { LegalService } from './core/legal.service';
 import { PreferencesService, QUALITIES, type Quality } from './core/preferences.service';
 import { SoundService } from './core/sound.service';
+import { pathOnly, soundForClick } from './core/ui-sounds';
+import { transitionKind } from './core/view-transitions';
 import { CityRain } from './shared/city-rain/city-rain';
 import { HUBS } from './shared/hubs';
 
@@ -21,7 +23,7 @@ import { HUBS } from './shared/hubs';
   templateUrl: './app.html',
   styleUrl: './app.css',
   host: {
-    '(document:click)': 'closeMenuOutside($event)',
+    '(document:click)': 'onDocumentClick($event)',
     '(document:keydown.escape)': 'menuOpen.set(false)',
   },
 })
@@ -72,14 +74,30 @@ export class App {
     effect(() => {
       if (this.characters.state()) untracked(() => void this.hud.refresh());
     });
+    // Seitenwechsel schließen das Menü und klingen: Hub-Wechsel voller, Tab-Wechsel leiser
+    let previous: string | null = null;
     inject(Router)
       .events.pipe(filter((e) => e instanceof NavigationEnd))
-      .subscribe(() => this.menuOpen.set(false));
+      .subscribe((e) => {
+        this.menuOpen.set(false);
+        const path = pathOnly(e.urlAfterRedirects);
+        if (previous !== null && previous !== path) {
+          this.sound.play(transitionKind(previous, path) === 'hub' ? 'nav' : 'tab');
+        }
+        previous = path;
+      });
   }
 
   protected toggleMenu(): void {
-    this.sound.play('click');
+    this.sound.play(this.menuOpen() ? 'close' : 'open');
     this.menuOpen.update((open) => !open);
+  }
+
+  /** Leiser Klang für jede Schaltfläche, außerdem schließt ein Klick daneben das Menü. */
+  protected onDocumentClick(event: Event): void {
+    const id = soundForClick(event.target);
+    if (id) this.sound.play(id);
+    this.closeMenuOutside(event);
   }
 
   protected closeMenuOutside(event: Event): void {
@@ -106,7 +124,7 @@ export class App {
 
   protected setSound(on: boolean): void {
     this.prefs.setSound(on);
-    if (on) this.sound.play('click');
+    if (on) this.sound.play('toggle');
   }
 
   protected async logout(): Promise<void> {

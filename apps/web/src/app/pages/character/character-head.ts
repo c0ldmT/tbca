@@ -25,7 +25,7 @@ const EMBLEMS: Record<string, string> = {
   imports: [TranslocoDirective, Bar],
   template: `
     <section
-      class="tbca-panel head tbca-gl tbca-gl--b"
+      class="tbca-panel head tbca-hub-head tbca-gl tbca-gl--b"
       *transloco="let t"
       [attr.aria-label]="t('character.title')"
     >

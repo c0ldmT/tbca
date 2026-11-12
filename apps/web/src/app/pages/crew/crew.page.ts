@@ -17,7 +17,7 @@ const TABS: HubTab[] = [
   imports: [TranslocoDirective, RouterOutlet, HubTabs],
   template: `
     <div class="hub" *transloco="let t">
-      <header>
+      <header class="tbca-hub-head">
         <span class="tbca-kicker">{{ t('crew.kicker') }}</span>
         <h1 class="tbca-title tbca-gl tbca-gl--e">{{ t('hubs.crew') }}</h1>
       </header>

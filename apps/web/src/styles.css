@@ -9,6 +9,7 @@
 @import './styles/bars.css';
 @import './styles/items.css';
 @import './styles/glitch.css';
+@import './styles/transitions.css';
 
 *,
 *::before,

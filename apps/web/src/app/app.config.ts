@@ -6,12 +6,18 @@ import {
   provideBrowserGlobalErrorListeners,
   type ApplicationConfig,
 } from '@angular/core';
-import { provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
+import {
+  provideRouter,
+  withComponentInputBinding,
+  withInMemoryScrolling,
+  withViewTransitions,
+} from '@angular/router';
 import { provideTransloco } from '@jsverse/transloco';
 import { DEFAULT_LOCALE, FALLBACK_LOCALE, LOCALES } from '@tbca/shared/constants';
 
 import { routes } from './app.routes';
 import { LanguageService } from './core/language.service';
+import { onViewTransitionCreated } from './core/view-transitions';
 import { TranslocoHttpLoader } from './core/transloco-loader';
 
 export const appConfig: ApplicationConfig = {
@@ -21,6 +27,7 @@ export const appConfig: ApplicationConfig = {
       routes,
       withComponentInputBinding(),
       withInMemoryScrolling({ scrollPositionRestoration: 'enabled' }),
+      withViewTransitions({ skipInitialTransition: true, onViewTransitionCreated }),
     ),
     provideHttpClient(withFetch()),
     provideTransloco({

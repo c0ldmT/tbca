@@ -37,7 +37,7 @@ export class CreateCharacter {
   protected pick(id: ClassId): void {
     if (id === this.classId()) return;
     this.classId.set(id);
-    this.sound.play('click');
+    this.sound.play('select');
   }
 
   protected readonly problem = computed(() => {

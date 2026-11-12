@@ -13,7 +13,7 @@ const TABS: HubTab[] = [{ path: '/market/shop', label: 'market.tabs.shop' }];
   imports: [TranslocoDirective, RouterOutlet, HubTabs],
   template: `
     <div class="hub" *transloco="let t">
-      <header>
+      <header class="tbca-hub-head">
         <span class="tbca-kicker">{{ t('market.kicker') }}</span>
         <h1 class="tbca-title tbca-gl tbca-gl--e">{{ t('hubs.market') }}</h1>
       </header>

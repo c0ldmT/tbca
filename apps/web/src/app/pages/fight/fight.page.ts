@@ -13,7 +13,7 @@ import { HubTabs, type HubTab } from '../../shared/ui/hub-tabs';
   imports: [TranslocoDirective, RouterOutlet, RouterLink, HubTabs],
   template: `
     <div class="hub" *transloco="let t">
-      <header class="title">
+      <header class="title tbca-hub-head">
         <div>
           @if (characters.state(); as c) {
             <span class="tbca-kicker">
