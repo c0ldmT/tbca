@@ -109,7 +109,7 @@
 
 .fighter {
   display: grid;
-  grid-template-columns: 4.5rem 1fr auto;
+  grid-template-columns: 6.5rem 1fr auto;
   align-items: center;
   gap: var(--tbca-space-3);
 }
@@ -117,6 +117,12 @@
 .fighter__name {
   font-family: var(--tbca-font-display);
   font-weight: 700;
+}
+
+.fighter__class {
+  display: block;
+  font: 500 var(--tbca-text-sm) / 1.2 var(--tbca-font-body);
+  color: var(--tbca-text-muted);
 }
 
 .fighter__bar {
@@ -160,6 +166,14 @@
 .log__line[data-tone='round'] {
   color: var(--tbca-text-muted);
   margin-top: var(--tbca-space-2);
+}
+
+.log__line[data-tone='ability'] {
+  color: var(--tbca-neon-cyan);
+}
+
+.log__line[data-tone='heal'] {
+  color: var(--tbca-tier-1);
 }
 
 .log__line[data-tone='crit'] {

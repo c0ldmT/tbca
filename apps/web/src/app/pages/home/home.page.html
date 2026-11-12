@@ -36,7 +36,10 @@
       <ul class="fighters">
         @for (fighter of fighters(); track fighter.name) {
           <li class="fighter" [class.fighter--down]="fighter.hp === 0">
-            <span class="fighter__name">{{ fighter.name }}</span>
+            <span class="fighter__name">
+              {{ fighter.name }}
+              <span class="fighter__class">{{ t('classes.' + fighter.classId) }}</span>
+            </span>
             <span class="fighter__bar" aria-hidden="true">
               <span class="fighter__fill" [style.width.%]="fighter.percent"></span>
             </span>
@@ -49,14 +52,16 @@
 
       @if (outcome(); as end) {
         <p class="arena__outcome" [tbcaGlitch]="result().logHash">
-          {{ t(end.key, end.params) }}
+          {{ t(end.key, paramsOf(end, t)) }}
         </p>
       }
 
       <h3 class="visually-hidden">{{ t('home.demo.log') }}</h3>
       <ol class="log" tabindex="0" [attr.aria-label]="t('home.demo.log')">
         @for (line of lines(); track $index) {
-          <li class="log__line" [attr.data-tone]="line.tone">{{ t(line.key, line.params) }}</li>
+          <li class="log__line" [attr.data-tone]="line.tone">
+            {{ t(line.key, paramsOf(line, t)) }}
+          </li>
         }
       </ol>
 

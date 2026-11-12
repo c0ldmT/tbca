@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { ENGINE_VERSION } from '@tbca/game-core';
 import { healthResponseSchema, meResponseSchema } from '@tbca/shared';
 
 import { hashToken } from '../src/auth/session.service.js';
@@ -51,7 +52,11 @@ describe('GET /api/health', () => {
     const res = await inject({ method: 'GET', url: '/api/health' });
     expect(res.statusCode).toBe(200);
     const body = healthResponseSchema.parse(res.json());
-    expect(body).toMatchObject({ status: 'ok', checks: { database: 'up' }, engineVersion: 1 });
+    expect(body).toMatchObject({
+      status: 'ok',
+      checks: { database: 'up' },
+      engineVersion: ENGINE_VERSION,
+    });
   });
 
   it('meldet 503, wenn die Datenbank fehlt', async () => {

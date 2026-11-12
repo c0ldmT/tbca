@@ -6,6 +6,19 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Phase 1
+
+- `@tbca/game-core`: Kampf-Engine v2 mit vier Klassen (Bruiser, Gunner, Netrunner, Medtech),
+  je vier Fähigkeiten, Klassen-Passiven, Energie, Abklingzeiten, Statuseffekten, Attributs-Dreieck
+  und Taktikregeln (Bedingung → Aktion → Ziel).
+- Spielinhalte als Daten (`DEFAULT_GAME_CONFIG`): Stat-Formeln, Klassen, Fähigkeiten, XP-Kurve;
+  grob vorkalibriert per Duell-Simulation.
+- Charakter-Ableitung: Attributspunkte, Freischaltung nach Level, Loadout-Prüfung,
+  Umskill-Kosten, Level aus XP.
+- Website: Der Testkampf nutzt die echten Klassen und zeigt Fähigkeiten und Status im Verlauf.
+
+### Phase 0
+
 ### Hinzugefügt
 
 - Monorepo-Gerüst mit pnpm-Workspaces, TypeScript-Basiskonfiguration, ESLint und Prettier.

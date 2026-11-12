@@ -4,7 +4,7 @@ import { TranslocoDirective } from '@jsverse/transloco';
 import { AuthService } from '../../core/auth.service';
 import { LanguageService } from '../../core/language.service';
 import { GlitchDirective } from '../../shared/glitch.directive';
-import { DEMO_FIGHTERS, DEMO_SEED, runDemoBattle, toLogLines } from './demo-battle';
+import { DEMO_FIGHTERS, DEMO_SEED, runDemoBattle, toLogLines, type LogLine } from './demo-battle';
 
 const LOGIN_RESULTS = ['success', 'cancelled', 'failed'] as const;
 type LoginResult = (typeof LOGIN_RESULTS)[number];
@@ -34,7 +34,13 @@ export class HomePage {
     const survivors = new Map(this.result().survivors.map((s) => [s.id, s.hp]));
     return DEMO_FIGHTERS.map((f) => {
       const hp = survivors.get(f.id) ?? 0;
-      return { name: f.name, hp, max: f.stats.maxHp, percent: (hp / f.stats.maxHp) * 100 };
+      return {
+        name: f.name,
+        classId: f.classId,
+        hp,
+        max: f.stats.maxHp,
+        percent: (hp / f.stats.maxHp) * 100,
+      };
     });
   });
   protected readonly lines = computed(() => {
@@ -43,6 +49,14 @@ export class HomePage {
     return toLogLines(this.result().events, format);
   });
   protected readonly outcome = computed(() => this.lines().at(-1));
+
+  /** Setzt übersetzte Namen (Fähigkeit, Status) in die Parameter einer Zeile ein. */
+  protected paramsOf(line: LogLine, t: (key: string) => string): Record<string, string | number> {
+    if (!line.nested) return line.params;
+    const resolved: Record<string, string | number> = { ...line.params };
+    for (const [param, key] of Object.entries(line.nested)) resolved[param] = t(key);
+    return resolved;
+  }
 
   protected rerun(): void {
     const bytes = crypto.getRandomValues(new Uint8Array(6));

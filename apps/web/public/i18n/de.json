@@ -39,7 +39,24 @@
     "miss": "{{ source }} verfehlt {{ target }}",
     "defeat": "{{ name }} ist kampfunfähig",
     "win": "{{ name }} gewinnt nach {{ rounds }} Runden",
-    "draw": "Unentschieden nach {{ rounds }} Runden"
+    "draw": "Unentschieden nach {{ rounds }} Runden",
+    "uses": "{{ source }} setzt {{ ability }} ein",
+    "dot": "{{ target }} erleidet {{ value }} Schaden durch {{ source }}",
+    "absorbed": "Schild von {{ target }} fängt den Treffer ab",
+    "heal": "{{ source }} heilt {{ target }} um {{ value }}",
+    "status": "{{ status }} auf {{ target }} (Dauer {{ turns }})",
+    "stunned": "{{ name }} ist betäubt und setzt aus",
+    "resist": "{{ target }} widersteht",
+    "drain": "{{ source }} entzieht {{ target }} {{ value }} Energie",
+    "cleanse": "{{ target }} wird gereinigt",
+    "statusName": {
+      "stun": "Betäubung",
+      "dot": "Schaden über Zeit",
+      "buff": "Verstärkung",
+      "debuff": "Schwächung",
+      "shield": "Schild",
+      "taunt": "Provokation"
+    }
   },
   "legal": {
     "imprint": {
@@ -55,5 +72,37 @@
     "title": "Signal verloren",
     "body": "Diese Seite gibt es nicht.",
     "back": "Zur Startseite"
+  },
+  "abilities": {
+    "bruiser": {
+      "heavy_strike": "Schwerer Schlag",
+      "provoke": "Provokation",
+      "fortify": "Panzern",
+      "shockwave": "Schockwelle"
+    },
+    "gunner": {
+      "double_tap": "Doppelschuss",
+      "aimed_shot": "Gezielter Schuss",
+      "suppress": "Sperrfeuer",
+      "bullet_storm": "Kugelhagel"
+    },
+    "netrunner": {
+      "breach": "Einbruch",
+      "short_circuit": "Kurzschluss",
+      "drain": "Energieabzug",
+      "virus": "Virus"
+    },
+    "medtech": {
+      "patch_up": "Zusammenflicken",
+      "barrier": "Barriere",
+      "stim": "Stimulans",
+      "toxin": "Toxin"
+    }
+  },
+  "classes": {
+    "bruiser": "Bruiser",
+    "gunner": "Gunner",
+    "netrunner": "Netrunner",
+    "medtech": "Medtech"
   }
 }

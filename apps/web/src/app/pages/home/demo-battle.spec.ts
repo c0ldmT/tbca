@@ -2,9 +2,9 @@ import { DEMO_SEED, runDemoBattle, toLogLines } from './demo-battle';
 
 describe('Testkampf', () => {
   it('liefert im Browser denselben Fingerabdruck wie auf dem Server', () => {
-    // 35a73d83 wurde in Chromium und in Node berechnet; weicht er ab, ist die Engine nicht
+    // Der Wert wurde in Chromium und in Node berechnet; weicht er ab, ist die Engine nicht
     // mehr deterministisch über Laufzeitumgebungen hinweg.
-    expect(runDemoBattle(DEMO_SEED).logHash).toBe('35a73d83');
+    expect(runDemoBattle(DEMO_SEED).logHash).toBe('46d6c659');
   });
 
   it('übersetzt das Event-Log in Zeilen mit Rundenbeginn und Ergebnis', () => {

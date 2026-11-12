@@ -1,49 +1,39 @@
 import {
+  DEFAULT_GAME_CONFIG,
+  defaultLoadout,
+  deriveSnapshot,
   ENGINE_VERSION,
   simulateBattle,
   type BattleEvent,
   type BattleResult,
+  type ClassId,
   type CombatantSnapshot,
 } from '@tbca/game-core';
 
-/** Zwei feste Testkämpfer; Werte wie die Startwerte der Spezifikation. */
+function demoFighter(id: string, name: string, classId: ClassId): CombatantSnapshot {
+  const level = 12;
+  const config = DEFAULT_GAME_CONFIG;
+  const primary = config.classes[classId].primary;
+  const allocated = { str: 0, dex: 0, int: 0, con: 0 };
+  allocated[primary] = 36;
+  allocated.con = 24;
+  return deriveSnapshot(config, {
+    id,
+    name,
+    level,
+    classId,
+    allocated,
+    loadout: defaultLoadout(config, classId, level),
+  });
+}
+
+/** Zwei Testkämpfer, abgeleitet aus den echten Klassen und Startwerten. */
 export const DEMO_FIGHTERS: readonly CombatantSnapshot[] = [
-  {
-    id: 'kira',
-    name: 'Kira',
-    level: 12,
-    stats: {
-      maxHp: 540,
-      armor: 170,
-      firewall: 80,
-      initiative: 100,
-      accuracy: 60,
-      evasion: 35,
-      critChance: 90,
-      critDamage: 15_000,
-      threat: 140,
-    },
-    attack: { kind: 'physical', base: 32, attribute: 44, scaling: 5_000 },
-  },
-  {
-    id: 'vex',
-    name: 'Vex',
-    level: 12,
-    stats: {
-      maxHp: 420,
-      armor: 110,
-      firewall: 90,
-      initiative: 132,
-      accuracy: 72,
-      evasion: 52,
-      critChance: 210,
-      critDamage: 16_000,
-    },
-    attack: { kind: 'physical', base: 26, attribute: 50, scaling: 5_000 },
-  },
+  demoFighter('kira', 'Kira', 'bruiser'),
+  demoFighter('vex', 'Vex', 'netrunner'),
 ];
 
-export const DEMO_SEED = 'tbca-phase-0';
+export const DEMO_SEED = 'tbca-phase-1';
 
 export function runDemoBattle(seed: string): BattleResult {
   return simulateBattle({
@@ -58,7 +48,9 @@ export function runDemoBattle(seed: string): BattleResult {
 export interface LogLine {
   key: string;
   params: Record<string, string | number>;
-  tone: 'round' | 'hit' | 'crit' | 'miss' | 'defeat' | 'end';
+  /** Übersetzungsschlüssel, die vor der Anzeige in Parameter eingesetzt werden. */
+  nested?: Record<string, string>;
+  tone: 'round' | 'ability' | 'hit' | 'crit' | 'miss' | 'heal' | 'status' | 'defeat' | 'end';
 }
 
 export function toLogLines(
@@ -69,6 +61,9 @@ export function toLogLines(
   const lines: LogLine[] = [];
   for (const e of events) {
     switch (e.type) {
+      case 'start':
+        lines.push({ key: 'battle.round', params: { round: 1 }, tone: 'round' });
+        break;
       case 'round':
         lines.push({ key: 'battle.round', params: { round: e.round }, tone: 'round' });
         break;
@@ -79,14 +74,66 @@ export function toLogLines(
           tone: 'round',
         });
         break;
-      case 'action': {
+      case 'action':
+        if (e.ability !== 'basic_attack') {
+          lines.push({
+            key: 'battle.uses',
+            params: { source: name(e.source) },
+            nested: { ability: `abilities.${e.ability}` },
+            tone: 'ability',
+          });
+        }
+        break;
+      case 'damage': {
         const params = { source: name(e.source), target: name(e.target), value: e.value };
-        if (e.outcome === 'miss') lines.push({ key: 'battle.miss', params, tone: 'miss' });
-        else if (e.effects.includes('crit'))
-          lines.push({ key: 'battle.crit', params, tone: 'crit' });
-        else lines.push({ key: 'battle.hit', params, tone: 'hit' });
+        if (e.dot) lines.push({ key: 'battle.dot', params, tone: 'hit' });
+        else if (e.value === 0) lines.push({ key: 'battle.absorbed', params, tone: 'status' });
+        else
+          lines.push({
+            key: e.crit ? 'battle.crit' : 'battle.hit',
+            params,
+            tone: e.crit ? 'crit' : 'hit',
+          });
         break;
       }
+      case 'miss':
+        lines.push({
+          key: 'battle.miss',
+          params: { source: name(e.source), target: name(e.target) },
+          tone: 'miss',
+        });
+        break;
+      case 'heal':
+        lines.push({
+          key: 'battle.heal',
+          params: { source: name(e.source), target: name(e.target), value: e.value },
+          tone: 'heal',
+        });
+        break;
+      case 'status':
+        lines.push({
+          key: 'battle.status',
+          params: { target: name(e.target), turns: e.turns },
+          nested: { status: `battle.statusName.${e.status}` },
+          tone: 'status',
+        });
+        break;
+      case 'stunned':
+        lines.push({ key: 'battle.stunned', params: { name: name(e.id) }, tone: 'status' });
+        break;
+      case 'resist':
+        lines.push({ key: 'battle.resist', params: { target: name(e.target) }, tone: 'miss' });
+        break;
+      case 'energy':
+        lines.push({
+          key: 'battle.drain',
+          params: { source: name(e.source), target: name(e.target), value: e.value },
+          tone: 'status',
+        });
+        break;
+      case 'cleanse':
+        lines.push({ key: 'battle.cleanse', params: { target: name(e.target) }, tone: 'status' });
+        break;
       case 'defeat':
         lines.push({ key: 'battle.defeat', params: { name: name(e.id) }, tone: 'defeat' });
         break;
@@ -99,9 +146,6 @@ export function toLogLines(
         );
         break;
       }
-      case 'start':
-        lines.push({ key: 'battle.round', params: { round: 1 }, tone: 'round' });
-        break;
     }
   }
   return lines;

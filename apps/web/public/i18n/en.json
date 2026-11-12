@@ -39,7 +39,24 @@
     "miss": "{{ source }} misses {{ target }}",
     "defeat": "{{ name }} is down",
     "win": "{{ name }} wins after {{ rounds }} rounds",
-    "draw": "Draw after {{ rounds }} rounds"
+    "draw": "Draw after {{ rounds }} rounds",
+    "uses": "{{ source }} uses {{ ability }}",
+    "dot": "{{ target }} takes {{ value }} damage from {{ source }}",
+    "absorbed": "{{ target }}'s shield absorbs the hit",
+    "heal": "{{ source }} heals {{ target }} for {{ value }}",
+    "status": "{{ status }} on {{ target }} (duration {{ turns }})",
+    "stunned": "{{ name }} is stunned and skips a turn",
+    "resist": "{{ target }} resists",
+    "drain": "{{ source }} drains {{ value }} energy from {{ target }}",
+    "cleanse": "{{ target }} is cleansed",
+    "statusName": {
+      "stun": "Stun",
+      "dot": "Damage over time",
+      "buff": "Buff",
+      "debuff": "Debuff",
+      "shield": "Shield",
+      "taunt": "Taunt"
+    }
   },
   "legal": {
     "imprint": {
@@ -55,5 +72,37 @@
     "title": "Signal lost",
     "body": "This page doesn't exist.",
     "back": "Back to home"
+  },
+  "abilities": {
+    "bruiser": {
+      "heavy_strike": "Heavy Strike",
+      "provoke": "Provoke",
+      "fortify": "Fortify",
+      "shockwave": "Shockwave"
+    },
+    "gunner": {
+      "double_tap": "Double Tap",
+      "aimed_shot": "Aimed Shot",
+      "suppress": "Suppress",
+      "bullet_storm": "Bullet Storm"
+    },
+    "netrunner": {
+      "breach": "Breach",
+      "short_circuit": "Short Circuit",
+      "drain": "Drain",
+      "virus": "Virus"
+    },
+    "medtech": {
+      "patch_up": "Patch Up",
+      "barrier": "Barrier",
+      "stim": "Stim",
+      "toxin": "Toxin"
+    }
+  },
+  "classes": {
+    "bruiser": "Bruiser",
+    "gunner": "Gunner",
+    "netrunner": "Netrunner",
+    "medtech": "Medtech"
   }
 }

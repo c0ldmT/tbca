@@ -27,7 +27,30 @@ export {
   type TimeSource,
 } from './clock/clock.js';
 
-export { BattleInputError, DEFAULT_BATTLE_RULES, simulateBattle } from './battle/engine.js';
+export * from './content/types.js';
+export { DEFAULT_GAME_CONFIG } from './content/default-config.js';
+
+export {
+  availableAbilities,
+  BuildError,
+  defaultLoadout,
+  deriveSnapshot,
+  evalStat,
+  pointsForLevel,
+  respecCost,
+  totalAttributes,
+  unspentPoints,
+  validateBuild,
+  type CharacterBuild,
+} from './character/build.js';
+export { levelFromXp, totalXpForLevel, xpToNext } from './character/xp.js';
+
+export {
+  BASIC_ATTACK,
+  BattleInputError,
+  DEFAULT_BATTLE_RULES,
+  simulateBattle,
+} from './battle/engine.js';
 export type {
   BattleEndReason,
   BattleEvent,
@@ -35,5 +58,4 @@ export type {
   BattleResult,
   BattleRules,
   CombatantSnapshot,
-  DamageKind,
 } from './battle/types.js';
