@@ -8,7 +8,8 @@
     </a>
 
     @if (auth.user()) {
-      <nav class="hubs" [attr.aria-label]="t('app.mainNav')">
+      <nav class="hubs" tbcaSlideIndicator="hub--on" [attr.aria-label]="t('app.mainNav')">
+        <span class="hubs__pill" aria-hidden="true"></span>
         @for (hub of hubs; track hub.key) {
           <a
             class="hub"
@@ -105,6 +106,7 @@
                   }
                 </span>
               </div>
+              <tbca-bg-status class="menu__diag" />
               <div class="menu__row">
                 <span class="tbca-label-mono" id="sound-label">{{ t('profile.sound') }}</span>
                 <span class="tbca-seg" role="group" aria-labelledby="sound-label">
@@ -151,6 +153,7 @@
   </header>
 
   <main id="main" tabindex="-1">
+    <div class="navscan" aria-hidden="true"></div>
     <router-outlet />
   </main>
 

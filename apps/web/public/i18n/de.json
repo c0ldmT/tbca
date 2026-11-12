@@ -859,7 +859,20 @@
     "sound": "Sound",
     "on": "An",
     "off": "Aus",
-    "logout": "Abmelden"
+    "logout": "Abmelden",
+    "bg": {
+      "running": "Regen läuft · {{ fps }} fps · {{ ms }} ms je Bild",
+      "lowered_mittel": "Regen läuft · {{ fps }} fps · Auto hat auf Mittel gesenkt ({{ ms }} ms je Bild)",
+      "lowered_sparsam": "Regen läuft · {{ fps }} fps · Auto hat auf Sparsam gesenkt ({{ ms }} ms je Bild)",
+      "starting": "Hintergrund startet …",
+      "paused": "Regen pausiert (Tab im Hintergrund)",
+      "still": "Standbild (Grafik: Niedrig)",
+      "reduced": "Standbild: Dein System hat „Bewegung reduzieren“ aktiv. Wähle „Hoch“, um den Regen trotzdem zu sehen.",
+      "error": "Fehler beim Zeichnen: {{ error }}",
+      "running_lost": "Regen läuft · {{ fps }} fps · Grafikkontext {{ lost }}× verloren und neu aufgebaut",
+      "lowered_mittel_lost": "Regen läuft · {{ fps }} fps · Auto: Mittel · Grafikkontext {{ lost }}× neu aufgebaut",
+      "lowered_sparsam_lost": "Regen läuft · {{ fps }} fps · Auto: Sparsam · Grafikkontext {{ lost }}× neu aufgebaut"
+    }
   },
   "gear": {
     "title": "Ausrüstung",

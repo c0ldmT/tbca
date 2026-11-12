@@ -10,7 +10,29 @@
  * Lichter, Gleiter und Regen dazu. Zufall ist geseedet, damit die Skyline stabil bleibt.
  */
 
-export type CityQuality = 'hoch' | 'mittel' | 'niedrig';
+/** „sparsam“ wählt nur die Auto-Stufe, wenn selbst „mittel“ zu langsam ist – nie ein Standbild. */
+export type CityQuality = 'hoch' | 'mittel' | 'sparsam' | 'niedrig';
+
+/** Laufzeitwerte für die Diagnose im Profil-Menü. */
+export interface CityStats {
+  /** Tatsächlich gezeichnete Bilder pro Sekunde. */
+  fps: number;
+  /** Mittlere Zeichenzeit je Bild in ms. */
+  cost: number;
+  /** Letzter Fehler beim Zeichnen, falls einer auftrat. */
+  error: string | null;
+  /** Wie oft der Browser den Grafikkontext verworfen hat (und er neu aufgebaut wurde). */
+  lost: number;
+}
+
+/** 2D-Kontext mit der (in Chromium vorhandenen) Abfrage auf Kontextverlust. */
+type Ctx2D = CanvasRenderingContext2D & { isContextLost?: () => boolean };
+
+/** Obergrenze für die Canvas-Größe (Pixel); größere Bildschirme werden hochskaliert. */
+const MAX_PIXELS = 2_600_000;
+
+/** So lange darf der Kontext verloren sein, bevor ein frisches Canvas eingesetzt wird. */
+const LOST_GRACE_MS = 1200;
 
 interface Sign {
   x: number;
@@ -71,6 +93,7 @@ const SETTINGS: Record<CityQuality, { density: number; dpr: number; spray: boole
     // „Hoch“ entspricht exakt dem abgenommenen Prototyp
     hoch: { density: 140, dpr: 1.5, spray: true, fps: 60 },
     mittel: { density: 90, dpr: 1, spray: true, fps: 30 },
+    sparsam: { density: 60, dpr: 0.75, spray: false, fps: 24 },
     niedrig: { density: 45, dpr: 1, spray: false, fps: 0 },
   };
 
@@ -482,6 +505,28 @@ export class RainCity {
   private samples = 0;
   /** Wird gerufen, wenn das Zeichnen dauerhaft zu langsam ist (Auto-Stufe senkt dann ab). */
   onSlow: (() => void) | null = null;
+  /** Wird etwa einmal pro Sekunde mit Laufzeitwerten gerufen. */
+  onStats: ((stats: CityStats) => void) | null = null;
+  private frames = 0;
+  private statsAt = 0;
+  private error: string | null = null;
+  private lostCount = 0;
+  /** Zeitpunkt (rAF-Zeit), seit dem der Kontext verloren ist; 0 = nicht verloren. */
+  private lostSince = 0;
+  /**
+   * Wird gerufen, wenn der Kontext verloren bleibt: Die Komponente setzt dann ein frisches
+   * Canvas ein. Ohne Rückruf baut die Stadt nur neu auf, sobald der Browser ihn wiederherstellt.
+   */
+  onLost: (() => void) | null = null;
+  private readonly onContextLost = (e: Event) => {
+    // Wiederherstellung durch den Browser erlauben (Standard), nur merken
+    void e;
+    this.markLost();
+  };
+  private readonly onContextRestored = () => {
+    this.lostSince = 0;
+    this.resize(true);
+  };
   private w = 0;
   private h = 0;
   private quality: CityQuality = 'hoch';
@@ -489,7 +534,40 @@ export class RainCity {
   constructor(
     private readonly canvas: HTMLCanvasElement,
     private readonly seed = 7,
-  ) {}
+  ) {
+    canvas.addEventListener('contextlost', this.onContextLost);
+    canvas.addEventListener('contextrestored', this.onContextRestored);
+  }
+
+  /** Löst die Stadt vom Canvas (Schleife stoppen, Ereignisse abmelden). */
+  dispose(): void {
+    this.stop();
+    this.canvas.removeEventListener('contextlost', this.onContextLost);
+    this.canvas.removeEventListener('contextrestored', this.onContextRestored);
+    this.onLost = null;
+    this.onStats = null;
+    this.onSlow = null;
+  }
+
+  private markLost(): void {
+    if (this.lostSince) return;
+    this.lostCount++;
+    this.lostSince = this.canvas.ownerDocument.defaultView?.performance.now() ?? 1;
+    this.error = null;
+  }
+
+  /** Prüft Haupt- und Stadt-Canvas auf Kontextverlust (Chromium meldet das über isContextLost). */
+  private contextLost(): boolean {
+    const main = this.canvas.getContext('2d') as Ctx2D | null;
+    const city = this.city?.canvas.getContext('2d') as Ctx2D | null | undefined;
+    if (main?.isContextLost?.()) return true;
+    if (city?.isContextLost?.()) {
+      // Nur das zwischengespeicherte Stadtbild ist weg: neu zeichnen genügt
+      this.resize(true);
+      this.lostCount++;
+    }
+    return false;
+  }
 
   setQuality(quality: CityQuality): void {
     const changed = quality !== this.quality;
@@ -504,9 +582,16 @@ export class RainCity {
 
   resize(force = false): void {
     const view = this.canvas.ownerDocument.defaultView;
-    const dpr = Math.min(view?.devicePixelRatio ?? 1, SETTINGS[this.quality].dpr);
-    const w = Math.max(320, Math.round(this.canvas.clientWidth * dpr));
-    const h = Math.max(320, Math.round(this.canvas.clientHeight * dpr));
+    const cw = Math.max(1, this.canvas.clientWidth);
+    const ch = Math.max(1, this.canvas.clientHeight);
+    // Große Monitore: Pixelzahl deckeln, das Canvas wird per CSS auf volle Größe gestreckt
+    const dpr = Math.min(
+      view?.devicePixelRatio ?? 1,
+      SETTINGS[this.quality].dpr,
+      Math.sqrt(MAX_PIXELS / (cw * ch)),
+    );
+    const w = Math.max(320, Math.round(cw * dpr));
+    const h = Math.max(320, Math.round(ch * dpr));
     if (!force && w === this.w && h === this.h) return;
     this.w = w;
     this.h = h;
@@ -530,27 +615,60 @@ export class RainCity {
     if (this.raf || this.quality === 'niedrig') return;
     const view = this.canvas.ownerDocument.defaultView;
     const loop = (t: number) => {
-      const fps = SETTINGS[this.quality].fps;
-      if (t - this.lastDrawn >= 1000 / fps - 2) {
-        this.lastDrawn = t;
-        const begin = view?.performance.now() ?? 0;
-        this.draw(t, false);
-        this.measure((view?.performance.now() ?? 0) - begin);
-      }
+      // Zuerst den nächsten Frame planen: ein Fehler beim Zeichnen darf die Schleife nie beenden
       this.raf = view?.requestAnimationFrame(loop) ?? 0;
+      const fps = SETTINGS[this.quality].fps;
+      // Zeitstempel können springen oder (bei Timer-Schutz) unsauber sein
+      if (t < this.lastDrawn) this.lastDrawn = t - 1000;
+      if (t - this.lastDrawn < 1000 / fps - 2) return;
+      this.lastDrawn = t;
+      // Kontext verloren: nicht zeichnen; bleibt er weg, ein frisches Canvas anfordern
+      if (this.lostSince || this.contextLost()) {
+        this.markLost();
+        if (t - this.lostSince > LOST_GRACE_MS && this.onLost) {
+          const recreate = this.onLost;
+          this.lostSince = 0;
+          recreate();
+        }
+        return;
+      }
+      const begin = view?.performance.now() ?? 0;
+      try {
+        this.draw(t, false);
+        this.frames++;
+      } catch (e) {
+        this.error = e instanceof Error ? e.message : String(e);
+        // Zustand zurücksetzen, damit der nächste Frame sauber beginnt
+        this.splashes = [];
+        this.last = 0;
+      }
+      this.measure((view?.performance.now() ?? 0) - begin);
+      if (t - this.statsAt >= 1000) {
+        const elapsed = this.statsAt ? t - this.statsAt : 1000;
+        this.onStats?.({
+          fps: Math.round((this.frames * 1000) / elapsed),
+          cost: Math.round(this.cost * 10) / 10,
+          error: this.error,
+          lost: this.lostCount,
+        });
+        this.frames = 0;
+        this.statsAt = t;
+      }
     };
     this.raf = view?.requestAnimationFrame(loop) ?? 0;
   }
 
   /**
-   * Misst die Zeichenzeit nach einer Aufwärmphase. Liegt sie über ~9 ms (mehr als die Hälfte
-   * eines 60-Hz-Bilds), meldet die Stadt das einmal; danach beginnt die Messung neu.
+   * Misst die Zeichenzeit nach einer Aufwärmphase. Braucht ein Bild dauerhaft mehr als gut die
+   * Hälfte seines Zeitbudgets (60 fps: ~9 ms, 30 fps: ~18 ms), meldet die Stadt das einmal;
+   * danach beginnt die Messung neu.
    */
   private measure(ms: number): void {
     this.samples++;
     if (this.samples < 30) return;
     this.cost = this.samples === 30 ? ms : this.cost * 0.95 + ms * 0.05;
-    if (this.samples > 150 && this.cost > 9) {
+    const budget = 1000 / SETTINGS[this.quality].fps;
+    if (this.samples > 150 && this.cost > budget * 0.55) {
       this.samples = 0;
       this.onSlow?.();
     }
@@ -560,6 +678,14 @@ export class RainCity {
     if (this.raf) this.canvas.ownerDocument.defaultView?.cancelAnimationFrame(this.raf);
     this.raf = 0;
     this.last = 0;
+    this.statsAt = 0;
+    this.frames = 0;
+    this.onStats?.({
+      fps: 0,
+      cost: Math.round(this.cost * 10) / 10,
+      error: this.error,
+      lost: this.lostCount,
+    });
   }
 
   private newDrop(anywhere: boolean): Drop {
@@ -579,7 +705,7 @@ export class RainCity {
     const city = this.city;
     const g = this.canvas.getContext('2d');
     if (!city || !g) return;
-    const dt = this.last ? Math.min(50, t - this.last) : 16;
+    const dt = this.last ? Math.max(0, Math.min(50, t - this.last)) : 16;
     this.last = t;
     const sc = city.sc;
     g.drawImage(city.canvas, 0, 0);
@@ -667,7 +793,7 @@ export class RainCity {
         this.splashes.splice(k, 1);
         continue;
       }
-      const rr = s.r * (0.25 + q);
+      const rr = Math.max(0.1, s.r * (0.25 + Math.max(0, q)));
       const alpha = (1 - q) * (0.35 + 0.5 * s.z);
       g.strokeStyle = `rgba(190,225,255,${alpha.toFixed(3)})`;
       g.lineWidth = Math.max(0.6, (0.6 + s.z) * sc * (1 - q * 0.5));

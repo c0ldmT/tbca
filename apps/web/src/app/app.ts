@@ -1,3 +1,4 @@
+import { DOCUMENT } from '@angular/common';
 import { Component, ElementRef, computed, effect, inject, signal, untracked } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
@@ -13,13 +14,23 @@ import { LegalService } from './core/legal.service';
 import { PreferencesService, QUALITIES, type Quality } from './core/preferences.service';
 import { SoundService } from './core/sound.service';
 import { pathOnly, soundForClick } from './core/ui-sounds';
-import { transitionKind } from './core/view-transitions';
+import { playNavMotion, tabDirection, transitionKind } from './core/nav-motion';
 import { CityRain } from './shared/city-rain/city-rain';
 import { HUBS } from './shared/hubs';
+import { SlideIndicator } from './shared/slide-indicator';
+import { BgStatus } from './shared/ui/bg-status';
 
 @Component({
   selector: 'tbca-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, TranslocoDirective, CityRain],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    TranslocoDirective,
+    CityRain,
+    SlideIndicator,
+    BgStatus,
+  ],
   templateUrl: './app.html',
   styleUrl: './app.css',
   host: {
@@ -37,6 +48,8 @@ export class App {
   private readonly account = inject(AccountService);
   protected readonly legal = inject(LegalService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+  private readonly document = inject(DOCUMENT);
+  private motionTimer: number | undefined;
 
   protected readonly hubs = HUBS;
   protected readonly qualities = QUALITIES;
@@ -74,7 +87,8 @@ export class App {
     effect(() => {
       if (this.characters.state()) untracked(() => void this.hud.refresh());
     });
-    // Seitenwechsel schließen das Menü und klingen: Hub-Wechsel voller, Tab-Wechsel leiser
+    // Seitenwechsel schließen das Menü, klingen und starten die Bewegung (motion.css):
+    // Hub-Wechsel voller, Tab-Wechsel leiser
     let previous: string | null = null;
     inject(Router)
       .events.pipe(filter((e) => e instanceof NavigationEnd))
@@ -82,7 +96,21 @@ export class App {
         this.menuOpen.set(false);
         const path = pathOnly(e.urlAfterRedirects);
         if (previous !== null && previous !== path) {
-          this.sound.play(transitionKind(previous, path) === 'hub' ? 'nav' : 'tab');
+          const kind = transitionKind(previous, path);
+          const tabs = Array.from(this.document.querySelectorAll('a.tbca-tab'), (a) =>
+            a.getAttribute('href'),
+          );
+          const view = this.document.defaultView;
+          if (view) {
+            this.motionTimer = playNavMotion(
+              this.document.documentElement,
+              kind,
+              tabDirection(tabs, previous, path),
+              view,
+              this.motionTimer,
+            );
+          }
+          this.sound.play(kind === 'hub' ? 'nav' : 'tab');
         }
         previous = path;
       });

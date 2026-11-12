@@ -90,13 +90,40 @@
 .hub--on,
 .hub--on:hover {
   color: var(--tbca-bg-void);
-  background: linear-gradient(90deg, #00f0ff, #7df9ff);
-  box-shadow: 0 0 24px rgb(0 240 255 / 0.5);
+  background: transparent;
+  /* Text erst dunkel, wenn die Pille ankommt */
+  transition: color 160ms ease 180ms;
 }
 
-/* Beim Hub-Wechsel gleitet die Markierung zum neuen Hub */
-:host-context([data-vt]) .hub--on {
-  view-transition-name: hub-active;
+/* Gleitende Pille hinter dem aktiven Hub (Position aus SlideIndicator) */
+.hubs {
+  position: relative;
+}
+
+.hub {
+  position: relative;
+  z-index: 1;
+}
+
+.hubs__pill {
+  position: absolute;
+  left: 0;
+  top: var(--ind-y, 0);
+  width: var(--ind-w, 0);
+  height: var(--ind-h, 0);
+  transform: translateX(var(--ind-x, 0));
+  opacity: var(--ind-o, 0);
+  background: linear-gradient(90deg, #00f0ff, #7df9ff);
+  clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+  pointer-events: none;
+  transition:
+    transform 440ms cubic-bezier(0.3, 1.3, 0.4, 1),
+    width 440ms cubic-bezier(0.3, 1.3, 0.4, 1),
+    opacity 200ms ease;
+}
+
+[data-ind-still] > .hubs__pill {
+  transition: none;
 }
 
 .hub svg,
@@ -154,6 +181,12 @@
   padding: 10px 18px;
 }
 
+.menu__diag {
+  display: block;
+  padding: 0 18px 8px;
+  text-align: right;
+}
+
 .menu__link {
   display: flex;
   align-items: center;
@@ -183,6 +216,61 @@ main {
   z-index: 1;
   outline: none;
   min-width: 0;
+}
+
+/* Scan-Strahl beim Hub-Wechsel: läuft einmal über den Inhalt, während die Karten entstehen */
+.navscan {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 120px;
+  z-index: 30;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgb(0 240 255 / 0.06) 70%,
+    rgb(0 240 255 / 0.22) 97%,
+    rgb(160 250 255 / 0.9) 99%,
+    transparent
+  );
+  mix-blend-mode: screen;
+}
+
+:host-context([data-nav='hub']) .navscan {
+  animation: navscan 760ms cubic-bezier(0.45, 0, 0.25, 1) 40ms both;
+}
+
+@keyframes navscan {
+  0% {
+    opacity: 0;
+    transform: translateY(-60px);
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  85% {
+    opacity: 0.9;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(100vh);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navscan {
+    display: none;
+  }
+}
+
+:host-context([data-quality='niedrig']) .navscan {
+  display: none;
 }
 
 .footer {
@@ -242,10 +330,6 @@ main {
     font: 600 0.625rem / 1 var(--tbca-font-display);
     letter-spacing: 0.12em;
     text-transform: uppercase;
-  }
-
-  :host-context([data-vt]) .bottom a.on {
-    view-transition-name: hub-active-m;
   }
 
   .bottom a.on {

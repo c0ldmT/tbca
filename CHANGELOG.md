@@ -34,10 +34,13 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
   Verlauf, Crew, Shop, Konto und Startseite.
 - Website: prozedurale UI-Klänge über die Web-Audio-API (ohne Audiodateien), im Profil-Menü
   abschaltbar. Grafikstufe und Sound gelten je Gerät.
-- Website: Seitenübergänge über View Transitions. Beim Hub-Wechsel gleitet die Hub-Markierung,
-  der Titel baut sich mit kurzem Glitch auf und der Inhalt materialisiert sich mit weicher
-  Scan-Kante; beim Tab-Wechsel gleitet die Leuchtlinie und der Inhalt schiebt sich aus der
-  Tab-Richtung herein. Bei reduzierter Bewegung und Grafikstufe „Niedrig“ ohne Animation.
+- Website: Seitenübergänge auf dem echten DOM (ohne View Transitions). Beim Hub-Wechsel gleitet
+  die Hub-Markierung, ein Scan-Strahl läuft über den Inhalt, die Karten materialisieren gestaffelt
+  und der Titel glitcht kurz; beim Tab-Wechsel gleitet die Leuchtlinie und die Karten schieben
+  sich aus der Tab-Richtung herein. Die Animationen enden exakt im fertigen Zustand. Bei
+  reduzierter Bewegung und Grafikstufe „Niedrig“ ohne Animation.
+- Website: Diagnose des Hintergrunds im Profil-Menü und im Konto (läuft/steht, Bilder pro
+  Sekunde, Zeichenzeit, automatisch gesenkte Stufe, Grund für ein Standbild, Kontextverluste).
 - Website: Klang-Engine mit Hall, Filtern, Stereo und Kompressor; leise Klänge für Schaltflächen,
   Umschalter, Auswahl, Tab- und Hub-Wechsel sowie Menü öffnen/schließen.
 - `legal.json` kennt den Modus `private` für Instanzen in einem geschlossenen Kreis: kein Impressum
@@ -51,7 +54,13 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 - Website: Die Grafikstufe „Auto“ startet auf „Hoch“ und senkt erst nach gemessener Zeichenzeit
   ab; vorher führten verfälschte Kernzahlen (Datenschutz-Einstellungen mancher Browser) zu einem
   stehenden Hintergrund. Eine ausdrücklich gewählte Stufe gilt auch bei reduzierter Bewegung.
-  Regendichte und Schleier entsprechen jetzt dem Prototyp.
+  Regendichte und Schleier entsprechen jetzt dem Prototyp. „Auto“ senkt höchstens auf die neue
+  Stufe „Sparsam“ und wird nie zum Standbild; die Canvas-Größe ist gedeckelt.
+- Website: Der Regen friert nicht mehr ein. Verliert der Browser den Grafikkontext (bei
+  GPU-Speicherdruck, z. B. ausgelöst durch View Transitions oder backdrop-filter über dem Canvas),
+  baut die Stadt neu auf und setzt nötigenfalls ein frisches Canvas ein; Fehler in einem Frame
+  beenden die Zeichenschleife nicht mehr. Seitenwechsel nutzen keine View Transitions mehr, der
+  Glitch-Streifen kein backdrop-filter, das Canvas liegt auf einer eigenen Compositing-Ebene.
 - Website: Abgeschrägte Ecken an Schaltflächen, Panels, Item-Rahmen und Karten haben eine
   durchgehende Umrisslinie.
 - Website: Bessere Lesbarkeit über dem Hintergrund – dunkler Halo für freistehende Titel und
@@ -62,7 +71,9 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 - Nicht mit echter API und echten Geräten geprüft: Die Oberfläche wurde gegen einen Mock der API in
   Chromium (Desktop 1440 px, Mobil 390 px) durchgeklickt; Klänge (nur offline gerendert und
   gemessen, nicht über Lautsprecher abgehört), Performance des Regens auf schwachen Geräten,
-  Seitenübergänge in Safari/Firefox und Touch-Drag auf echten Geräten sind ungetestet.
+  Seitenübergänge in Safari/Firefox und Touch-Drag auf echten Geräten sind ungetestet. Das
+  Einfrieren des Regens trat nur unter Windows mit echter GPU auf (Brave, Opera GX) und ließ sich
+  hier nicht nachstellen; die Selbstheilung ist mit simuliertem Kontextverlust getestet.
 - Monster haben noch keine eigenen Silhouetten; das Kampf-HUD zeigt für sie eine Platzhalterform.
 
 ## [0.1.0] – 2026-11-24

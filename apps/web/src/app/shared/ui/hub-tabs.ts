@@ -2,6 +2,8 @@ import { Component, input } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 
+import { SlideIndicator } from '../slide-indicator';
+
 export interface HubTab {
   /** Absoluter Pfad, z. B. /character/gear. */
   path: string;
@@ -16,9 +18,15 @@ export interface HubTab {
 /** Tabs unter einem Hub-Titel; jeder Tab ist eine eigene Route. */
 @Component({
   selector: 'tbca-hub-tabs',
-  imports: [RouterLink, RouterLinkActive, TranslocoDirective],
+  imports: [RouterLink, RouterLinkActive, TranslocoDirective, SlideIndicator],
   template: `
-    <nav class="tbca-tabs" *transloco="let t" [attr.aria-label]="label()">
+    <nav
+      class="tbca-tabs"
+      tbcaSlideIndicator="tbca-tab--on"
+      *transloco="let t"
+      [attr.aria-label]="label()"
+    >
+      <span class="tbca-tabs__ink" aria-hidden="true"></span>
       @for (tab of tabs(); track tab.path) {
         <a
           class="tbca-tab"
@@ -42,7 +50,6 @@ export interface HubTab {
           @if (tab.badge) {
             <span class="tbca-badge">{{ tab.badge }}</span>
           }
-          <span class="tbca-tab__ink" aria-hidden="true"></span>
         </a>
       }
     </nav>

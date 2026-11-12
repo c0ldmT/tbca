@@ -8,11 +8,12 @@ import { AuthService } from '../../core/auth.service';
 import { CharacterService } from '../../core/character.service';
 import { LanguageService } from '../../core/language.service';
 import { PreferencesService, QUALITIES } from '../../core/preferences.service';
+import { BgStatus } from '../../shared/ui/bg-status';
 
 /** Konto: verknüpfte Plattformen, Sprache, Umbenennen, Datenexport und Löschen. */
 @Component({
   selector: 'tbca-account-page',
-  imports: [TranslocoDirective],
+  imports: [TranslocoDirective, BgStatus],
   templateUrl: './account.page.html',
   styleUrl: './account.page.css',
 })

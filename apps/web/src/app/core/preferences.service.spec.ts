@@ -33,7 +33,7 @@ describe('PreferencesService', () => {
     expect(prefs.effectiveQuality()).toBe('hoch');
   });
 
-  it('startet Auto auf Hoch und senkt nur nach gemessener Langsamkeit ab', () => {
+  it('startet Auto auf Hoch und senkt nur nach gemessener Langsamkeit ab, nie bis zum Standbild', () => {
     const prefs = TestBed.inject(PreferencesService);
     prefs.reducedMotion.set(false);
     prefs.setQuality('auto');
@@ -42,7 +42,8 @@ describe('PreferencesService', () => {
     expect(prefs.effectiveQuality()).toBe('mittel');
     prefs.reportSlow();
     prefs.reportSlow();
-    expect(prefs.effectiveQuality()).toBe('niedrig');
+    // Auto wird nie zum Standbild
+    expect(prefs.effectiveQuality()).toBe('sparsam');
     // Eine feste Wahl wird nie automatisch geändert
     prefs.setQuality('hoch');
     prefs.reportSlow();

@@ -859,7 +859,20 @@
     "sound": "Sound",
     "on": "On",
     "off": "Off",
-    "logout": "Sign out"
+    "logout": "Sign out",
+    "bg": {
+      "running": "Rain running · {{ fps }} fps · {{ ms }} ms per frame",
+      "lowered_mittel": "Rain running · {{ fps }} fps · Auto lowered to medium ({{ ms }} ms per frame)",
+      "lowered_sparsam": "Rain running · {{ fps }} fps · Auto lowered to saver ({{ ms }} ms per frame)",
+      "starting": "Background starting …",
+      "paused": "Rain paused (tab in background)",
+      "still": "Still image (graphics: low)",
+      "reduced": "Still image: your system has “reduce motion” on. Choose “High” to see the rain anyway.",
+      "error": "Drawing error: {{ error }}",
+      "running_lost": "Rain running · {{ fps }} fps · graphics context lost and rebuilt {{ lost }}×",
+      "lowered_mittel_lost": "Rain running · {{ fps }} fps · Auto: medium · graphics context rebuilt {{ lost }}×",
+      "lowered_sparsam_lost": "Rain running · {{ fps }} fps · Auto: saver · graphics context rebuilt {{ lost }}×"
+    }
   },
   "gear": {
     "title": "Gear",

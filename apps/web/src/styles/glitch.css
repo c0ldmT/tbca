@@ -73,14 +73,14 @@
   opacity: 0;
   pointer-events: none;
   z-index: 6;
-  background: linear-gradient(
-    90deg,
-    rgb(255 42 109 / 0.22),
-    rgb(0 240 255 / 0.28) 55%,
-    rgb(0 240 255 / 0)
-  );
-  -webkit-backdrop-filter: hue-rotate(80deg) brightness(1.6) saturate(1.6);
-  backdrop-filter: hue-rotate(80deg) brightness(1.6) saturate(1.6);
+  /* Bewusst ohne backdrop-filter: ein plötzlich aufgehender GPU-Effekt über dem Canvas kann
+     in manchen Chromium-Setups (Windows, echte GPU) die Hintergrund-Animation einfrieren. */
+  background:
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.12) 0 2px, transparent 2px 7px),
+    linear-gradient(90deg, rgb(255 42 109 / 0.38), rgb(0 240 255 / 0.42) 55%, rgb(0 240 255 / 0));
+  box-shadow:
+    0 -1px 0 rgb(0 240 255 / 0.5),
+    0 1px 0 rgb(255 42 109 / 0.4);
   animation: tbca-gxb var(--gd, 17s) steps(1, end) var(--gdl, 3s) infinite;
 }
 

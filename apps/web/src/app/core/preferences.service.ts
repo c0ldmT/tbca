@@ -4,7 +4,17 @@ import { Injectable, computed, effect, inject, signal } from '@angular/core';
 /** Grafikstufen (Spezifikation, Abschnitt 18); „auto“ wählt nach Gerät. */
 export const QUALITIES = ['auto', 'hoch', 'mittel', 'niedrig'] as const;
 export type Quality = (typeof QUALITIES)[number];
-export type EffectiveQuality = Exclude<Quality, 'auto'>;
+/** Wirksame Stufe; „sparsam“ wählt nur Auto, wenn selbst „mittel“ zu langsam zeichnet. */
+export type EffectiveQuality = Exclude<Quality, 'auto'> | 'sparsam';
+
+/** Laufzeitwerte des Hintergrunds für die Diagnose. */
+export interface BackgroundStats {
+  fps: number;
+  cost: number;
+  error: string | null;
+  /** Wie oft der Grafikkontext verloren ging und neu aufgebaut wurde. */
+  lost: number;
+}
 
 const QUALITY_KEY = 'tbca.quality';
 const SOUND_KEY = 'tbca.sound';
@@ -26,12 +36,14 @@ export class PreferencesService {
 
   /** Wie oft der Hintergrund gemessen zu langsam war (0–2); senkt nur die Auto-Stufe. */
   readonly slowSteps = signal(0);
+  /** Zuletzt gemeldete Laufzeitwerte des Hintergrunds (null = noch keine). */
+  readonly backgroundStats = signal<BackgroundStats | null>(null);
 
   /**
    * Eine ausdrücklich gewählte Stufe gilt immer. „Auto“ startet auf Hoch und senkt erst nach
-   * gemessener Langsamkeit ab – die gemeldeten CPU-Kerne taugen dafür nicht, weil viele Browser
-   * sie aus Datenschutzgründen verfälschen. Bei reduzierter Bewegung oder Datensparmodus wählt
-   * „Auto“ die ruhigere Stufe.
+   * gemessener Langsamkeit ab (Hoch → Mittel → Sparsam, nie bis zum Standbild) – die gemeldeten
+   * CPU-Kerne taugen dafür nicht, weil viele Browser sie aus Datenschutzgründen verfälschen.
+   * Nur bei reduzierter Bewegung im System steht der Hintergrund unter „Auto“ still.
    */
   readonly effectiveQuality = computed<EffectiveQuality>(() => {
     const chosen = this.quality();
@@ -41,7 +53,7 @@ export class PreferencesService {
       (Navigator & { connection?: { saveData?: boolean } }) | undefined;
     const start = nav?.connection?.saveData ? 1 : 0;
     const steps = start + this.slowSteps();
-    return steps >= 2 ? 'niedrig' : steps === 1 ? 'mittel' : 'hoch';
+    return steps >= 2 ? 'sparsam' : steps === 1 ? 'mittel' : 'hoch';
   });
 
   /** Vom Hintergrund gemeldet: Zeichnen dauerhaft zu langsam. */

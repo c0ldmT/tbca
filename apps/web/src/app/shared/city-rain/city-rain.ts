@@ -40,6 +40,12 @@ import { RainCity } from './city-renderer';
       width: 100%;
       height: 100%;
     }
+    /* Eigene Compositing-Ebene: andere Effekte auf der Seite sollen das Canvas nicht in ihre
+       Ebene ziehen (Schutz gegen eingefrorene Darstellung) */
+    .city {
+      will-change: transform;
+      transform: translateZ(0);
+    }
     .veil {
       background: linear-gradient(
         180deg,
@@ -69,6 +75,8 @@ export class CityRain implements OnDestroy {
 
   private city: RainCity | null = null;
   private observer: ResizeObserver | null = null;
+  /** Kontextverluste früherer Canvas-Elemente, damit die Diagnose die Summe zeigt. */
+  private lostBefore = 0;
   private readonly onVisibility = () => {
     if (!this.city) return;
     if (this.document.hidden) this.city.stop();
@@ -80,14 +88,7 @@ export class CityRain implements OnDestroy {
       const el = this.canvas().nativeElement;
       // Ohne Canvas-Unterstützung (z. B. in Tests) bleibt der dunkle Hintergrund.
       if (!el.getContext?.('2d')) return;
-      this.city = new RainCity(el, this.seed());
-      this.city.onSlow = () => this.prefs.reportSlow();
-      this.city.setQuality(this.prefs.effectiveQuality());
-      this.city.resize(true);
-      if (typeof ResizeObserver !== 'undefined') {
-        this.observer = new ResizeObserver(() => this.city?.resize());
-        this.observer.observe(el);
-      }
+      this.mount(el);
       this.document.addEventListener('visibilitychange', this.onVisibility);
     });
     effect(() => {
@@ -96,8 +97,40 @@ export class CityRain implements OnDestroy {
     });
   }
 
+  /** Startet die Stadt auf einem Canvas und beobachtet dessen Größe. */
+  private mount(el: HTMLCanvasElement): void {
+    const city = new RainCity(el, this.seed());
+    city.onSlow = () => this.prefs.reportSlow();
+    city.onStats = (stats) =>
+      this.prefs.backgroundStats.set({ ...stats, lost: stats.lost + this.lostBefore });
+    city.onLost = () => this.replaceCanvas(el);
+    city.setQuality(this.prefs.effectiveQuality());
+    city.resize(true);
+    this.city = city;
+    this.observer?.disconnect();
+    if (typeof ResizeObserver !== 'undefined') {
+      this.observer = new ResizeObserver(() => this.city?.resize());
+      this.observer.observe(el);
+    }
+  }
+
+  /**
+   * Der Browser hat den Grafikkontext verworfen und nicht zurückgegeben (z. B. bei GPU-
+   * Speicherdruck): ein frisches Canvas einsetzen und die Stadt darauf neu aufbauen.
+   */
+  private replaceCanvas(old: HTMLCanvasElement): void {
+    this.lostBefore = Math.max(this.prefs.backgroundStats()?.lost ?? 0, this.lostBefore + 1);
+    this.city?.dispose();
+    const fresh = this.document.createElement('canvas');
+    fresh.className = old.className;
+    // Angulars Style-Kapselung: Attribute des alten Elements übernehmen
+    for (const attr of Array.from(old.attributes)) fresh.setAttribute(attr.name, attr.value);
+    old.replaceWith(fresh);
+    this.mount(fresh);
+  }
+
   ngOnDestroy(): void {
-    this.city?.stop();
+    this.city?.dispose();
     this.observer?.disconnect();
     this.document.removeEventListener('visibilitychange', this.onVisibility);
   }
