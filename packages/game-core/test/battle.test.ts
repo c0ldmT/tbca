@@ -43,7 +43,7 @@ describe('simulateBattle – Determinismus', () => {
     // Ändert sich einer dieser Werte, haben sich Kampflogik oder Startwerte geändert:
     // dann ENGINE_VERSION erhöhen bzw. die Konfiguration versionieren und die Werte bewusst neu setzen.
     expect(simulateBattle(duel('golden-duel')).logHash).toBe('53cba225');
-    expect(simulateBattle(teamFight('golden-team')).logHash).toBe('ad265af0');
+    expect(simulateBattle(teamFight('golden-team')).logHash).toBe('6721e90a');
   });
 });
 
@@ -139,10 +139,42 @@ describe('simulateBattle – Ablauf', () => {
   });
 
   it('lenkt Angriffe per Provokation auf den Tank', () => {
-    const { events } = simulateBattle(teamFight('taunt'));
-    const enemyHits = of(events, 'damage').filter((d) => d.source.startsWith('b-') && !d.dot);
-    const onTank = enemyHits.filter((d) => d.target === 'a-tank').length;
-    expect(onTank / enemyHits.length).toBeGreaterThan(0.4);
+    // Anteil gegnerischer Treffer auf den Tank, über mehrere Seeds gemittelt. Der Tank hat hier
+    // weniger Grundbedrohung als seine Verbündeten, damit nur die Provokation ihn zum Ziel macht.
+    const share = (provoke: boolean) => {
+      let onTank = 0;
+      let total = 0;
+      for (let i = 0; i < 12; i++) {
+        const fight = teamFight(`taunt-${i}`);
+        const tank = tweak(fight.teams[0]![0]!, { stats: { threat: 50 } });
+        const tactics = provoke
+          ? [{ when: { type: 'always' as const }, use: 'bruiser.provoke', target: 'self' as const }]
+          : [];
+        const teams = [[{ ...tank, tactics }, ...fight.teams[0]!.slice(1)], fight.teams[1]!];
+        const hits = of(simulateBattle({ ...fight, teams }).events, 'damage').filter(
+          (d) => d.source.startsWith('b-') && !d.dot,
+        );
+        onTank += hits.filter((d) => d.target === 'a-tank').length;
+        total += hits.length;
+      }
+      return onTank / total;
+    };
+    expect(share(true)).toBeGreaterThan(share(false) + 0.1);
+  });
+
+  it('wirkt Team-Fähigkeiten auf alle lebenden Verbündeten', () => {
+    const { events } = simulateBattle(teamFight('stim'));
+    const stim = events.findIndex(
+      (e) => e.type === 'action' && e.source === 'a-medic' && e.ability === 'medtech.stim',
+    );
+    expect(stim).toBeGreaterThanOrEqual(0);
+    // Die Auswirkungen folgen direkt auf die Aktion, bis zur nächsten Aktion
+    const next = events.findIndex((e, i) => i > stim && e.type === 'action');
+    const cleansed = events
+      .slice(stim + 1, next < 0 ? undefined : next)
+      .filter((e) => e.type === 'cleanse')
+      .map((e) => (e as { target: string }).target);
+    expect(new Set(cleansed)).toEqual(new Set(['a-tank', 'a-runner', 'a-medic']));
   });
 
   it('wechselt in den Sudden Death und entscheidet nach maxRounds über den HP-Rest', () => {

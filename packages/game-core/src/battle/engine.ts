@@ -177,6 +177,8 @@ class Battle {
         return [actor];
       case 'all_enemies':
         return enemies;
+      case 'all_allies':
+        return allies;
       case 'ally': {
         const sel = selector === 'self' ? 'self' : 'lowest_hp_ally';
         return sel === 'self' ? [actor] : pick(allies, byLowestHp);

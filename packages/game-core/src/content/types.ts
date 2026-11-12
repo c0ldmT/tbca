@@ -90,7 +90,7 @@ export type Effect =
   | { readonly type: 'cleanse' };
 
 /** Wen eine Fähigkeit trifft. */
-export type AbilityTarget = 'enemy' | 'all_enemies' | 'ally' | 'self';
+export type AbilityTarget = 'enemy' | 'all_enemies' | 'ally' | 'all_allies' | 'self';
 
 export interface AbilityDef {
   readonly id: string;

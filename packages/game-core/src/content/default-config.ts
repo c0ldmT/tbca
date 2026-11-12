@@ -68,6 +68,8 @@ const classes: Record<ClassDef['id'], ClassDef> = {
     starterWeapon: { id: 'injector', kind: 'tech', base: 15, scalesWith: 'int', scaling: 9_000 },
     threat: 90,
     defaultTactics: [
+      // Im Team zuerst das Stimulans für alle; im Duell greift die Regel nie
+      { when: { type: 'enemies_at_least', count: 2 }, use: 'medtech.stim' },
       {
         when: { type: 'ally_hp_below', permille: 600 },
         use: 'medtech.patch_up',
@@ -256,13 +258,15 @@ const abilities: AbilityDef[] = [
   {
     id: 'medtech.stim',
     classId: 'medtech',
-    target: 'ally',
+    // Team-Fähigkeit: wirkt auf alle Verbündeten, im Duell nur auf den Medtech selbst
+    target: 'all_allies',
     energyCost: 25,
     cooldown: 4,
     unlockLevel: 5,
     effects: [
       { type: 'cleanse' },
-      { type: 'modifier', status: 'buff', modifiers: { damageDealt: 2_000 }, turns: 2 },
+      { type: 'heal', amount: { base: 15, scalesWith: 'int', scaling: 4_000 }, multiplier: 10_000 },
+      { type: 'modifier', status: 'buff', modifiers: { damageDealt: 1_500 }, turns: 2 },
     ],
   },
   {

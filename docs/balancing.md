@@ -115,13 +115,36 @@ Versuche, die nicht übernommen wurden: mehr Heilung oder stärkere Barriere heb
 im 3v3 um 3–5 Punkte, macht ihn aber im Duell auf Level 80 zu stark (63–65 %) und den Bruiser
 dort noch schwächer. Ein Stimulans in der Standard-Taktik half dem Team nicht.
 
+## Team-Stimulans
+
+Mehr Heilung half dem Medtech im Team kaum, machte ihn aber im Duell stärker; eine
+schwächere Selbstheilung (Versuch mit einer Kampfregel) brach ihn im Duell ein (Level 1–30
+nur noch 14–33 %), ohne das Team spürbar zu heben. Den Ausschlag gibt eine Team-Fähigkeit:
+
+- Neues Fähigkeitsziel `all_allies` (alle lebenden Verbündeten). Bestehende Kämpfe ändern sich
+  dadurch nicht, die Engine-Version bleibt 2.
+- „Stimulans“ (ab Level 5) wirkt jetzt auf das ganze Team: säubert, heilt 15 + 0,4 je INT und
+  gibt 2 Züge +15 % Schaden (vorher ein Verbündeter, +20 % Schaden, keine Heilung). Die
+  Standard-Taktik des Medtech setzt es zuerst, sobald mindestens zwei Gegner da sind – im
+  Duell also nie.
+
+| Stufe   | 3v3-Beitrag vorher (B/G/N/M) | nachher           | 2v2 nachher       |
+| ------- | ---------------------------- | ----------------- | ----------------- |
+| L10 ★3  | 62 / 50 / 49 / 39            | 59 / 49 / 44 / 48 | 55 / 50 / 48 / 47 |
+| L20 ★3  | 57 / 54 / 48 / 41            | 56 / 53 / 45 / 45 | 54 / 54 / 51 / 42 |
+| L30 ★7  | 57 / 56 / 49 / 38            | 54 / 55 / 45 / 46 | 53 / 52 / 51 / 43 |
+| L50 ★7  | 53 / 58 / 46 / 42            | 52 / 57 / 42 / 49 | 51 / 55 / 49 / 45 |
+| L80 ★11 | 48 / 56 / 45 / 51            | 47 / 56 / 43 / 54 | 47 / 57 / 43 / 53 |
+
+Duelle bleiben unverändert. Im Dungeon wirkt das Stimulans ab mehreren Monstern als
+Selbstheilung mit; Ø Tiefe des Medtech auf Level 80 23,8 → 21,2 Etagen.
+
 ## Offen
 
 - Bruiser im Duell auf Level 80 bei 40 % (gegen Medtech 29 %), im Team dagegen stark (3v3 auf
   Level 10–30 57–62 %).
-- Medtech im 3v3 auf Level 10–50 nur 38–42 %; mehr Heilung verschiebt das Problem ins Duell
-  (siehe oben). Kandidaten: Heilung, die auf Verbündete stärker wirkt als auf sich selbst
-  (braucht eine Engine-Änderung), oder eine Team-Fähigkeit.
+- Im Team ist jetzt der Netrunner am schwächsten (3v3 42–45 %), der Medtech im 2v2 auf Level
+  20–30 noch bei 42–43 %.
 - Dreieck auf niedrigem Level zu steil: Bruiser gegen Gunner 75–91 % bis Level 10; Gunner auf
   Level 1 bei 37 %.
 - Auf Level 1 kommt im Dungeon kaum jemand über Etage 1; der Medtech mit gekürzter Heilung
