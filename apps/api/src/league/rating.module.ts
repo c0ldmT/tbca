@@ -1,7 +1,8 @@
 import { Global, Module } from '@nestjs/common';
 import type { DbConnection } from '@tbca/db';
 
-import { DB_CONNECTION, LEAGUE_REPOSITORY } from '../tokens.js';
+import { DB_CONNECTION, LEAGUE_REPOSITORY, TEAM_LEAGUE_REPOSITORY } from '../tokens.js';
+import { DrizzleTeamLeagueRepository } from './drizzle-team-league.repository.js';
 import { DrizzleLeagueRepository } from './drizzle-league.repository.js';
 import { RatingService } from './rating.service.js';
 
@@ -15,7 +16,12 @@ import { RatingService } from './rating.service.js';
       inject: [DB_CONNECTION],
       useFactory: (c: DbConnection) => new DrizzleLeagueRepository(c.db),
     },
+    {
+      provide: TEAM_LEAGUE_REPOSITORY,
+      inject: [DB_CONNECTION],
+      useFactory: (c: DbConnection) => new DrizzleTeamLeagueRepository(c.db),
+    },
   ],
-  exports: [RatingService, LEAGUE_REPOSITORY],
+  exports: [RatingService, LEAGUE_REPOSITORY, TEAM_LEAGUE_REPOSITORY],
 })
 export class RatingModule {}

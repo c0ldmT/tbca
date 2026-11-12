@@ -12,6 +12,8 @@ import {
   rating,
   season,
   shopPurchase,
+  teamLeagueCycle,
+  teamRating,
   wallet,
   xpLedgerDaily,
   type Database,
@@ -146,6 +148,8 @@ export class DrizzleSeasonAdminRepository implements SeasonAdminRepository {
       // Liga und Rating beginnen von vorn
       await tx.delete(leagueCycle).where(eq(leagueCycle.seasonId, seasonId));
       await tx.delete(rating).where(eq(rating.seasonId, seasonId));
+      await tx.delete(teamLeagueCycle).where(eq(teamLeagueCycle.seasonId, seasonId));
+      await tx.delete(teamRating).where(eq(teamRating.seasonId, seasonId));
       let removed = 0;
       if (mode === 'wipe') {
         const humans = tx.select({ id: account.id }).from(account).where(eq(account.isBot, false));

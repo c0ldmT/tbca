@@ -42,6 +42,7 @@ import { DrizzleSeasonAdminRepository } from '../src/admin/drizzle-season-admin.
 import { DrizzleExportRepository } from '../src/admin/drizzle-export.repository.js';
 import { DrizzleDungeonRepository } from '../src/dungeon/drizzle-dungeon.repository.js';
 import { DrizzleLeagueRepository } from '../src/league/drizzle-league.repository.js';
+import { DrizzleTeamLeagueRepository } from '../src/league/drizzle-team-league.repository.js';
 
 const url = process.env['TBCA_TEST_DATABASE_URL'];
 
@@ -865,6 +866,89 @@ describe.skipIf(!url)('Drizzle-Repositories (Integration)', () => {
       home.id,
     ]);
     expect(await league.recentCycles(randomUUID(), 2)).toEqual([]);
+  });
+
+  it('speichert Team-Ratings je Größe und Zyklen der Team-Liga', async () => {
+    const teams = new DrizzleTeamRepository(conn.db);
+    const guild = await new DrizzleDiscordRepository(conn.db).ensureGuildCommunity(
+      `${Date.now()}7`,
+      'Ligatest',
+    );
+    const make = async (n: string) => {
+      const [acc] = await conn.db.insert(account).values({}).returning();
+      await teams.joinCommunity(guild.communityId, acc!.id);
+      const suffix = `${Date.now() % 100000}${n}`;
+      return teams.create({
+        communityId: guild.communityId,
+        name: `Liga${suffix}`,
+        tag: `L${suffix.slice(-3)}`,
+        logo: 'wolf',
+        captainAccountId: acc!.id,
+        joinCode: `TL${suffix}`,
+        focus: 'threat',
+        lineup2: [],
+        lineup3: [],
+      });
+    };
+    const a = await make('a');
+    const b = await make('b');
+    const seasonId = (await new DrizzleSeasonRepository(conn.db).findCurrent())!.id;
+    const repo = new DrizzleTeamLeagueRepository(conn.db);
+    await repo.updateRatings(seasonId, 2, [a.id, b.id], (cur) =>
+      [...cur.values()].map((r) => ({ ...r, games: 5, rating: r.teamId === a.id ? 1600 : 1400 })),
+    );
+    // Getrennt je Größe
+    expect((await repo.ratings(seasonId, 3, [a.id])).size).toBe(0);
+    expect((await repo.ratings(seasonId, 2, [a.id])).get(a.id)).toMatchObject({ rating: 1600 });
+    await repo.setJoined(seasonId, 2, a.id, true);
+    await repo.setJoined(seasonId, 2, b.id, true);
+    expect((await repo.entrants(seasonId, 2, 5)).map((r) => r.teamId)).toEqual([a.id, b.id]);
+    const board = await repo.leaderboard(seasonId, 2, { minGames: 5, limit: 50 });
+    expect(board.find((r) => r.teamId === a.id)).toMatchObject({
+      community: 'Ligatest',
+      logo: 'wolf',
+    });
+
+    const at = (h: number) => new Date(Date.UTC(2026, 10, 12, h));
+    const cycle = await repo.createCycle({
+      seasonId,
+      size: 2,
+      number: 1,
+      startsAt: at(19),
+      endsAt: at(19),
+      members: [
+        { teamId: a.id, division: 0, ratingAtStart: 1600 },
+        { teamId: b.id, division: 0, ratingAtStart: 1400 },
+      ],
+      matches: [
+        {
+          division: 0,
+          matchday: 1,
+          lockAt: at(18),
+          playAt: at(19),
+          aTeamId: a.id,
+          bTeamId: b.id,
+          status: 'scheduled',
+        },
+      ],
+    });
+    expect(await repo.activeCycle(seasonId, 2)).toMatchObject({ id: cycle.id, size: 2 });
+    expect(await repo.activeCycle(seasonId, 3)).toBeNull();
+    expect(await repo.nextEvent(cycle.id)).toEqual({ kind: 'lock', at: at(18) });
+    const [m] = await repo.matches(cycle.id);
+    await repo.lockMatches([{ id: m!.id, snapshots: [[], []] }]);
+    expect(await repo.nextEvent(cycle.id)).toEqual({ kind: 'play', at: at(19) });
+    await repo.finishMatch(m!.id, { fightId: null, winnerTeamId: a.id, draw: false });
+    await repo.finishCycle(cycle.id, at(19), [
+      { teamId: a.id, place: 1, movement: 'stay' },
+      { teamId: b.id, place: 2, movement: 'stay' },
+    ]);
+    expect(await repo.lastCycle(seasonId, 2)).toMatchObject({ status: 'finished' });
+    expect((await repo.members(cycle.id)).map((x) => x.place)).toEqual([1, 2]);
+    // Aufräumen, damit andere Tests die laufende Season ohne Team-Liga sehen
+    await teams.remove(a.id);
+    await teams.remove(b.id);
+    expect((await repo.ratings(seasonId, 2, [a.id, b.id])).size).toBe(0);
   });
 
   it('liefert die Rohdaten für den Balancing-Export', async () => {

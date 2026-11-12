@@ -67,7 +67,8 @@ export interface FightView {
     | 'dungeon'
     | 'team_rated'
     | 'team_friendly'
-    | 'league';
+    | 'league'
+    | 'team_league';
   createdAt: string;
   engineVersion: number;
   configVersion: number;
@@ -91,7 +92,8 @@ export interface FightSummary {
     | 'dungeon'
     | 'team_rated'
     | 'team_friendly'
-    | 'league';
+    | 'league'
+    | 'team_league';
   createdAt: string;
   won: boolean;
   draw: boolean;

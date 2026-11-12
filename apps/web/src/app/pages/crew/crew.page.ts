@@ -8,10 +8,11 @@ import { HubTabs, type HubTab } from '../../shared/ui/hub-tabs';
 const TABS: HubTab[] = [
   { path: '/crew/team', label: 'crew.tabs.team' },
   { path: '/crew/challenge', label: 'crew.tabs.challenge' },
+  { path: '/crew/league', label: 'crew.tabs.league' },
   { path: '/crew/communities', label: 'crew.tabs.communities' },
 ];
 
-/** Crew-Hub: eigenes Team, Team-Kämpfe und Communities. */
+/** Crew-Hub: eigenes Team, Team-Kämpfe, Team-Liga und Communities. */
 @Component({
   selector: 'tbca-crew-page',
   imports: [TranslocoDirective, RouterOutlet, HubTabs],

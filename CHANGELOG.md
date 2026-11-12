@@ -8,6 +8,17 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ### Hinzugefügt
 
+- Team-Rating und Team-Liga: Gewertete Team-Kämpfe schreiben ein Glicko-2-Rating je Team und
+  Größe fort (2v2 und 3v3 getrennt, beide Seiten); die ersten 5 zählen als Platzierung. Der
+  Kapitän meldet das Team für die Liga einer Größe an. Ablauf wie in der Einzel-Liga
+  (Divisionen, Round Robin, Spieltag 20:00, Auf- und Abstieg); zum Lock wird die
+  Standard-Aufstellung, sonst die stärksten Mitglieder, mit Team-Fokus eingefroren – ohne volle
+  Aufstellung verliert ein Team kampflos. Belohnung je Mitglied wie bei einem gewerteten
+  Kampf, ohne Tageslimit. Der Job `league-tick` arbeitet Einzel- und Team-Liga ab. Website:
+  Tab „Team-Liga“ im Crew-Hub mit Tabelle, Spielplan, Rating und Team-Rangliste. Migration
+  0016 (`team_rating`, `team_league_cycle`, `team_league_member`, `team_league_match`,
+  Kampfart `team_league`). Das Zurücksetzen einer Season löscht auch Team-Ratings und
+  Team-Liga.
 - Liga im Discord-Bot: `/tbca liga` zeigt Rating, Platzierung, Division und nächsten Spieltag
   mit Buttons für Platzierungskampf und An-/Abmelden. `/tbca-admin liga-kanal` legt einen
   Kanal für Ankündigungen fest (einer je Server): Der Bot holt jede Minute neue Ergebnisse ab

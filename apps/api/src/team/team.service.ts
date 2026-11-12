@@ -26,6 +26,7 @@ import type { Env } from '../config/env.js';
 import { dayKey } from '../fight/day.js';
 import type { FightRepository } from '../fight/types.js';
 import { SeasonService, type CurrentSeason } from '../game/season.js';
+import { RatingService } from '../league/rating.service.js';
 import { ProgressionService } from '../progression/progression.service.js';
 import {
   ADMIN_REPOSITORY,
@@ -64,6 +65,7 @@ export class TeamService {
     @Inject(ENV) private readonly env: Env,
     @Inject(ADMIN_REPOSITORY) private readonly admin: AdminRepository,
     @Inject(ProgressionService) private readonly progression: ProgressionService,
+    @Inject(RatingService) private readonly ratings: RatingService,
   ) {}
 
   communities(accountId: string): Promise<CommunityView[]> {
@@ -343,7 +345,7 @@ export class TeamService {
     const opponentIsBot = theirs.every((c) => c.isBot);
     const median = await this.progression.median(season.id);
 
-    return this.fights.lockedMany(
+    const response = await this.fights.lockedMany(
       ours.map((c) => c.id),
       async (tx) => {
         const rewards = [];
@@ -419,6 +421,33 @@ export class TeamService {
         return { fightId, won, draw: result.winner === null, rewards: summary };
       },
     );
+    // Gewertete Team-Kämpfe schreiben das Team-Rating der Größe fort (Platzierung, Team-Liga)
+    if (input.mode === 'rated')
+      await this.ratings.recordTeams(
+        season.id,
+        input.size,
+        own.id,
+        opponent.id,
+        result.winner === null ? null : (result.winner as 0 | 1),
+      );
+    return response;
+  }
+
+  /**
+   * Aufstellung eines Teams als Kampf-Momentaufnahmen mit Team-Fokus (für den Lock der
+   * Team-Liga): gespeicherte Standard-Aufstellung, sonst die stärksten Mitglieder. Null, wenn
+   * das Team nicht genug Mitglieder mit Charakter hat.
+   */
+  async lineupSnapshots(teamId: string, size: 2 | 3): Promise<CombatantSnapshot[] | null> {
+    const season = await this.seasons.current();
+    const t = await this.teams.find(teamId);
+    if (!t) return null;
+    try {
+      const lineup = await this.opponentLineup(season, t, size);
+      return lineup.map((c) => ({ ...snapshotOf(season, c), focus: t.focus }));
+    } catch {
+      return null;
+    }
   }
 
   // --- intern ---------------------------------------------------------------

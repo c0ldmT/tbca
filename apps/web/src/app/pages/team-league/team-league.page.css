@@ -1,0 +1,21 @@
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 18px;
+  margin-bottom: 18px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.bar .tbca-select {
+  min-width: 220px;
+}
+
+.who tbca-team-logo,
+.board tbca-team-logo {
+  flex: 0 0 auto;
+}

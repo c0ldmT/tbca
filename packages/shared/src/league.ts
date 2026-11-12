@@ -105,4 +105,78 @@ export interface LeagueTickResult {
   played: number;
   cyclesStarted: number;
   cyclesFinished: number;
+  /** Team-Liga (2v2 und 3v3 zusammen). */
+  teams?: Omit<LeagueTickResult, 'teams'>;
 }
+
+// --- Team-Liga ----------------------------------------------------------------------
+
+export interface TeamLeagueRef {
+  id: string;
+  name: string;
+  tag: string;
+  logo: string;
+}
+
+export interface TeamLeagueTableRow extends TeamLeagueRef {
+  place: number;
+  played: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  points: number;
+  movement: 'up' | 'down' | 'stay';
+  /** Das eigene Team. */
+  mine: boolean;
+}
+
+export interface TeamLeagueMatchView {
+  id: string;
+  matchday: number;
+  lockAt: string;
+  playAt: string;
+  status: 'scheduled' | 'locked' | 'played' | 'bye';
+  a: TeamLeagueRef | null;
+  b: TeamLeagueRef | null;
+  winnerId: string | null;
+  draw: boolean;
+  fightId: string | null;
+}
+
+/** GET /api/teams/:id/league?size= – Team-Liga eines Teams in einer Größe. */
+export interface TeamLeagueView {
+  size: 2 | 3;
+  rating: RatingView | null;
+  joined: boolean;
+  /** Nur der Kapitän meldet an und ab. */
+  captain: boolean;
+  cycle: LeagueView['cycle'];
+  division: {
+    index: number;
+    count: number;
+    table: TeamLeagueTableRow[];
+    matches: TeamLeagueMatchView[];
+  } | null;
+  next: LeagueView['next'];
+  rules: LeagueView['rules'];
+}
+
+export interface TeamLeaderboardEntry extends TeamLeagueRef {
+  place: number;
+  community: string;
+  rating: number;
+  rd: number;
+  games: number;
+  wins: number;
+  losses: number;
+  draws: number;
+}
+
+export const teamLeagueQuerySchema = z.object({
+  size: z.coerce.number().pipe(z.union([z.literal(2), z.literal(3)])),
+});
+
+export const teamLeagueJoinSchema = z.object({
+  size: z.union([z.literal(2), z.literal(3)]),
+  joined: z.boolean(),
+});

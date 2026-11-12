@@ -81,6 +81,14 @@ import type {
   MemberRecord,
   RatingRecord,
 } from '../src/league/types.js';
+import type {
+  TeamCycleRecord,
+  TeamLeagueRepository,
+  TeamMatchRecord,
+  TeamMemberRecord,
+  TeamRatingRecord,
+  TeamSize,
+} from '../src/league/team-types.js';
 import {
   ACCOUNT_REPOSITORY,
   CHARACTER_REPOSITORY,
@@ -101,6 +109,7 @@ import {
   ACCOUNT_DATA_REPOSITORY,
   DISCORD_OAUTH,
   LEAGUE_REPOSITORY,
+  TEAM_LEAGUE_REPOSITORY,
   SEASON_REPOSITORY,
   SESSION_STORE,
 } from '../src/tokens.js';
@@ -1446,6 +1455,194 @@ export class InMemoryLeague implements LeagueRepository {
   }
 }
 
+export class InMemoryTeamLeague implements TeamLeagueRepository {
+  readonly ratingRows: TeamRatingRecord[] = [];
+  readonly cycles: TeamCycleRecord[] = [];
+  readonly memberRows: TeamMemberRecord[] = [];
+  readonly matchRows: TeamMatchRecord[] = [];
+  /** Für Namen in der Rangliste. */
+  teams: InMemoryTeams | null = null;
+
+  private row(seasonId: string, size: TeamSize, teamId: string): TeamRatingRecord {
+    let r = this.ratingRows.find(
+      (x) => x.seasonId === seasonId && x.size === size && x.teamId === teamId,
+    );
+    if (!r) {
+      r = {
+        teamId,
+        seasonId,
+        size,
+        ...GLICKO_START,
+        games: 0,
+        wins: 0,
+        losses: 0,
+        draws: 0,
+        leagueJoined: false,
+      };
+      this.ratingRows.push(r);
+    }
+    return r;
+  }
+
+  async ratings(seasonId: string, size: TeamSize, ids: readonly string[]) {
+    return new Map(
+      this.ratingRows
+        .filter((r) => r.seasonId === seasonId && r.size === size && ids.includes(r.teamId))
+        .map((r) => [r.teamId, { ...r }]),
+    );
+  }
+
+  async updateRatings(
+    seasonId: string,
+    size: TeamSize,
+    ids: readonly string[],
+    update: (current: Map<string, TeamRatingRecord>) => TeamRatingRecord[],
+  ) {
+    const current = new Map(ids.map((id) => [id, { ...this.row(seasonId, size, id) }]));
+    const next = update(current);
+    for (const n of next)
+      Object.assign(this.row(seasonId, size, n.teamId), {
+        ...n,
+        leagueJoined: this.row(seasonId, size, n.teamId).leagueJoined,
+      });
+    return next;
+  }
+
+  async setJoined(seasonId: string, size: TeamSize, teamId: string, joined: boolean) {
+    const r = this.row(seasonId, size, teamId);
+    r.leagueJoined = joined;
+    return { ...r };
+  }
+
+  async entrants(seasonId: string, size: TeamSize, minGames: number) {
+    return this.ratingRows
+      .filter(
+        (r) => r.seasonId === seasonId && r.size === size && r.leagueJoined && r.games >= minGames,
+      )
+      .sort((a, b) => b.rating - a.rating || (a.teamId < b.teamId ? -1 : 1))
+      .map((r) => ({ ...r }));
+  }
+
+  async leaderboard(
+    seasonId: string,
+    size: TeamSize,
+    options: { minGames: number; limit: number },
+  ) {
+    const out = [];
+    for (const r of this.ratingRows
+      .filter((x) => x.seasonId === seasonId && x.size === size && x.games >= options.minGames)
+      .sort((a, b) => b.rating - a.rating)
+      .slice(0, options.limit)) {
+      const t = await this.teams?.find(r.teamId);
+      out.push({
+        ...r,
+        name: t?.name ?? '?',
+        tag: t?.tag ?? '?',
+        logo: t?.logo ?? 'wolf',
+        community: t?.communityName ?? '',
+      });
+    }
+    return out;
+  }
+
+  async activeCycle(seasonId: string, size: TeamSize) {
+    return (
+      this.cycles.find(
+        (c) => c.seasonId === seasonId && c.size === size && c.status === 'active',
+      ) ?? null
+    );
+  }
+
+  async lastCycle(seasonId: string, size: TeamSize) {
+    return (
+      this.cycles
+        .filter((c) => c.seasonId === seasonId && c.size === size)
+        .sort((a, b) => b.number - a.number)[0] ?? null
+    );
+  }
+
+  async createCycle(input: Parameters<TeamLeagueRepository['createCycle']>[0]) {
+    const cycle: TeamCycleRecord = {
+      id: randomUUID(),
+      seasonId: input.seasonId,
+      size: input.size,
+      number: input.number,
+      status: 'active',
+      startsAt: input.startsAt,
+      endsAt: input.endsAt,
+      finishedAt: null,
+    };
+    this.cycles.push(cycle);
+    for (const m of input.members)
+      this.memberRows.push({ ...m, cycleId: cycle.id, place: null, movement: null });
+    for (const m of input.matches)
+      this.matchRows.push({
+        ...m,
+        id: randomUUID(),
+        cycleId: cycle.id,
+        snapshots: null,
+        fightId: null,
+        winnerTeamId: null,
+        draw: false,
+      });
+    return cycle;
+  }
+
+  async members(cycleId: string) {
+    return this.memberRows.filter((m) => m.cycleId === cycleId).map((m) => ({ ...m }));
+  }
+
+  async matches(cycleId: string) {
+    return this.matchRows
+      .filter((m) => m.cycleId === cycleId)
+      .sort((a, b) => a.matchday - b.matchday || a.division - b.division)
+      .map((m) => ({ ...m }));
+  }
+
+  async nextEvent(cycleId: string) {
+    const open = this.matchRows.filter((m) => m.cycleId === cycleId);
+    const lock = open
+      .filter((m) => m.status === 'scheduled')
+      .map((m) => m.lockAt.getTime())
+      .sort((a, b) => a - b)[0];
+    const play = open
+      .filter((m) => m.status === 'locked')
+      .map((m) => m.playAt.getTime())
+      .sort((a, b) => a - b)[0];
+    if (lock !== undefined && (play === undefined || lock <= play))
+      return { kind: 'lock' as const, at: new Date(lock) };
+    return play !== undefined ? { kind: 'play' as const, at: new Date(play) } : null;
+  }
+
+  async lockMatches(updates: { id: string; snapshots: CombatantSnapshot[][] }[]) {
+    for (const u of updates) {
+      const m = this.matchRows.find((x) => x.id === u.id && x.status === 'scheduled');
+      if (m) Object.assign(m, { status: 'locked', snapshots: u.snapshots });
+    }
+  }
+
+  async finishMatch(
+    id: string,
+    result: { fightId: string | null; winnerTeamId: string | null; draw: boolean },
+  ) {
+    const m = this.matchRows.find((x) => x.id === id && x.status === 'locked');
+    if (m) Object.assign(m, { status: 'played', ...result });
+  }
+
+  async finishCycle(
+    cycleId: string,
+    at: Date,
+    rows: { teamId: string; place: number; movement: 'up' | 'down' | 'stay' }[],
+  ) {
+    for (const r of rows) {
+      const m = this.memberRows.find((x) => x.cycleId === cycleId && x.teamId === r.teamId);
+      if (m) Object.assign(m, { place: r.place, movement: r.movement });
+    }
+    const c = this.cycles.find((x) => x.id === cycleId);
+    if (c && c.status === 'active') Object.assign(c, { status: 'finished', finishedAt: at });
+  }
+}
+
 export interface TestApp {
   app: NestFastifyApplication;
   accounts: InMemoryAccounts;
@@ -1466,6 +1663,7 @@ export interface TestApp {
   bots: InMemoryBots;
   accountData: InMemoryAccountData;
   league: InMemoryLeague;
+  teamLeague: InMemoryTeamLeague;
   time: ManualTimeSource;
   dbUp: { value: boolean };
 }
@@ -1491,6 +1689,8 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
   const accountData = new InMemoryAccountData(accounts, characters, sessions, fights);
   const league = new InMemoryLeague(characters);
   league.discord = guilds;
+  const teamLeague = new InMemoryTeamLeague();
+  teamLeague.teams = teams;
   // 12.11.2026, 12:00 Uhr in Berlin
   const time = new ManualTimeSource(Date.UTC(2026, 10, 12, 11, 0));
   const dbUp = { value: true };
@@ -1532,6 +1732,8 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
     .useValue(accountData)
     .overrideProvider(LEAGUE_REPOSITORY)
     .useValue(league)
+    .overrideProvider(TEAM_LEAGUE_REPOSITORY)
+    .useValue(teamLeague)
     .overrideProvider(RATE_LIMITER)
     .useValue(new MemoryRateLimiter(time.read))
     .overrideProvider(CLOCK)
@@ -1568,6 +1770,7 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
     bots,
     accountData,
     league,
+    teamLeague,
     time,
     dbUp,
   };

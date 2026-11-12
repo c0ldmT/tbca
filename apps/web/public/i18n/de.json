@@ -477,7 +477,8 @@
       "dungeon": "Dungeon",
       "team_rated": "Gewertete Team-Herausforderung",
       "team_friendly": "Team-Freundschaftskampf",
-      "league": "Liga-Spieltag"
+      "league": "Liga-Spieltag",
+      "team_league": "Team-Liga-Spieltag"
     },
     "winnerTeam": "{{ name }} gewinnen nach {{ rounds }} Runden",
     "turnOrder": "Zugreihenfolge",
@@ -1383,7 +1384,8 @@
     "tabs": {
       "team": "Mein Team",
       "challenge": "Team-Kampf",
-      "communities": "Communities"
+      "communities": "Communities",
+      "league": "Team-Liga"
     },
     "noTeam": "Du bist noch in keinem Team. Gründe eins oder tritt mit einem Code bei – unter „Mein Team“.",
     "myTeam": "Mein Team",
@@ -1466,5 +1468,22 @@
     "higher": "Höhere Division",
     "lower": "Niedrigere Division",
     "own": "Meine Division"
+  },
+  "teamLeague": {
+    "title": "Team-Liga",
+    "team": "Team",
+    "size": "Größe",
+    "noTeam": "Für die Team-Liga brauchst du ein Team.",
+    "toTeams": "Zum Team",
+    "intro": "Wie die Einzel-Liga, getrennt für 2v2 und 3v3: täglich um {{ time }} Uhr kämpft dein Team gegen ein Team der Division – mit der Standard-Aufstellung, sonst den stärksten Mitgliedern, und dem Team-Fokus vom Lock {{ lock }} Minuten vorher.",
+    "needPlacement": "Zuerst {{ n }} gewertete Team-Kämpfe in dieser Größe für das Start-Rating.",
+    "captainJoins": "Der Kapitän meldet das Team an.",
+    "joinedInfo": "Euer Team ist angemeldet.",
+    "lineupHint": "Aufstellung und Team-Fokus werden {{ lock }} Minuten vor dem Spieltag eingefroren. Wer dann keine volle Aufstellung hat, verliert kampflos.",
+    "rating": "Team-Rating {{ size }}v{{ size }}",
+    "unrated": "Noch kein Rating in dieser Größe – es entsteht mit dem ersten gewerteten Team-Kampf.",
+    "toChallenge": "Team-Kampf starten",
+    "join": "Für die {{ size }}v{{ size }}-Liga anmelden",
+    "leaderboard": "Team-Rangliste {{ size }}v{{ size }}"
   }
 }

@@ -5,6 +5,8 @@ import type {
   LeaderboardEntry,
   LeagueDivisionView,
   LeagueView,
+  TeamLeaderboardEntry,
+  TeamLeagueView,
 } from '@tbca/shared';
 import { CSRF_HEADER } from '@tbca/shared/constants';
 import { firstValueFrom, type Observable } from 'rxjs';
@@ -41,9 +43,32 @@ export class LeagueService {
     );
   }
 
-  private write<T>(url: string): Promise<T> {
+  teamView(teamId: string, size: 2 | 3): Promise<TeamLeagueView> {
+    return this.read(
+      this.http.get<TeamLeagueView>(`/api/teams/${encodeURIComponent(teamId)}/league`, {
+        params: { size },
+      }),
+    );
+  }
+
+  teamJoin(teamId: string, size: 2 | 3, joined: boolean): Promise<TeamLeagueView> {
+    return this.write<TeamLeagueView>(`/api/teams/${encodeURIComponent(teamId)}/league`, {
+      size,
+      joined,
+    });
+  }
+
+  teamLeaderboard(size: 2 | 3, limit = 20): Promise<TeamLeaderboardEntry[]> {
+    return this.read(
+      this.http.get<TeamLeaderboardEntry[]>('/api/league/teams/leaderboard', {
+        params: { size, limit },
+      }),
+    );
+  }
+
+  private write<T>(url: string, body: unknown = null): Promise<T> {
     const headers = { [CSRF_HEADER]: this.auth.user()?.csrfToken ?? '' };
-    return this.read(this.http.post<T>(url, null, { headers }));
+    return this.read(this.http.post<T>(url, body, { headers }));
   }
 
   private async read<T>(request: Observable<T>): Promise<T> {

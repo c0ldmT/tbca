@@ -342,6 +342,7 @@ export const fightKind = pgEnum('fight_kind', [
   'team_rated',
   'team_friendly',
   'league',
+  'team_league',
 ]);
 export const fightEndReason = pgEnum('fight_end_reason', ['knockout', 'timeout']);
 
@@ -845,6 +846,114 @@ export const leagueMatch = pgTable(
     index('league_match_due_idx').on(t.status, t.lockAt, t.playAt),
     check(
       'league_match_status_check',
+      sql`${t.status} IN ('scheduled', 'locked', 'played', 'bye')`,
+    ),
+  ],
+);
+
+// --- Team-Rating und Team-Liga (Abschnitt 9) -----------------------------------
+
+/** Glicko-2-Rating eines Teams je Season und Größe (2v2 und 3v3 getrennt). */
+export const teamRating = pgTable(
+  'team_rating',
+  {
+    teamId: uuid('team_id')
+      .notNull()
+      .references(() => team.id, { onDelete: 'cascade' }),
+    seasonId: uuid('season_id')
+      .notNull()
+      .references(() => season.id, { onDelete: 'cascade' }),
+    size: integer('size').notNull(),
+    rating: doublePrecision('rating').notNull(),
+    rd: doublePrecision('rd').notNull(),
+    volatility: doublePrecision('volatility').notNull(),
+    games: integer('games').notNull().default(0),
+    wins: integer('wins').notNull().default(0),
+    losses: integer('losses').notNull().default(0),
+    draws: integer('draws').notNull().default(0),
+    /** Für kommende Zyklen der Team-Liga dieser Größe angemeldet. */
+    leagueJoined: boolean('league_joined').notNull().default(false),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.teamId, t.seasonId, t.size] }),
+    index('team_rating_season_size_idx').on(t.seasonId, t.size, t.rating),
+    check('team_rating_size_check', sql`${t.size} IN (2, 3)`),
+  ],
+);
+
+/** Zyklus der Team-Liga einer Größe; Ablauf wie in der Einzel-Liga. */
+export const teamLeagueCycle = pgTable(
+  'team_league_cycle',
+  {
+    id: id(),
+    seasonId: uuid('season_id')
+      .notNull()
+      .references(() => season.id, { onDelete: 'cascade' }),
+    size: integer('size').notNull(),
+    number: integer('number').notNull(),
+    status: text('status').$type<'active' | 'finished'>().notNull().default('active'),
+    startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
+    endsAt: timestamp('ends_at', { withTimezone: true }).notNull(),
+    finishedAt: timestamp('finished_at', { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('team_league_cycle_season_size_number_idx').on(t.seasonId, t.size, t.number),
+    check('team_league_cycle_status_check', sql`${t.status} IN ('active', 'finished')`),
+    check('team_league_cycle_size_check', sql`${t.size} IN (2, 3)`),
+  ],
+);
+
+export const teamLeagueMember = pgTable(
+  'team_league_member',
+  {
+    cycleId: uuid('cycle_id')
+      .notNull()
+      .references(() => teamLeagueCycle.id, { onDelete: 'cascade' }),
+    teamId: uuid('team_id')
+      .notNull()
+      .references(() => team.id, { onDelete: 'cascade' }),
+    division: integer('division').notNull(),
+    ratingAtStart: doublePrecision('rating_at_start').notNull(),
+    place: integer('place'),
+    movement: text('movement').$type<'up' | 'down' | 'stay'>(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.cycleId, t.teamId] }),
+    index('team_league_member_team_idx').on(t.teamId),
+  ],
+);
+
+/**
+ * Paarung der Team-Liga. Zum Lock werden beide Aufstellungen als Momentaufnahmen gespeichert
+ * (je Team eine Liste, mit Team-Fokus).
+ */
+export const teamLeagueMatch = pgTable(
+  'team_league_match',
+  {
+    id: id(),
+    cycleId: uuid('cycle_id')
+      .notNull()
+      .references(() => teamLeagueCycle.id, { onDelete: 'cascade' }),
+    division: integer('division').notNull(),
+    matchday: integer('matchday').notNull(),
+    lockAt: timestamp('lock_at', { withTimezone: true }).notNull(),
+    playAt: timestamp('play_at', { withTimezone: true }).notNull(),
+    aTeamId: uuid('a_team_id').references(() => team.id, { onDelete: 'set null' }),
+    bTeamId: uuid('b_team_id').references(() => team.id, { onDelete: 'set null' }),
+    status: text('status').$type<'scheduled' | 'locked' | 'played' | 'bye'>().notNull(),
+    /** Aufstellungen zum Lock: [Team a, Team b]; eine leere Liste heißt nicht antrittsfähig. */
+    snapshots: jsonb('snapshots').$type<CombatantSnapshot[][]>(),
+    fightId: uuid('fight_id').references(() => fight.id, { onDelete: 'set null' }),
+    winnerTeamId: uuid('winner_team_id'),
+    draw: boolean('draw').notNull().default(false),
+  },
+  (t) => [
+    index('team_league_match_cycle_idx').on(t.cycleId, t.division, t.matchday),
+    index('team_league_match_due_idx').on(t.status, t.lockAt, t.playAt),
+    check(
+      'team_league_match_status_check',
       sql`${t.status} IN ('scheduled', 'locked', 'played', 'bye')`,
     ),
   ],

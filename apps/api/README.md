@@ -21,6 +21,9 @@ REST-API auf NestJS mit Fastify. Alle Routen liegen unter `/api`.
 | `POST /api/league/placement`                      | Platzierungskampf (gewertet) gegen einen automatisch gewählten Gegner |
 | `GET /api/league/divisions/:index`                | Tabelle und Spielplan einer Division des aktuellen Zyklus             |
 | `GET /api/league/leaderboard?scope=&limit=`       | Rangliste `global` oder nach eigener Heimat-Community                 |
+| `GET /api/league/teams/leaderboard?size=&limit=`  | Team-Rangliste 2v2 oder 3v3                                           |
+| `GET /api/teams/:id/league?size=`                 | Team-Liga eines Teams: Rating, Division, Spielplan                    |
+| `POST /api/teams/:id/league`                      | Team an-/abmelden `{ size, joined }` (nur Kapitän)                    |
 | `POST /api/internal/jobs/league-tick` (Dienst)    | Fällige Locks, Spieltage, Zyklus-Ende und -Start abarbeiten           |
 
 ### Admin (nur Superadmins, schreibend mit CSRF-Token)

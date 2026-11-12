@@ -1,0 +1,279 @@
+<ng-container *transloco="let t">
+  @if (error()) {
+    <p class="tbca-notice tbca-notice--bad" role="alert">{{ t('errors.' + error()) }}</p>
+  }
+  <div class="bar">
+    @if ((teams() ?? []).length > 1) {
+      <label class="field">
+        <span class="tbca-label-mono">{{ t('teamLeague.team') }}</span>
+        <select class="tbca-select" (change)="pickTeam($any($event.target).value)">
+          @for (tm of teams() ?? []; track tm.id) {
+            <option [value]="tm.id" [selected]="tm.id === teamId()">
+              [{{ tm.tag }}] {{ tm.name }}
+            </option>
+          }
+        </select>
+      </label>
+    }
+    <span class="tbca-seg" role="group" [attr.aria-label]="t('teamLeague.size')">
+      <button type="button" [attr.aria-pressed]="size() === 2" (click)="pickSize(2)">2v2</button>
+      <button type="button" [attr.aria-pressed]="size() === 3" (click)="pickSize(3)">3v3</button>
+    </span>
+  </div>
+
+  <div class="cols">
+    <div class="main">
+      @if (teams() !== null && teams()!.length === 0) {
+        <section class="tbca-panel tbca-gl tbca-gl--a intro">
+          <h2>{{ t('teamLeague.title') }}</h2>
+          <p>{{ t('teamLeague.noTeam') }}</p>
+          <a class="tbca-button" routerLink="/crew/team">{{ t('teamLeague.toTeams') }}</a>
+        </section>
+      } @else if (view(); as v) {
+        @if (v.division; as d) {
+          <section
+            class="tbca-panel tbca-panel--flush tbca-gl tbca-gl--a"
+            aria-labelledby="tl-table"
+          >
+            <i class="tbca-gx" aria-hidden="true"></i>
+            <div class="tbca-ph">
+              <h2 id="tl-table">
+                {{ v.size }}v{{ v.size }} ·
+                {{ t('league.division', { n: d.index + 1, count: d.count }) }}
+              </h2>
+              <span class="tbca-idx">
+                {{ t('league.cycle', { n: v.cycle!.number }) }} ·
+                {{ t('league.cycleStatus.' + v.cycle!.status) }}
+              </span>
+            </div>
+            <div class="scroll">
+              <table class="table">
+                <caption class="visually-hidden">
+                  {{
+                    t('league.tableCaption')
+                  }}
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">{{ t('teamLeague.team') }}</th>
+                    <th scope="col" [title]="t('league.playedLong')">{{ t('league.played') }}</th>
+                    <th scope="col" [title]="t('league.winsLong')">{{ t('league.wins') }}</th>
+                    <th scope="col" [title]="t('league.drawsLong')">{{ t('league.draws') }}</th>
+                    <th scope="col" [title]="t('league.lossesLong')">{{ t('league.losses') }}</th>
+                    <th scope="col">{{ t('league.points') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (r of d.table; track r.id) {
+                    <tr [class.me]="r.mine" [attr.data-move]="r.movement">
+                      <td class="pl">
+                        {{ r.place }}
+                        @if (r.movement !== 'stay') {
+                          <span class="mv" [attr.aria-label]="t('league.move.' + r.movement)">{{
+                            r.movement === 'up' ? '▲' : '▼'
+                          }}</span>
+                        }
+                      </td>
+                      <th scope="row">
+                        <span class="who">
+                          <tbca-team-logo [logo]="r.logo" [tag]="r.tag" [size]="36" />
+                          <span>
+                            <b>{{ r.name }}</b>
+                            <small>[{{ r.tag }}]</small>
+                          </span>
+                        </span>
+                      </th>
+                      <td>{{ r.played }}</td>
+                      <td>{{ r.wins }}</td>
+                      <td>{{ r.draws }}</td>
+                      <td>{{ r.losses }}</td>
+                      <td class="pts">{{ r.points }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <p class="tbca-hint pad">
+              {{ t('teamLeague.lineupHint', { lock: v.rules.lockMinutes }) }}
+            </p>
+          </section>
+
+          <section
+            class="tbca-panel tbca-panel--flush tbca-gl tbca-gl--c"
+            aria-labelledby="tl-plan"
+          >
+            <i class="tbca-gx" aria-hidden="true"></i>
+            <div class="tbca-ph">
+              <h2 id="tl-plan">{{ t('league.schedule') }}</h2>
+              <span class="tbca-idx">{{ t('league.matchdayAt', { time: v.rules.matchday }) }}</span>
+            </div>
+            @for (day of matchdays(); track day.matchday) {
+              <div class="day">
+                <h3>
+                  {{ t('league.matchday', { n: day.matchday }) }}
+                  <small>{{ when(day.playAt) }}</small>
+                </h3>
+                <ul>
+                  @for (m of day.matches; track m.id) {
+                    <li [class.mine]="mine(m)" [attr.data-outcome]="outcome(m)">
+                      @if (m.status === 'bye') {
+                        <span class="pair">{{ t('league.bye', { name: m.a?.name ?? '—' }) }}</span>
+                      } @else {
+                        <span class="pair">
+                          <b [class.won]="m.winnerId && m.winnerId === m.a?.id"
+                            >[{{ m.a?.tag ?? '—' }}]</b
+                          >
+                          <span class="vs">vs</span>
+                          <b [class.won]="m.winnerId && m.winnerId === m.b?.id"
+                            >[{{ m.b?.tag ?? '—' }}]</b
+                          >
+                        </span>
+                        <span class="st">
+                          @if (m.status === 'played') {
+                            @if (m.fightId) {
+                              <a [routerLink]="['/replay', m.fightId]">{{
+                                t('league.result.' + outcome(m))
+                              }}</a>
+                            } @else {
+                              {{ t('league.forfeit') }}
+                            }
+                          } @else {
+                            {{ t('league.status.' + m.status) }}
+                          }
+                        </span>
+                      }
+                    </li>
+                  }
+                </ul>
+              </div>
+            }
+          </section>
+        } @else {
+          <section class="tbca-panel tbca-gl tbca-gl--a intro">
+            <h2>{{ t('teamLeague.title') }} · {{ v.size }}v{{ v.size }}</h2>
+            <p>
+              {{ t('teamLeague.intro', { time: v.rules.matchday, lock: v.rules.lockMinutes }) }}
+            </p>
+            <p class="tbca-hint">
+              @if (!placed()) {
+                {{ t('teamLeague.needPlacement', { n: v.rules.placementGames }) }}
+              } @else if (!v.joined) {
+                {{ v.captain ? t('league.needJoin') : t('teamLeague.captainJoins') }}
+              } @else {
+                {{ t('league.waiting') }}
+              }
+            </p>
+          </section>
+        }
+      } @else if (!error()) {
+        <p class="tbca-hint">{{ t('pvp.loading') }}</p>
+      }
+    </div>
+
+    <div class="side">
+      @if (view(); as v) {
+        <section
+          class="tbca-panel tbca-panel--flush tbca-gl tbca-gl--f"
+          aria-labelledby="tl-rating"
+        >
+          <i class="tbca-gx" aria-hidden="true"></i>
+          <div class="tbca-ph">
+            <h2 id="tl-rating">{{ t('teamLeague.rating', { size: v.size }) }}</h2>
+            <span class="tbca-idx">Glicko-2</span>
+          </div>
+          <div class="rating">
+            @if (v.rating; as r) {
+              <div class="big">
+                <b>{{ r.rating }}</b>
+                <small>± {{ r.rd * 2 }}</small>
+              </div>
+              <p class="rec">
+                {{ t('league.record', { w: r.wins, d: r.draws, l: r.losses, n: r.games }) }}
+              </p>
+            } @else {
+              <p class="tbca-hint">{{ t('teamLeague.unrated') }}</p>
+            }
+            @if (!placed()) {
+              <div class="meter__row">
+                <span>{{ t('league.placement') }}</span>
+                <b
+                  >{{
+                    v.rules.placementGames - (v.rating?.placementLeft ?? v.rules.placementGames)
+                  }}
+                  / {{ v.rules.placementGames }}</b
+                >
+              </div>
+              <tbca-segments
+                [total]="v.rules.placementGames"
+                [filled]="
+                  v.rules.placementGames - (v.rating?.placementLeft ?? v.rules.placementGames)
+                "
+              />
+              <a class="tbca-button tbca-button--ghost" routerLink="/crew/challenge">{{
+                t('teamLeague.toChallenge')
+              }}</a>
+            }
+            @if (v.next; as n) {
+              <div class="next">
+                <span class="tbca-label-mono">{{
+                  t('league.nextMatchday', { n: n.matchday })
+                }}</span>
+                <b>{{ when(n.playAt) }}</b>
+                <small>{{
+                  n.locked ? t('league.lockedNow') : t('league.lockAt', { time: time(n.lockAt) })
+                }}</small>
+              </div>
+            }
+            @if (v.captain) {
+              @if (v.joined) {
+                <button
+                  type="button"
+                  class="tbca-button tbca-button--ghost"
+                  [disabled]="busy()"
+                  (click)="join(false)"
+                >
+                  {{ t('league.leave') }}
+                </button>
+              } @else {
+                <button type="button" class="tbca-button" [disabled]="busy()" (click)="join(true)">
+                  {{ t('teamLeague.join', { size: v.size }) }}
+                </button>
+              }
+            } @else {
+              <p class="tbca-hint">
+                {{ v.joined ? t('teamLeague.joinedInfo') : t('teamLeague.captainJoins') }}
+              </p>
+            }
+          </div>
+        </section>
+      }
+
+      <section class="tbca-panel tbca-panel--flush tbca-gl tbca-gl--c" aria-labelledby="tl-board">
+        <i class="tbca-gx" aria-hidden="true"></i>
+        <div class="tbca-ph">
+          <h2 id="tl-board">{{ t('teamLeague.leaderboard', { size: size() }) }}</h2>
+        </div>
+        @if (board(); as list) {
+          <ol class="board">
+            @for (e of list; track e.id) {
+              <li [class.me]="e.id === teamId()">
+                <span class="bp">{{ e.place }}</span>
+                <tbca-team-logo [logo]="e.logo" [tag]="e.tag" [size]="36" />
+                <span class="bn">
+                  <b>{{ e.name }}</b>
+                  <small>[{{ e.tag }}] · {{ e.community }}</small>
+                </span>
+                <span class="br">{{ e.rating }}</span>
+              </li>
+            } @empty {
+              <li class="empty tbca-hint">{{ t('league.boardEmpty') }}</li>
+            }
+          </ol>
+        } @else {
+          <p class="tbca-hint pad">{{ t('pvp.loading') }}</p>
+        }
+      </section>
+    </div>
+  </div>
+</ng-container>

@@ -477,7 +477,8 @@
       "dungeon": "Dungeon",
       "team_rated": "Rated team challenge",
       "team_friendly": "Friendly team fight",
-      "league": "League matchday"
+      "league": "League matchday",
+      "team_league": "Team league matchday"
     },
     "winnerTeam": "{{ name }} win after {{ rounds }} rounds",
     "turnOrder": "Turn order",
@@ -1383,7 +1384,8 @@
     "tabs": {
       "team": "My team",
       "challenge": "Team fight",
-      "communities": "Communities"
+      "communities": "Communities",
+      "league": "Team league"
     },
     "noTeam": "You are not in a team yet. Found one or join with a code – under “My team”.",
     "myTeam": "My team",
@@ -1466,5 +1468,22 @@
     "higher": "Higher division",
     "lower": "Lower division",
     "own": "My division"
+  },
+  "teamLeague": {
+    "title": "Team league",
+    "team": "Team",
+    "size": "Size",
+    "noTeam": "You need a team for the team league.",
+    "toTeams": "Go to team",
+    "intro": "Like the solo league, separately for 2v2 and 3v3: every day at {{ time }} your team fights a team from its division – with the default line-up (otherwise the strongest members) and the team focus from the lock {{ lock }} minutes before.",
+    "needPlacement": "First {{ n }} rated team fights in this size for the starting rating.",
+    "captainJoins": "The captain signs the team up.",
+    "joinedInfo": "Your team is signed up.",
+    "lineupHint": "Line-up and team focus are frozen {{ lock }} minutes before the matchday. A team without a full line-up then loses by walkover.",
+    "rating": "Team rating {{ size }}v{{ size }}",
+    "unrated": "No rating in this size yet – it starts with the first rated team fight.",
+    "toChallenge": "Start a team fight",
+    "join": "Join the {{ size }}v{{ size }} league",
+    "leaderboard": "Team leaderboard {{ size }}v{{ size }}"
   }
 }

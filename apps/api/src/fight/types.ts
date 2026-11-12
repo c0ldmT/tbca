@@ -1,7 +1,14 @@
 import type { BattleInput, BattleResult } from '@tbca/game-core';
 
 export type FightKind =
-  'pvp_rated' | 'pvp_friendly' | 'training' | 'dungeon' | 'team_rated' | 'team_friendly' | 'league';
+  | 'pvp_rated'
+  | 'pvp_friendly'
+  | 'training'
+  | 'dungeon'
+  | 'team_rated'
+  | 'team_friendly'
+  | 'league'
+  | 'team_league';
 
 export interface NewFight {
   seasonId: string;

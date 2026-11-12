@@ -1,10 +1,8 @@
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import {
   ENGINE_VERSION,
-  formDivisions,
   levelFromXp,
   pvpReward,
-  roundRobin,
   simulateBattle,
   standings,
   type Clock,
@@ -26,7 +24,7 @@ import { snapshotOf } from '../character/character.service.js';
 import type { CharacterRecord, CharacterRepository } from '../character/types.js';
 import { ApiError } from '../common/api-error.js';
 import type { Env } from '../config/env.js';
-import { addDays, dayKey, zonedTime } from '../fight/day.js';
+import { dayKey } from '../fight/day.js';
 import { FightService } from '../fight/fight.service.js';
 import type { FightRepository } from '../fight/types.js';
 import { SeasonService, type CurrentSeason } from '../game/season.js';
@@ -39,6 +37,8 @@ import {
   LEAGUE_REPOSITORY,
 } from '../tokens.js';
 import { GLICKO_START } from './glicko2.js';
+import { planCycle } from './schedule.js';
+import { TeamLeagueService } from './team-league.service.js';
 import { RatingService } from './rating.service.js';
 import type {
   CycleRecord,
@@ -75,6 +75,7 @@ export class LeagueService {
     @Inject(ProgressionService) private readonly progression: ProgressionService,
     @Inject(CLOCK) private readonly clock: Clock,
     @Inject(ENV) private readonly env: Env,
+    @Inject(TeamLeagueService) private readonly teamLeague: TeamLeagueService,
   ) {}
 
   // --- Spieler ----------------------------------------------------------------
@@ -332,71 +333,53 @@ export class LeagueService {
       if (event.kind === 'lock') result.locked += await this.lockDue(season, cycle, event.at);
       else result.played += await this.playDue(season, cycle, event.at);
     }
+    // Team-Liga im selben Durchlauf (2v2 und 3v3)
+    result.teams = await this.teamLeague.tick();
     return result;
   }
 
   private async startCycle(season: CurrentSeason, base: number): Promise<CycleRecord | null> {
     const rules = season.game.league;
     const entrants = await this.repo.entrants(season.id, rules.placementGames);
-    if (entrants.length < Math.max(2, rules.minPlayers)) return null;
     const last = await this.repo.lastCycle(season.id);
     const previous = new Map(
       (last ? await this.repo.members(last.id) : []).map((m) => [m.characterId, m]),
     );
-    const divisions = formDivisions(
+    const plan = planCycle(
       rules,
-      entrants.map((e) => {
-        const p = previous.get(e.characterId);
-        return {
-          characterId: e.characterId,
-          rating: e.rating,
-          previous:
-            p && p.place !== null
-              ? { division: p.division, place: p.place, movement: p.movement ?? 'stay' }
-              : null,
-        };
-      }),
+      entrants.map((e) => ({ id: e.characterId, rating: e.rating })),
+      (id) => {
+        const p = previous.get(id);
+        return p && p.place !== null
+          ? { division: p.division, place: p.place, movement: p.movement ?? 'stay' }
+          : null;
+      },
+      base,
+      this.env.GAME_TIMEZONE,
     );
-    if (divisions.length === 0) return null;
-
-    // Erster Spieltag: der früheste, dessen Lock noch bevorsteht
-    const tz = this.env.GAME_TIMEZONE;
-    const at = (day: string) => zonedTime(day, rules.matchdayHour, rules.matchdayMinute, tz);
-    const lockMs = rules.lockMinutes * 60_000;
-    let day = dayKey(base, tz);
-    while (at(day) - lockMs <= base) day = addDays(day, 1);
-
-    const matches: NewMatch[] = [];
-    divisions.forEach((ids, division) => {
-      roundRobin(ids).forEach((pairs, round) => {
-        const playAt = at(addDays(day, round));
-        for (const p of pairs)
-          matches.push({
-            division,
-            matchday: round + 1,
-            lockAt: new Date(playAt - lockMs),
-            playAt: new Date(playAt),
-            aCharacterId: p.a,
-            bCharacterId: p.b,
-            status: p.b === null ? 'bye' : 'scheduled',
-          });
-      });
-    });
-    const plays = matches.map((m) => m.playAt.getTime());
+    if (!plan) return null;
     const rating = new Map(entrants.map((e) => [e.characterId, e.rating]));
     return this.repo.createCycle({
       seasonId: season.id,
       number: (last?.number ?? 0) + 1,
-      startsAt: new Date(Math.min(...plays)),
-      endsAt: new Date(Math.max(...plays)),
-      members: divisions.flatMap((ids, division) =>
+      startsAt: plan.startsAt,
+      endsAt: plan.endsAt,
+      members: plan.divisions.flatMap((ids, division) =>
         ids.map((characterId) => ({
           characterId,
           division,
           ratingAtStart: rating.get(characterId) ?? GLICKO_START.rating,
         })),
       ),
-      matches,
+      matches: plan.pairings.map((p): NewMatch => ({
+        division: p.division,
+        matchday: p.matchday,
+        lockAt: p.lockAt,
+        playAt: p.playAt,
+        aCharacterId: p.a,
+        bCharacterId: p.b,
+        status: p.b === null ? 'bye' : 'scheduled',
+      })),
     });
   }
 
