@@ -24,17 +24,30 @@ export class PreferencesService {
     this.window?.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false,
   );
 
+  /** Wie oft der Hintergrund gemessen zu langsam war (0–2); senkt nur die Auto-Stufe. */
+  readonly slowSteps = signal(0);
+
+  /**
+   * Eine ausdrücklich gewählte Stufe gilt immer. „Auto“ startet auf Hoch und senkt erst nach
+   * gemessener Langsamkeit ab – die gemeldeten CPU-Kerne taugen dafür nicht, weil viele Browser
+   * sie aus Datenschutzgründen verfälschen. Bei reduzierter Bewegung oder Datensparmodus wählt
+   * „Auto“ die ruhigere Stufe.
+   */
   readonly effectiveQuality = computed<EffectiveQuality>(() => {
-    if (this.reducedMotion()) return 'niedrig';
     const chosen = this.quality();
     if (chosen !== 'auto') return chosen;
-    const nav = this.window?.navigator as (Navigator & { deviceMemory?: number }) | undefined;
-    const cores = nav?.hardwareConcurrency ?? 4;
-    const memory = nav?.deviceMemory ?? 4;
-    if (cores <= 2 || memory <= 2) return 'niedrig';
-    if (cores <= 4 || memory <= 4) return 'mittel';
-    return 'hoch';
+    if (this.reducedMotion()) return 'niedrig';
+    const nav = this.window?.navigator as
+      (Navigator & { connection?: { saveData?: boolean } }) | undefined;
+    const start = nav?.connection?.saveData ? 1 : 0;
+    const steps = start + this.slowSteps();
+    return steps >= 2 ? 'niedrig' : steps === 1 ? 'mittel' : 'hoch';
   });
+
+  /** Vom Hintergrund gemeldet: Zeichnen dauerhaft zu langsam. */
+  reportSlow(): void {
+    if (this.quality() === 'auto') this.slowSteps.update((n) => Math.min(2, n + 1));
+  }
 
   constructor() {
     this.window

@@ -64,7 +64,7 @@ export class CityRain implements OnDestroy {
   private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
 
   /** Abdunkelung für Lesbarkeit (0–0,8). */
-  readonly dim = input(0.32);
+  readonly dim = input(0.2);
   readonly seed = input(7);
 
   private city: RainCity | null = null;
@@ -81,6 +81,7 @@ export class CityRain implements OnDestroy {
       // Ohne Canvas-Unterstützung (z. B. in Tests) bleibt der dunkle Hintergrund.
       if (!el.getContext?.('2d')) return;
       this.city = new RainCity(el, this.seed());
+      this.city.onSlow = () => this.prefs.reportSlow();
       this.city.setQuality(this.prefs.effectiveQuality());
       this.city.resize(true);
       if (typeof ResizeObserver !== 'undefined') {

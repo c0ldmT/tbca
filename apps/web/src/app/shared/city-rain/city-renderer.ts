@@ -68,8 +68,9 @@ const NEON = ['#FF2A6D', '#00F0FF', '#B44CFF', '#F5E400', '#FF2A6D', '#00F0FF'];
 
 const SETTINGS: Record<CityQuality, { density: number; dpr: number; spray: boolean; fps: number }> =
   {
-    hoch: { density: 110, dpr: 1.5, spray: true, fps: 60 },
-    mittel: { density: 60, dpr: 1, spray: false, fps: 30 },
+    // „Hoch“ entspricht exakt dem abgenommenen Prototyp
+    hoch: { density: 140, dpr: 1.5, spray: true, fps: 60 },
+    mittel: { density: 90, dpr: 1, spray: true, fps: 30 },
     niedrig: { density: 45, dpr: 1, spray: false, fps: 0 },
   };
 
@@ -476,6 +477,11 @@ export class RainCity {
   private raf = 0;
   private last = 0;
   private lastDrawn = 0;
+  /** Gemessene Zeichenzeit (gleitender Mittelwert, ms) und Zahl der Messungen. */
+  private cost = 0;
+  private samples = 0;
+  /** Wird gerufen, wenn das Zeichnen dauerhaft zu langsam ist (Auto-Stufe senkt dann ab). */
+  onSlow: (() => void) | null = null;
   private w = 0;
   private h = 0;
   private quality: CityQuality = 'hoch';
@@ -488,7 +494,10 @@ export class RainCity {
   setQuality(quality: CityQuality): void {
     const changed = quality !== this.quality;
     this.quality = quality;
-    if (changed) this.resize(true);
+    if (changed) {
+      this.samples = 0;
+      this.resize(true);
+    }
     if (quality === 'niedrig') this.stop();
     else this.start();
   }
@@ -524,11 +533,27 @@ export class RainCity {
       const fps = SETTINGS[this.quality].fps;
       if (t - this.lastDrawn >= 1000 / fps - 2) {
         this.lastDrawn = t;
+        const begin = view?.performance.now() ?? 0;
         this.draw(t, false);
+        this.measure((view?.performance.now() ?? 0) - begin);
       }
       this.raf = view?.requestAnimationFrame(loop) ?? 0;
     };
     this.raf = view?.requestAnimationFrame(loop) ?? 0;
+  }
+
+  /**
+   * Misst die Zeichenzeit nach einer Aufwärmphase. Liegt sie über ~9 ms (mehr als die Hälfte
+   * eines 60-Hz-Bilds), meldet die Stadt das einmal; danach beginnt die Messung neu.
+   */
+  private measure(ms: number): void {
+    this.samples++;
+    if (this.samples < 30) return;
+    this.cost = this.samples === 30 ? ms : this.cost * 0.95 + ms * 0.05;
+    if (this.samples > 150 && this.cost > 9) {
+      this.samples = 0;
+      this.onSlow?.();
+    }
   }
 
   stop(): void {

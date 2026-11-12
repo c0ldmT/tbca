@@ -23,11 +23,30 @@ describe('PreferencesService', () => {
     expect(prefs.sound()).toBe(false);
   });
 
-  it('schaltet bei reduzierter Bewegung auf die niedrige Stufe', () => {
+  it('nimmt bei reduzierter Bewegung nur im Auto-Modus die ruhige Stufe', () => {
     const prefs = TestBed.inject(PreferencesService);
-    prefs.setQuality('hoch');
     prefs.reducedMotion.set(true);
+    prefs.setQuality('auto');
     expect(prefs.effectiveQuality()).toBe('niedrig');
+    // Ausdrückliche Wahl gilt trotzdem
+    prefs.setQuality('hoch');
+    expect(prefs.effectiveQuality()).toBe('hoch');
+  });
+
+  it('startet Auto auf Hoch und senkt nur nach gemessener Langsamkeit ab', () => {
+    const prefs = TestBed.inject(PreferencesService);
+    prefs.reducedMotion.set(false);
+    prefs.setQuality('auto');
+    expect(prefs.effectiveQuality()).toBe('hoch');
+    prefs.reportSlow();
+    expect(prefs.effectiveQuality()).toBe('mittel');
+    prefs.reportSlow();
+    prefs.reportSlow();
+    expect(prefs.effectiveQuality()).toBe('niedrig');
+    // Eine feste Wahl wird nie automatisch geändert
+    prefs.setQuality('hoch');
+    prefs.reportSlow();
+    expect(prefs.effectiveQuality()).toBe('hoch');
   });
 
   it('schreibt die wirksame Stufe an das Wurzelelement', () => {
