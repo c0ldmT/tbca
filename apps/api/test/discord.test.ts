@@ -18,6 +18,16 @@ function bot(method: 'GET' | 'POST', url: string, payload?: unknown, token = 'b'
   });
 }
 
+/** Worker-Job über den internen Endpunkt auslösen. */
+const job = (path: string) =>
+  t.app.inject({
+    method: 'POST',
+    url: `/api/internal/jobs/${path}`,
+    headers: { authorization: `Bearer ${'b'.repeat(40)}` },
+  });
+
+const profile = async () => (await bot('GET', `profile?userId=${USER}`)).json() as { xp: number };
+
 const message = (overrides: Record<string, unknown> = {}) =>
   bot('POST', 'activity', {
     eventId: String(eventId++),
@@ -99,15 +109,15 @@ describe('Interne Discord-API', () => {
     expect(me.json().name).toBe('Neo');
   });
 
-  it('gibt Aktivitäts-XP mit Cooldown, Wiederholungs- und Kanalprüfung', async () => {
+  it('merkt Aktivitäts-XP mit Cooldown, Wiederholungs- und Kanalprüfung vor', async () => {
     await setup();
     const first = (await message()).json();
-    expect(first.reason).toBe('ok');
-    expect(first.awarded).toBeGreaterThanOrEqual(15);
+    expect(first.reason).toBe('queued');
+    expect(first.queued).toBeGreaterThanOrEqual(15);
     expect((await message({ hash: 'b'.repeat(16) })).json().reason).toBe('cooldown');
     t.time.tick(61_000);
     expect((await message({ hash: 'b'.repeat(16) })).json().reason).toBe('repeat'); // gleiche Nachricht direkt hintereinander
-    expect((await message({ hash: 'c'.repeat(16) })).json().reason).toBe('ok');
+    expect((await message({ hash: 'c'.repeat(16) })).json().reason).toBe('queued');
     t.time.tick(61_000);
     expect((await message({ length: 3, hash: 'd'.repeat(16) })).json().reason).toBe('too_short');
     expect((await message({ channelId: '555555555555555555' })).json().reason).toBe(
@@ -119,9 +129,25 @@ describe('Interne Discord-API', () => {
   it('verarbeitet dieselbe Nachricht nur einmal', async () => {
     await setup();
     const id = String(eventId++);
-    expect((await message({ eventId: id })).json().reason).toBe('ok');
+    expect((await message({ eventId: id })).json().reason).toBe('queued');
     t.time.tick(61_000);
     expect((await message({ eventId: id, hash: 'e'.repeat(16) })).json().reason).toBe('duplicate');
+  });
+
+  it('bucht vorgemerkte XP gebündelt und erst dann', async () => {
+    await setup();
+    const xpBefore = (await profile()).xp;
+    let queued = 0;
+    for (let i = 0; i < 3; i++) {
+      t.time.tick(61_000);
+      queued += (await message({ hash: `a${i}`.padStart(16, '0') })).json().queued;
+    }
+    expect((await profile()).xp).toBe(xpBefore);
+    const flush = (await job('flush-passive-xp')).json();
+    expect(flush).toMatchObject({ entries: 3, bundles: 1, awarded: queued });
+    expect((await profile()).xp).toBe(xpBefore + queued);
+    // Nichts doppelt
+    expect((await job('flush-passive-xp')).json()).toMatchObject({ entries: 0 });
   });
 
   it('deckelt passive XP pro Tag', async () => {
@@ -129,7 +155,10 @@ describe('Interne Discord-API', () => {
     let total = 0;
     for (let i = 0; i < 60; i++) {
       t.time.tick(61_000);
-      total += (await message({ hash: i.toString(16).padStart(16, '0') })).json().awarded;
+      const res = (await message({ hash: i.toString(16).padStart(16, '0') })).json();
+      if (res.reason === 'daily_cap') break;
+      // Gebündelt buchen, damit das gebuchte Limit greift
+      total += (await job('flush-passive-xp')).json().awarded;
     }
     // Level 1–2: voll bis 80–120, halb bis 240–360 – weit unter 60 × 25 = 1 500.
     expect(total).toBeLessThanOrEqual(240);

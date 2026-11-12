@@ -8,6 +8,11 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ### Hinzugefügt
 
+- XP-Bündelung (Spezifikation, Abschnitt 15): Aktivitäts-XP aus dem Chat werden nach allen
+  Prüfungen in Valkey vorgemerkt und vom Worker alle 30 Sekunden gebündelt gebucht – eine
+  Transaktion je Account und Tag statt je Nachricht (`POST /api/internal/jobs/flush-passive-xp`).
+  Die interne Aktivitäts-Antwort meldet `queued` statt `awarded`; ist das gebuchte Tageslimit
+  schon erreicht, wird nichts mehr vorgemerkt.
 - Aufholbonus (Spezifikation, Abschnitt 11): Charaktere mehr als 5 Level unter dem Median der
   Season bekommen +50 % XP aus Kämpfen, Team-Kämpfen und Dungeon (Konfiguration `catchUp`).
   Der Worker frischt den Median alle 10 Minuten auf (`POST /api/internal/jobs/season-stats`,

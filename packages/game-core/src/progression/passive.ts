@@ -37,6 +37,13 @@ export interface PassiveCapResult {
   readonly rawToday: number;
 }
 
+/** Obergrenze der passiven Roh-XP pro Tag; darüber gibt es nichts mehr. */
+export function passiveHardCap(config: GameConfig, level: number): number {
+  const cap = config.passiveXp.dailyCap;
+  const soft = cap.soft.base + cap.soft.perLevel * level;
+  return Math.max(soft, cap.hard.base + cap.hard.perLevel * level);
+}
+
 /**
  * Wendet das passive Tageslimit an. `rawToday` ist die Summe aller passiven Roh-XP des Tages vor
  * dieser Gutschrift; gilt für alle Communities und Plattformen eines Accounts gemeinsam.

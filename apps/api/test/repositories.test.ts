@@ -391,6 +391,10 @@ describe.skipIf(!url)('Drizzle-Repositories (Integration)', () => {
       return { rawToday: 200, awarded: 120, xp: 140, level: 2 };
     });
     expect((await chars.findById(c.id))!.xp).toBe(140);
+    // Rohstand lesen und gebündelte Nachrichten zählen
+    expect(await repo.passiveRaw(input)).toBe(200);
+    await repo.bookPassive({ ...input, messages: 3 }, (s) => ({ ...s, awarded: 0 }));
+    expect(await repo.passiveRaw({ ...input, day: '2026-11-20' })).toBe(0);
   });
 
   it('verwaltet Teams mit eindeutigen Namen und einem Team je Community', async () => {

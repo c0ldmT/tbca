@@ -57,10 +57,13 @@ export interface DiscordProfileView {
 }
 
 export interface DiscordActivityResult {
-  /** Gutgeschriebene XP (0 bei Cooldown, Wiederholung, Limit oder unbekanntem Spieler). */
-  awarded: number;
+  /**
+   * Vorgemerkte XP (vor Deckelung). Gebucht wird gebündelt durch den Worker
+   * (Job „flush-passive-xp“); erst dort greift das Tageslimit genau.
+   */
+  queued: number;
   reason:
-    | 'ok'
+    | 'queued'
     | 'not_registered'
     | 'channel_disabled'
     | 'too_short'
@@ -68,7 +71,18 @@ export interface DiscordActivityResult {
     | 'repeat'
     | 'duplicate'
     | 'daily_cap';
-  levelUp: number | null;
+}
+
+/** Ergebnis des Bündel-Jobs für passive XP. */
+export interface PassiveFlushResult {
+  /** Verarbeitete Vormerkungen. */
+  entries: number;
+  /** Gebuchte Bündel (je Account und Tag eins). */
+  bundles: number;
+  /** Insgesamt gutgeschriebene XP nach Deckelung. */
+  awarded: number;
+  /** Level-Aufstiege in diesem Lauf. */
+  levelUps: number;
 }
 
 /** Kompakte Zusammenfassung für den Chat: Sieger, Runden, bester Treffer, Link zum Replay. */

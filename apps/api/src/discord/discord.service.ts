@@ -5,11 +5,17 @@ import {
   applyPassiveCap,
   levelFromXp,
   messageXp,
+  passiveHardCap,
   Xoshiro128ss,
   type ClassId,
   type Clock,
 } from '@tbca/game-core';
-import type { DiscordActivityResult, DiscordFightSummary, DiscordProfileView } from '@tbca/shared';
+import type {
+  DiscordActivityResult,
+  DiscordFightSummary,
+  DiscordProfileView,
+  PassiveFlushResult,
+} from '@tbca/shared';
 
 import type { AccountRepository } from '../auth/types.js';
 import { CharacterService } from '../character/character.service.js';
@@ -34,6 +40,17 @@ import type { DiscordRepository, GuildCommunity } from './types.js';
  * Discord-Anbindung (Spezifikation, Abschnitte 4 und 11): Community-Onboarding, Registrierung
  * per Slash-Command (Schatten-Account), Profil, Herausforderungen und Aktivitäts-XP.
  */
+/** Warteschlange vorgemerkter passiver XP in Valkey. */
+const PASSIVE_QUEUE = 'xp:passive:pending';
+
+interface PassiveEntry {
+  seasonId: string;
+  accountId: string;
+  characterId: string;
+  day: string;
+  amount: number;
+}
+
 @Injectable()
 export class DiscordService {
   constructor(
@@ -152,7 +169,8 @@ export class DiscordService {
   /**
    * Aktivitäts-XP für eine Discord-Nachricht. Der Bot schickt nur Länge und einen kurzlebigen
    * Hash, nie den Inhalt. Reihenfolge der Prüfungen: Ereignis doppelt, Spieler unbekannt,
-   * Kanal ohne XP, zu kurz, Cooldown, Wiederholung, Tageslimit.
+   * Kanal ohne XP, zu kurz, Cooldown, Wiederholung, Tageslimit erreicht. Bestandene Nachrichten
+   * werden nur vorgemerkt; der Worker bucht sie gebündelt (`flushPassive`).
    */
   async activity(input: {
     eventId: string;
@@ -164,9 +182,8 @@ export class DiscordService {
     hash: string;
   }): Promise<DiscordActivityResult> {
     const none = (reason: DiscordActivityResult['reason']): DiscordActivityResult => ({
-      awarded: 0,
+      queued: 0,
       reason,
-      levelUp: null,
     });
     const rules = (await this.seasons.current()).game.passiveXp.message;
 
@@ -192,35 +209,82 @@ export class DiscordService {
     if (!(await this.limiter.acquire(`xp:discord:cooldown:${input.userId}`, rules.cooldownMs)))
       return none('cooldown');
 
+    const day = dayKey(this.clock.now(), this.env.GAME_TIMEZONE);
+    // Schon gebuchtes Tageslimit erreicht: gar nicht erst vormerken
+    const raw = await this.discord.passiveRaw({ seasonId: season.id, accountId, day });
+    if (raw >= passiveHardCap(season.game, me.level)) return none('daily_cap');
+
     await this.discord.ensureMember(guild.communityId, accountId);
     const amount = messageXp(season.game, input.length, Xoshiro128ss.fromSeed(randomUUID()));
-    const booked = await this.discord.bookPassive(
-      {
-        seasonId: season.id,
-        accountId,
-        characterId: me.id,
-        day: dayKey(this.clock.now(), this.env.GAME_TIMEZONE),
-      },
-      (state) => {
-        const capped = applyPassiveCap(season.game, {
-          level: state.level,
-          rawToday: state.rawToday,
-          amount,
-        });
-        const xp = state.xp + capped.awarded;
-        return {
-          rawToday: capped.rawToday,
-          awarded: capped.awarded,
-          xp,
-          level: Math.max(state.level, levelFromXp(season.game, xp).level),
-        };
-      },
-    );
-    return {
-      awarded: booked.awarded,
-      reason: booked.awarded > 0 ? 'ok' : 'daily_cap',
-      levelUp: booked.level > booked.levelBefore ? booked.level : null,
+    const entry: PassiveEntry = {
+      seasonId: season.id,
+      accountId,
+      characterId: me.id,
+      day,
+      amount,
     };
+    await this.limiter.enqueue(PASSIVE_QUEUE, JSON.stringify(entry));
+    return { queued: amount, reason: 'queued' };
+  }
+
+  /**
+   * Bucht vorgemerkte passive XP gebündelt: je Account und Tag eine Transaktion mit der Summe.
+   * Die Deckelung rechnet pfadunabhängig (Gutschrift = f(neu) − f(alt)), deshalb ergibt die
+   * Summe dasselbe wie einzelne Buchungen. Läuft per Worker alle 30 Sekunden.
+   */
+  async flushPassive(max = 2000): Promise<PassiveFlushResult> {
+    const raw = await this.limiter.drain(PASSIVE_QUEUE, max);
+    const bundles = new Map<string, PassiveEntry & { messages: number }>();
+    for (const line of raw) {
+      let entry: PassiveEntry;
+      try {
+        entry = JSON.parse(line) as PassiveEntry;
+      } catch {
+        continue;
+      }
+      const key = `${entry.seasonId}:${entry.accountId}:${entry.day}`;
+      const bundle = bundles.get(key);
+      if (bundle) {
+        bundle.amount += entry.amount;
+        bundle.messages += 1;
+        bundle.characterId = entry.characterId;
+      } else bundles.set(key, { ...entry, messages: 1 });
+    }
+    if (bundles.size === 0) return { entries: raw.length, bundles: 0, awarded: 0, levelUps: 0 };
+
+    const season = await this.seasons.current();
+    let awarded = 0;
+    let levelUps = 0;
+    for (const bundle of bundles.values()) {
+      // Vormerkungen einer vergangenen Season verfallen
+      if (bundle.seasonId !== season.id) continue;
+      const booked = await this.discord.bookPassive(
+        {
+          seasonId: bundle.seasonId,
+          accountId: bundle.accountId,
+          characterId: bundle.characterId,
+          day: bundle.day,
+          messages: bundle.messages,
+        },
+        (state) => {
+          const capped = applyPassiveCap(season.game, {
+            level: state.level,
+            rawToday: state.rawToday,
+            amount: bundle.amount,
+          });
+          const xp = state.xp + capped.awarded;
+          return {
+            rawToday: capped.rawToday,
+            awarded: capped.awarded,
+            xp,
+            level: Math.max(state.level, levelFromXp(season.game, xp).level),
+          };
+        },
+      );
+      awarded += booked.awarded;
+      if (booked.level > booked.levelBefore) levelUps++;
+    }
+    return { entries: raw.length, bundles: bundles.size, awarded, levelUps };
   }
 
   private async guild(guildId: string): Promise<GuildCommunity> {

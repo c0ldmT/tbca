@@ -542,8 +542,18 @@ export class InMemoryDiscord implements DiscordRepository {
     this.members.set(accountId, list);
   }
 
+  async passiveRaw(input: { seasonId: string; accountId: string; day: string }) {
+    return this.ledger.get(`${input.seasonId}:${input.accountId}:${input.day}`) ?? 0;
+  }
+
   async bookPassive(
-    input: { seasonId: string; accountId: string; characterId: string; day: string },
+    input: {
+      seasonId: string;
+      accountId: string;
+      characterId: string;
+      day: string;
+      messages?: number;
+    },
     decide: (s: { rawToday: number; xp: number; level: number }) => {
       rawToday: number;
       awarded: number;

@@ -23,8 +23,17 @@ export interface DiscordRepository {
    * Bucht passive XP in einer Transaktion: `decide` erhält den heutigen Rohstand und liefert
    * neuen Rohstand, Gutschrift und den neuen XP-/Level-Stand des Charakters.
    */
+  /** Heutiger Rohstand passiver XP (vor Deckelung) des Accounts. */
+  passiveRaw(input: { seasonId: string; accountId: string; day: string }): Promise<number>;
   bookPassive(
-    input: { seasonId: string; accountId: string; characterId: string; day: string },
+    input: {
+      seasonId: string;
+      accountId: string;
+      characterId: string;
+      day: string;
+      /** Anzahl gebündelter Nachrichten (Standard 1). */
+      messages?: number;
+    },
     decide: (state: { rawToday: number; xp: number; level: number }) => {
       rawToday: number;
       awarded: number;

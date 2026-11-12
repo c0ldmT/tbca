@@ -6,14 +6,14 @@ import { CharacterModule } from '../character/character.module.js';
 import { DrizzleCharacterRepository } from '../character/drizzle-character.repository.js';
 import { FightModule } from '../fight/fight.module.js';
 import { CHARACTER_REPOSITORY, DB_CONNECTION, DISCORD_REPOSITORY } from '../tokens.js';
-import { DiscordController } from './discord.controller.js';
+import { DiscordController, PassiveXpJobController } from './discord.controller.js';
 import { DiscordService } from './discord.service.js';
 import { DrizzleDiscordRepository } from './drizzle-discord.repository.js';
 import { ServiceTokenGuard } from './service-token.guard.js';
 
 @Module({
   imports: [AuthModule, CharacterModule, FightModule],
-  controllers: [DiscordController],
+  controllers: [DiscordController, PassiveXpJobController],
   providers: [
     DiscordService,
     ServiceTokenGuard,

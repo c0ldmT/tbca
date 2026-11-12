@@ -61,3 +61,16 @@ export class DiscordController {
     return this.discord.activity(parseBody(discordActivitySchema, body));
   }
 }
+
+/** Worker-Job: vorgemerkte passive XP gebündelt buchen. */
+@Controller('internal/jobs')
+@UseGuards(ServiceTokenGuard)
+export class PassiveXpJobController {
+  constructor(@Inject(DiscordService) private readonly discord: DiscordService) {}
+
+  @Post('flush-passive-xp')
+  @HttpCode(200)
+  flush() {
+    return this.discord.flushPassive();
+  }
+}

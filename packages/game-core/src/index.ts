@@ -96,6 +96,7 @@ export {
 export {
   applyPassiveCap,
   messageXp,
+  passiveHardCap,
   type PassiveCapResult,
   type PassiveXpRules,
 } from './progression/passive.js';

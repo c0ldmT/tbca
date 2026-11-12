@@ -98,8 +98,28 @@ export class DrizzleDiscordRepository implements DiscordRepository {
     });
   }
 
+  async passiveRaw(input: { seasonId: string; accountId: string; day: string }): Promise<number> {
+    const [row] = await this.db
+      .select({ raw: xpLedgerDaily.passiveRaw })
+      .from(xpLedgerDaily)
+      .where(
+        and(
+          eq(xpLedgerDaily.seasonId, input.seasonId),
+          eq(xpLedgerDaily.accountId, input.accountId),
+          eq(xpLedgerDaily.day, input.day),
+        ),
+      );
+    return row?.raw ?? 0;
+  }
+
   bookPassive(
-    input: { seasonId: string; accountId: string; characterId: string; day: string },
+    input: {
+      seasonId: string;
+      accountId: string;
+      characterId: string;
+      day: string;
+      messages?: number;
+    },
     decide: (state: { rawToday: number; xp: number; level: number }) => {
       rawToday: number;
       awarded: number;
@@ -134,7 +154,7 @@ export class DrizzleDiscordRepository implements DiscordRepository {
         .set({
           passiveRaw: result.rawToday,
           passiveAwarded: sql`${xpLedgerDaily.passiveAwarded} + ${result.awarded}`,
-          messages: sql`${xpLedgerDaily.messages} + 1`,
+          messages: sql`${xpLedgerDaily.messages} + ${input.messages ?? 1}`,
         })
         .where(
           and(

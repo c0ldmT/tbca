@@ -17,6 +17,10 @@ export interface RateLimiter {
   remember(key: string, value: string, ttlMs: number): Promise<void>;
   /** Liest einen mit `remember` abgelegten Wert; null, wenn keiner (mehr) da ist. */
   recall(key: string): Promise<string | null>;
+  /** Hängt einen Eintrag an eine Warteschlange an (z. B. vorgemerkte XP). */
+  enqueue(key: string, value: string): Promise<void>;
+  /** Nimmt bis zu `max` Einträge vom Anfang der Warteschlange. */
+  drain(key: string, max: number): Promise<string[]>;
 }
 
 export class ValkeyRateLimiter implements RateLimiter, OnApplicationShutdown {
@@ -38,6 +42,14 @@ export class ValkeyRateLimiter implements RateLimiter, OnApplicationShutdown {
 
   recall(key: string): Promise<string | null> {
     return this.client.get(key);
+  }
+
+  async enqueue(key: string, value: string): Promise<void> {
+    await this.client.rpush(key, value);
+  }
+
+  async drain(key: string, max: number): Promise<string[]> {
+    return (await this.client.lpop(key, max)) ?? [];
   }
 
   async onApplicationShutdown(): Promise<void> {
@@ -71,6 +83,18 @@ export class MemoryRateLimiter implements RateLimiter {
   async recall(key: string): Promise<string | null> {
     const current = this.entries.get(key);
     return current && current.until > this.now() ? current.value : null;
+  }
+
+  private readonly queues = new Map<string, string[]>();
+
+  async enqueue(key: string, value: string): Promise<void> {
+    this.queues.set(key, [...(this.queues.get(key) ?? []), value]);
+  }
+
+  async drain(key: string, max: number): Promise<string[]> {
+    const queue = this.queues.get(key) ?? [];
+    this.queues.set(key, queue.slice(max));
+    return queue.slice(0, max);
   }
 }
 

@@ -12,6 +12,8 @@ export interface JobDefinition {
 
 export const JOBS: readonly JobDefinition[] = [
   { name: 'expire-dungeon-runs', everyMs: 60_000, path: 'expire-dungeon-runs' },
+  // Aktivitäts-XP aus dem Chat gebündelt buchen (Spezifikation, Abschnitt 15)
+  { name: 'flush-passive-xp', everyMs: 30_000, path: 'flush-passive-xp' },
   { name: 'cleanup-sessions', everyMs: 60 * 60_000, path: 'cleanup-sessions' },
   // Median-Level der Season für den Aufholbonus
   { name: 'season-stats', everyMs: 10 * 60_000, path: 'season-stats' },
