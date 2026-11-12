@@ -213,7 +213,8 @@ const abilities: AbilityDef[] = [
   {
     id: 'netrunner.virus',
     classId: 'netrunner',
-    target: 'enemy',
+    // Verbreitet sich über alle Gegner; im Duell trifft er wie bisher einen
+    target: 'all_enemies',
     energyCost: 30,
     cooldown: 4,
     unlockLevel: 10,

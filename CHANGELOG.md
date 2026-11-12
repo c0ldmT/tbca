@@ -136,6 +136,8 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ### Geändert
 
+- Netrunner-Fähigkeit „Virus“ trifft alle Gegner (vorher einen). Hebt den Netrunner im 3v3 von
+  42–45 % auf 48–52 %, Duelle unverändert. Referenz-Fingerabdruck Team `a59d38c1`.
 - Medtech-Fähigkeit „Stimulans“ wirkt auf das ganze Team (neues Fähigkeitsziel `all_allies`):
   säubert, heilt 15 + 0,4 je INT und gibt 2 Züge +15 % Schaden; die Standard-Taktik setzt sie
   zuerst, sobald mindestens zwei Gegner da sind. Hebt den Medtech im 3v3 auf Level 10–50 von

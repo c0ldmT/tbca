@@ -139,12 +139,31 @@ nur noch 14–33 %), ohne das Team spürbar zu heben. Den Ausschlag gibt eine Te
 Duelle bleiben unverändert. Im Dungeon wirkt das Stimulans ab mehreren Monstern als
 Selbstheilung mit; Ø Tiefe des Medtech auf Level 80 23,8 → 21,2 Etagen.
 
+## Virus als Flächeneffekt
+
+Im Team fiel danach der Netrunner zurück (3v3 42–45 %): Bruiser und Gunner treffen ab zwei
+Gegnern alle, der Netrunner nur einen. „Virus“ trifft jetzt alle Gegner (Schaden über Zeit und
++15 % erlittener Schaden wie bisher); im Duell ändert sich nichts.
+
+| Stufe   | 3v3 vorher (B/G/N/M) | nachher           | 2v2 nachher       |
+| ------- | -------------------- | ----------------- | ----------------- |
+| L10 ★3  | 59 / 49 / 44 / 48    | 55 / 47 / 51 / 47 | 49 / 48 / 55 / 47 |
+| L20 ★3  | 56 / 53 / 45 / 45    | 53 / 51 / 51 / 45 | 52 / 52 / 53 / 42 |
+| L30 ★7  | 54 / 55 / 45 / 46    | 50 / 52 / 52 / 46 | 52 / 51 / 56 / 41 |
+| L50 ★7  | 52 / 57 / 42 / 49    | 49 / 55 / 49 / 48 | 50 / 53 / 52 / 44 |
+| L80 ★11 | 47 / 56 / 43 / 54    | 44 / 55 / 48 / 54 | 46 / 55 / 46 / 52 |
+
+Verworfen: Bruiser für Level 80 stärken (mehr Schaden, weniger erlittener Schaden, mehr
+Wachstum) – jede Variante machte ihn auf Level 3–30 zu stark (bis 69 %). Ebenso das Dreieck auf
+niedrigem Level über Rüstung: weniger Rüstung je STR senkt Bruiser gegen Gunner auf Level 3 nur
+von 82 auf 78 %.
+
 ## Offen
 
 - Bruiser im Duell auf Level 80 bei 40 % (gegen Medtech 29 %), im Team dagegen stark (3v3 auf
   Level 10–30 57–62 %).
-- Im Team ist jetzt der Netrunner am schwächsten (3v3 42–45 %), der Medtech im 2v2 auf Level
-  20–30 noch bei 42–43 %.
+- Medtech im 2v2 auf Level 20–30 bei 41–42 %; Gunner gewinnt im Team ab Level 50 leicht
+  überdurchschnittlich (55 %).
 - Dreieck auf niedrigem Level zu steil: Bruiser gegen Gunner 75–91 % bis Level 10; Gunner auf
   Level 1 bei 37 %.
 - Auf Level 1 kommt im Dungeon kaum jemand über Etage 1; der Medtech mit gekürzter Heilung
