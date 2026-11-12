@@ -1572,6 +1572,13 @@ export class InMemoryTeamLeague implements TeamLeagueRepository {
     );
   }
 
+  async recentCycles(seasonId: string, size: TeamSize, limit: number) {
+    return this.cycles
+      .filter((c) => c.seasonId === seasonId && c.size === size)
+      .sort((a, b) => b.number - a.number)
+      .slice(0, limit);
+  }
+
   async createCycle(input: Parameters<TeamLeagueRepository['createCycle']>[0]) {
     const cycle: TeamCycleRecord = {
       id: randomUUID(),

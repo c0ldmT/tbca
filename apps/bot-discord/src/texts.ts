@@ -167,7 +167,7 @@ const de = {
     n.items
       .map((i) =>
         i.kind === 'matchday'
-          ? `⚔️ **Liga · Zyklus ${i.cycle}, Spieltag ${i.matchday}** (${stamp(i.playAt)})\n` +
+          ? `⚔️ **${i.team ? `Team-Liga ${i.team}v${i.team}` : 'Liga'} · Zyklus ${i.cycle}, Spieltag ${i.matchday}** (${stamp(i.playAt)})\n` +
             i.results
               .map(
                 (r) =>
@@ -175,7 +175,7 @@ const de = {
                   (r.url ? ` · <${r.url}>` : ''),
               )
               .join('\n')
-          : `🏁 **Liga · Zyklus ${i.cycle} beendet**\n` +
+          : `🏁 **${i.team ? `Team-Liga ${i.team}v${i.team}` : 'Liga'} · Zyklus ${i.cycle} beendet**\n` +
             i.rows
               .map(
                 (r) =>
@@ -368,7 +368,7 @@ const en: typeof de = {
     n.items
       .map((i) =>
         i.kind === 'matchday'
-          ? `⚔️ **League · cycle ${i.cycle}, matchday ${i.matchday}** (${stamp(i.playAt)})\n` +
+          ? `⚔️ **${i.team ? `Team league ${i.team}v${i.team}` : 'League'} · cycle ${i.cycle}, matchday ${i.matchday}** (${stamp(i.playAt)})\n` +
             i.results
               .map(
                 (r) =>
@@ -376,7 +376,7 @@ const en: typeof de = {
                   (r.url ? ` · <${r.url}>` : ''),
               )
               .join('\n')
-          : `🏁 **League · cycle ${i.cycle} finished**\n` +
+          : `🏁 **${i.team ? `Team league ${i.team}v${i.team}` : 'League'} · cycle ${i.cycle} finished**\n` +
             i.rows
               .map(
                 (r) =>

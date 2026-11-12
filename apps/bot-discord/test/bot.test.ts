@@ -429,6 +429,12 @@ describe('Discord-Bot', () => {
                 cycle: 1,
                 rows: [{ name: 'Neo', division: 2, place: 1, movement: 'up' }],
               },
+              {
+                kind: 'cycle_end',
+                team: 3,
+                cycle: 2,
+                rows: [{ name: '[CHW] Chrome Wolves', division: 1, place: 2, movement: 'stay' }],
+              },
             ],
           },
         ],
@@ -457,5 +463,7 @@ describe('Discord-Bot', () => {
     expect(sent[0]).toContain('Spieltag 2');
     expect(sent[0]).toContain('**Neo** gewinnt');
     expect(sent[0]).toContain('Platz 1 – Aufstieg ▲');
+    expect(sent[0]).toContain('**Team-Liga 3v3 · Zyklus 2 beendet**');
+    expect(sent[0]).toContain('[CHW] Chrome Wolves: Division 1, Platz 2');
   });
 });

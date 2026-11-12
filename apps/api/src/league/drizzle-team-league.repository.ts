@@ -204,6 +204,16 @@ export class DrizzleTeamLeagueRepository implements TeamLeagueRepository {
     return row ? toCycle(row) : null;
   }
 
+  async recentCycles(seasonId: string, size: TeamSize, limit: number) {
+    const rows = await this.db
+      .select()
+      .from(teamLeagueCycle)
+      .where(and(eq(teamLeagueCycle.seasonId, seasonId), eq(teamLeagueCycle.size, size)))
+      .orderBy(desc(teamLeagueCycle.number))
+      .limit(limit);
+    return rows.map(toCycle);
+  }
+
   createCycle(input: Parameters<TeamLeagueRepository['createCycle']>[0]) {
     return this.db.transaction(async (tx) => {
       const [cycle] = await tx

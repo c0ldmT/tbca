@@ -93,6 +93,8 @@ export interface TeamLeagueRepository {
 
   activeCycle(seasonId: string, size: TeamSize): Promise<TeamCycleRecord | null>;
   lastCycle(seasonId: string, size: TeamSize): Promise<TeamCycleRecord | null>;
+  /** Die letzten Zyklen einer Größe, neuester zuerst (für Ankündigungen). */
+  recentCycles(seasonId: string, size: TeamSize, limit: number): Promise<TeamCycleRecord[]>;
   createCycle(input: {
     seasonId: string;
     size: TeamSize;

@@ -39,6 +39,7 @@ import { DungeonService } from '../dungeon/dungeon.service.js';
 import { FightService } from '../fight/fight.service.js';
 import type { PvpRepository } from '../fight/types.js';
 import { LeagueService } from '../league/league.service.js';
+import { TeamLeagueService } from '../league/team-league.service.js';
 import { TeamService } from '../team/team.service.js';
 import { SeasonService } from '../game/season.js';
 import type { RateLimiter } from '../limits/rate-limiter.js';
@@ -86,6 +87,7 @@ export class DiscordService {
     @Inject(DungeonService) private readonly dungeonService: DungeonService,
     @Inject(TeamService) private readonly teamService: TeamService,
     @Inject(LeagueService) private readonly league: LeagueService,
+    @Inject(TeamLeagueService) private readonly teamLeague: TeamLeagueService,
     @Inject(PVP_REPOSITORY) private readonly pvp: PvpRepository,
   ) {}
 
@@ -521,14 +523,18 @@ export class DiscordService {
   }
 
   /**
-   * Neue Liga-Ankündigungen je Kanal seit der letzten Abfrage (Spielzeit). Der Bot fragt
+   * Neue Ankündigungen der Einzel- und Team-Liga je Kanal seit der letzten Abfrage (Spielzeit). Der Bot fragt
    * regelmäßig; was hier geliefert wird, gilt als angekündigt.
    */
   async leagueNews(): Promise<DiscordLeagueNews[]> {
     const until = this.clock.now();
     const out: DiscordLeagueNews[] = [];
     for (const ch of await this.discord.leagueChannels()) {
-      const items = await this.league.news(ch.communityId, ch.announcedUntil.getTime(), until);
+      const after = ch.announcedUntil.getTime();
+      const items = [
+        ...(await this.league.news(ch.communityId, after, until)),
+        ...(await this.teamLeague.news(ch.communityId, after, until)),
+      ];
       await this.discord.markLeagueAnnounced(ch.channelId, new Date(until));
       if (items.length)
         out.push({

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { TeamLeagueService } from '../src/league/team-league.service.js';
 import { createTestApp, login, WEB_ORIGIN, type TestApp } from './helpers.js';
 
 type Auth = { cookie: string; csrfToken: string };
@@ -160,6 +161,26 @@ describe('Team-Liga', () => {
       .map((m) => m.place)
       .sort();
     expect(places).toEqual([1, 2, 3, 4]);
+
+    // Ankündigungen für die Community der Teams: drei Spieltage, dann das Abschlussranking …
+    const news = await t.app
+      .get(TeamLeagueService)
+      .news(DEV, 0, new Date('2026-11-16T00:00:00Z').getTime());
+    // … und der erste Spieltag des schon begonnenen nächsten Zyklus
+    expect(news.map((n) => [n.kind, n.team, n.cycle])).toEqual([
+      ['matchday', 2, 1],
+      ['matchday', 2, 1],
+      ['matchday', 2, 1],
+      ['cycle_end', 2, 1],
+      ['matchday', 2, 2],
+    ]);
+    const first = news[0]!;
+    expect(first.kind === 'matchday' && first.results).toHaveLength(2);
+    expect(first.kind === 'matchday' && first.results[0]!.a).toMatch(/^\[[A-Z]+\] /);
+    const end = news[3]!;
+    expect(end.kind === 'cycle_end' && end.rows.map((r) => r.place)).toEqual([1, 2, 3, 4]);
+    // Andere Communities hören nichts davon
+    expect(await t.app.get(TeamLeagueService).news('other', 0, Date.now() * 2)).toEqual([]);
 
     const board = (
       await call(players[0]!, 'GET', '/api/league/teams/leaderboard?size=2&limit=10')

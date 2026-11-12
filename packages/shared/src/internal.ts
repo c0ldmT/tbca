@@ -237,9 +237,11 @@ export interface DiscordLeagueMatchResult {
   url: string | null;
 }
 
+/** Ankündigung der Einzel-Liga oder – mit `team` – der Team-Liga dieser Größe. */
 export type DiscordLeagueNewsItem =
   | {
       kind: 'matchday';
+      team?: 2 | 3;
       cycle: number;
       matchday: number;
       playAt: string;
@@ -247,6 +249,7 @@ export type DiscordLeagueNewsItem =
     }
   | {
       kind: 'cycle_end';
+      team?: 2 | 3;
       cycle: number;
       rows: { name: string; division: number; place: number; movement: 'up' | 'down' | 'stay' }[];
     };

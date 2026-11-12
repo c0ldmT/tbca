@@ -10,6 +10,7 @@ import {
   type StandingRow,
 } from '@tbca/game-core';
 import type {
+  DiscordLeagueNewsItem,
   LeagueTickResult,
   LeagueView,
   TeamLeaderboardEntry,
@@ -415,6 +416,69 @@ export class TeamLeagueService {
       match.bTeamId!,
       result.winner === null ? null : (result.winner as 0 | 1),
     );
+  }
+
+  /**
+   * Ankündigungen der Team-Liga für eine Community: gespielte Spieltage und Zyklusenden der
+   * letzten Zyklen beider Größen, die in (after, until] fallen – nur Paarungen und Plätze von
+   * Teams dieser Community.
+   */
+  async news(communityId: string, after: number, until: number): Promise<DiscordLeagueNewsItem[]> {
+    const season = await this.seasons.current();
+    const items: DiscordLeagueNewsItem[] = [];
+    const inRange = (d: Date | null) => !!d && d.getTime() > after && d.getTime() <= until;
+    for (const size of SIZES) {
+      for (const cycle of (await this.repo.recentCycles(season.id, size, 2)).reverse()) {
+        const members = await this.repo.members(cycle.id);
+        const names = new Map<string, string>();
+        const home = new Set<string>();
+        for (const m of members) {
+          const t = await this.teams.find(m.teamId);
+          if (!t) continue;
+          names.set(t.id, `[${t.tag}] ${t.name}`);
+          if (t.communityId === communityId) home.add(t.id);
+        }
+        if (home.size === 0) continue;
+        const name = (id: string | null) => (id ? (names.get(id) ?? '—') : '—');
+        const matches = await this.repo.matches(cycle.id);
+        const days = [...new Set(matches.map((m) => m.matchday))].sort((a, b) => a - b);
+        for (const day of days) {
+          const ofDay = matches.filter((m) => m.matchday === day && m.status !== 'bye');
+          if (ofDay.length === 0 || ofDay.some((m) => m.status !== 'played')) continue;
+          if (!inRange(ofDay[0]!.playAt)) continue;
+          const results = ofDay
+            .filter((m) => (m.aTeamId && home.has(m.aTeamId)) || (m.bTeamId && home.has(m.bTeamId)))
+            .map((m) => ({
+              a: name(m.aTeamId),
+              b: name(m.bTeamId),
+              winner: m.draw ? null : m.winnerTeamId ? name(m.winnerTeamId) : null,
+              url: m.fightId ? `${this.env.WEB_ORIGIN}/replay/${m.fightId}` : null,
+            }));
+          if (results.length)
+            items.push({
+              kind: 'matchday',
+              team: size,
+              cycle: cycle.number,
+              matchday: day,
+              playAt: ofDay[0]!.playAt.toISOString(),
+              results,
+            });
+        }
+        if (cycle.status === 'finished' && inRange(cycle.finishedAt)) {
+          const rows = members
+            .filter((m) => home.has(m.teamId) && m.place !== null)
+            .sort((x, y) => x.division - y.division || x.place! - y.place!)
+            .map((m) => ({
+              name: name(m.teamId),
+              division: m.division + 1,
+              place: m.place!,
+              movement: m.movement ?? 'stay',
+            }));
+          if (rows.length) items.push({ kind: 'cycle_end', team: size, cycle: cycle.number, rows });
+        }
+      }
+    }
+    return items;
   }
 
   private async finishCycle(season: CurrentSeason, cycle: TeamCycleRecord): Promise<void> {

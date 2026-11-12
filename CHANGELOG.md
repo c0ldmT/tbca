@@ -8,6 +8,10 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ### Hinzugefügt
 
+- Team-Liga im Discord: Der Liga-Kanal eines Servers (`/tbca-admin liga-kanal`) meldet jetzt
+  auch gespielte Spieltage und das Zyklusende der Team-Liga 2v2 und 3v3 – nur Paarungen und
+  Plätze von Teams der Community des Servers. Die Nachricht nennt die Größe
+  („Team-Liga 3v3 · Zyklus 2“) und die Teams mit Kürzel.
 - Team-Rating und Team-Liga: Gewertete Team-Kämpfe schreiben ein Glicko-2-Rating je Team und
   Größe fort (2v2 und 3v3 getrennt, beide Seiten); die ersten 5 zählen als Platzierung. Der
   Kapitän meldet das Team für die Liga einer Größe an. Ablauf wie in der Einzel-Liga
