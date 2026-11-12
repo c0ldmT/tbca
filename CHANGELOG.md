@@ -100,6 +100,15 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ### Geändert
 
+- Balancing, erste Angleichung der Klassen (Details und Zahlen in `docs/balancing.md`): GES gibt
+  deutlich weniger Initiative, Genauigkeit, Ausweichen und Crit-Chance, dafür wachsen diese
+  Werte mit dem Level; STR gibt Firewall; Schwerer Schlag 210 %, Doppelschuss 2 × 85 %, Pistole
+  0,875 je GES, Netrunner-Durchdringung 25 %/25 %, Medtech-Flicken mit Grundwert 12. Die
+  Standard-Taktiken nutzen jetzt alle Startfähigkeiten (Spott und Flächenangriffe erst ab zwei
+  Gegnern). Gesamt-Siegquoten liegen ab Level 3 zwischen 38 und 58 % statt 13 bis 100 %.
+  Gilt für neue Seasons; für die laufende Season einen Entwurf aus den Startwerten anlegen und
+  veröffentlichen. Die Referenz-Fingerabdrücke der Kampf-Tests sind entsprechend neu gesetzt
+  (Engine unverändert, gespeicherte Kämpfe bleiben gültig).
 - Dungeon: Nach „Weiter“ läuft der Kampf der Etage im Kampf-HUD (Tempo 2×, überspringbar); das
   Ergebnis der Etage erscheint erst danach.
 - Dungeon: Der Run-Loot ist bis zum Ausstieg versiegelt. Die API liefert während des Runs nur die

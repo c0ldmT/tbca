@@ -4,7 +4,7 @@ describe('Testkampf', () => {
   it('liefert im Browser denselben Fingerabdruck wie auf dem Server', () => {
     // Der Wert wurde in Chromium und in Node berechnet; weicht er ab, ist die Engine nicht
     // mehr deterministisch über Laufzeitumgebungen hinweg.
-    expect(runDemoBattle(DEMO_SEED).logHash).toBe('46d6c659');
+    expect(runDemoBattle(DEMO_SEED).logHash).toBe('92d315fa');
   });
 
   it('übersetzt das Event-Log in Zeilen mit Rundenbeginn und Ergebnis', () => {

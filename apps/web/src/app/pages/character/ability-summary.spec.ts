@@ -8,7 +8,7 @@ const ability = (id: string) => DEFAULT_GAME_CONFIG.abilities.find((a) => a.id =
 describe('describeEffects', () => {
   it('beschreibt Effekte aus den Daten', () => {
     expect(describeEffects(ability('gunner.double_tap'))).toEqual([
-      { key: 'effect.damageHits', params: { percent: 70, hits: 2 } },
+      { key: 'effect.damageHits', params: { percent: 85, hits: 2 } },
     ]);
     expect(describeEffects(ability('netrunner.short_circuit'))).toEqual([
       { key: 'effect.damage', params: { percent: 90, hits: 1 } },

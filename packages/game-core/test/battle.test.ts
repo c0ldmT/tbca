@@ -42,8 +42,8 @@ describe('simulateBattle – Determinismus', () => {
   it('hängt nicht von Laufzeitdetails ab (Referenz-Fingerabdrücke)', () => {
     // Ändert sich einer dieser Werte, haben sich Kampflogik oder Startwerte geändert:
     // dann ENGINE_VERSION erhöhen bzw. die Konfiguration versionieren und die Werte bewusst neu setzen.
-    expect(simulateBattle(duel('golden-duel')).logHash).toBe('1265f20b');
-    expect(simulateBattle(teamFight('golden-team')).logHash).toBe('8d8aaed1');
+    expect(simulateBattle(duel('golden-duel')).logHash).toBe('c84a8caf');
+    expect(simulateBattle(teamFight('golden-team')).logHash).toBe('d77e6a09');
   });
 });
 
