@@ -33,6 +33,7 @@ import { ItemIcon } from '../../../shared/ui/item-icon';
 import { Segments } from '../../../shared/ui/segments';
 import { Stars } from '../../../shared/ui/stars';
 import { GearState } from '../gear/gear-state';
+import { ItemNamePipe } from '../../../shared/item-name';
 
 type Op = 'upgrade' | 'reroll' | 'transfer' | 'salvage';
 type ListFilter = 'all' | 'equipped' | 'inventory';
@@ -59,7 +60,7 @@ interface LogEntry {
  */
 @Component({
   selector: 'tbca-workshop-page',
-  imports: [TranslocoDirective, ItemIcon, Stars, Segments, Bar],
+  imports: [TranslocoDirective, ItemIcon, Stars, Segments, Bar, ItemNamePipe],
   templateUrl: './workshop.page.html',
   styleUrl: './workshop.page.css',
 })
@@ -450,12 +451,14 @@ export class WorkshopPage {
     this.log.update((list) => [{ tone, text }, ...list].slice(0, 8));
   }
 
+  private readonly itemName = new ItemNamePipe();
+
   private tr(key: string, params?: Record<string, unknown>): string {
     return this.transloco.translate(key, params);
   }
 
   private name(item: ItemView): string {
-    return this.tr('items.' + item.templateId);
+    return this.itemName.transform(item.templateId);
   }
 
   private statName(stat: string): string {

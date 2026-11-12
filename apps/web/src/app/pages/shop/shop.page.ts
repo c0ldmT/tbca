@@ -12,11 +12,12 @@ import { GameConfigService } from '../../core/game-config.service';
 import { statLabel, statValue, tier } from '../../shared/item-format';
 import { ItemIcon } from '../../shared/ui/item-icon';
 import { Stars } from '../../shared/ui/stars';
+import { ItemNamePipe } from '../../shared/item-name';
 
 /** Shop (Markt): Verbrauchsgüter und tägliche Rotation an Ausrüstung auf dem eigenen Level. */
 @Component({
   selector: 'tbca-shop-page',
-  imports: [TranslocoDirective, RouterLink, ItemIcon, Stars],
+  imports: [TranslocoDirective, RouterLink, ItemIcon, Stars, ItemNamePipe],
   templateUrl: './shop.page.html',
   styleUrl: './shop.page.css',
 })

@@ -7,6 +7,7 @@ import { randomUUID } from 'node:crypto';
 import {
   account,
   creditBalance,
+  season,
   createDb,
   InsufficientMaterialsError,
   identity,
@@ -37,6 +38,9 @@ import { DrizzleDiscordRepository } from '../src/discord/drizzle-discord.reposit
 import { DrizzleTeamRepository } from '../src/team/drizzle-team.repository.js';
 import { DrizzleAccountDataRepository } from '../src/account/drizzle-account-data.repository.js';
 import { TeamConflictError } from '../src/team/types.js';
+import { DrizzleSeasonAdminRepository } from '../src/admin/drizzle-season-admin.repository.js';
+import { DrizzleExportRepository } from '../src/admin/drizzle-export.repository.js';
+import { DrizzleDungeonRepository } from '../src/dungeon/drizzle-dungeon.repository.js';
 
 const url = process.env['TBCA_TEST_DATABASE_URL'];
 
@@ -535,5 +539,154 @@ describe.skipIf(!url)('Drizzle-Repositories (Integration)', () => {
         .sort(),
     ).toEqual(['Gelöschter Spieler', `Keep${suffix}`]);
     expect((await conn.db.select().from(account).where(eq(account.id, a!.id))).length).toBe(0);
+  });
+  it('setzt Tageslimits zurück und die Season auf Anfang', async () => {
+    // Eigene Season, damit das Zurücksetzen die anderen Tests nicht berührt
+    const [own] = await conn.db
+      .insert(season)
+      .values({
+        slug: `reset-${Date.now()}`,
+        name: 'Reset-Test',
+        isTest: true,
+        startsAt: new Date('2026-11-01T00:00:00Z'),
+        endsAt: new Date('2027-01-01T00:00:00Z'),
+      })
+      .returning();
+    const seasonId = own!.id;
+    const chars = new DrizzleCharacterRepository(conn.db);
+    const make = async (name: string, isBot = false) => {
+      const [acc] = await conn.db.insert(account).values({ isBot }).returning();
+      return chars.create({
+        accountId: acc!.id,
+        seasonId,
+        name: `${name}${Date.now() % 100000}`,
+        classId: 'gunner',
+        level: 5,
+        xp: 900,
+        allocated: { str: 0, dex: 10, int: 0, con: 10 },
+        loadouts: { gunner: defaultLoadout(DEFAULT_GAME_CONFIG, 'gunner', 5) },
+      });
+    };
+    const a = await make('Ra');
+    const b = await make('Rb');
+    const bot = await make('Rbot', true);
+    const snap = (c: typeof a) =>
+      deriveSnapshot(DEFAULT_GAME_CONFIG, { ...c, loadout: c.loadouts.gunner! });
+    const teams = [[snap(a)], [snap(b)]];
+    const result = simulateBattle({
+      engineVersion: ENGINE_VERSION,
+      configVersion: 1,
+      seed: 'r',
+      teams,
+    });
+    const fights = new DrizzleFightRepository(conn.db);
+    const fightOnce = () =>
+      fights.locked(a.id, (tx) =>
+        tx.insert({
+          seasonId,
+          kind: 'pvp_rated',
+          seed: 'r',
+          configVersion: 1,
+          input: { teams },
+          result,
+          rewardDay: '2026-11-12',
+          participants: [
+            {
+              team: 0,
+              slot: 0,
+              characterId: a.id,
+              initiator: true,
+              won: true,
+              rewarded: true,
+              xpAwarded: 60,
+              creditsAwarded: 0,
+              opponentCharacterId: b.id,
+            },
+          ],
+        }),
+      );
+    const dungeon = new DrizzleDungeonRepository(conn.db);
+    const runOnce = (characterId: string, accountId: string) =>
+      dungeon.locked(characterId, (tx) =>
+        tx.saveRun({
+          id: null,
+          seasonId,
+          accountId,
+          characterId,
+          status: 'left',
+          floor: 2,
+          seed: 'x',
+          snapshot: snap(a),
+          hp: 1,
+          energy: 1,
+          injectors: 0,
+          backupChip: false,
+          loot: { items: [], credits: 0 },
+          xpGained: 0,
+          lastFightId: null,
+          rewardDay: '2026-11-12',
+          lastActionAt: new Date(),
+          endedAt: new Date(),
+        }),
+      );
+    await fightOnce();
+    await runOnce(a.id, a.accountId);
+    await runOnce(b.id, b.accountId);
+    const runsOf = (id: string) => dungeon.locked(id, (tx) => tx.runsOnDay(id, '2026-11-12'));
+
+    const repo = new DrizzleSeasonAdminRepository(conn.db);
+    expect(await repo.info(seasonId)).toMatchObject({ slug: own!.slug });
+    expect(await repo.stats(seasonId, '2026-11-12')).toMatchObject({
+      characters: 2,
+      bots: 1,
+      playedToday: 2,
+      dungeonRunsToday: 2,
+      rewardedFightsToday: 1,
+    });
+
+    // Nur Spieler a: Dungeon zurück, Kämpfe bleiben
+    await repo.resetDaily({
+      seasonId,
+      day: '2026-11-12',
+      kinds: ['dungeon'],
+      account: { accountId: a.accountId, characterId: a.id },
+    });
+    expect(await runsOf(a.id)).toBe(0);
+    expect(await runsOf(b.id)).toBe(1);
+    expect((await fights.rewardCounts(a.id, '2026-11-12')).today).toBe(1);
+
+    // Alle: Kämpfe zurück; danach zählen neue Kämpfe wieder
+    await repo.resetDaily({ seasonId, day: '2026-11-12', kinds: ['fights'], account: null });
+    expect((await fights.rewardCounts(a.id, '2026-11-12')).today).toBe(0);
+    await fightOnce();
+    expect((await fights.rewardCounts(a.id, '2026-11-12')).today).toBe(1);
+    expect((await repo.resetsOn(seasonId, '2026-11-12')).map((r) => r.kind)).toEqual([
+      'fights',
+      'dungeon',
+    ]);
+
+    const progress = await repo.resetSeason(seasonId, 'progress');
+    expect(progress).toMatchObject({ characters: 3, fights: 2, runs: 2 });
+    expect(await chars.findById(a.id)).toMatchObject({ level: 1, xp: 0, allocated: { dex: 0 } });
+
+    const wiped = await repo.resetSeason(seasonId, 'wipe');
+    expect(wiped.characters).toBe(3);
+    expect(await chars.findById(a.id)).toBeNull();
+    expect(await chars.findById(bot.id)).toMatchObject({ level: 1 });
+
+    await repo.setEnd(seasonId, new Date('2027-02-01T00:00:00Z'));
+    expect((await repo.info(seasonId))!.endsAt.toISOString()).toBe('2027-02-01T00:00:00.000Z');
+  });
+  it('liefert die Rohdaten für den Balancing-Export', async () => {
+    const current = (await new DrizzleSeasonRepository(conn.db).findCurrent())!;
+    const rows = await new DrizzleExportRepository(conn.db).rows(current.id, new Date(0), 50);
+    // Die vorigen Tests haben Charaktere und Kämpfe in der Dev-Season angelegt
+    expect(rows.characters.length).toBeGreaterThan(0);
+    expect(rows.characters[0]).toHaveProperty('allocated');
+    expect(rows.fights.length).toBeGreaterThan(0);
+    expect(rows.fights[0]!.teams.length).toBe(2);
+    expect(rows.fights[0]!.participants.length).toBeGreaterThan(0);
+    for (const list of [rows.runs, rows.credits, rows.items, rows.purchases, rows.passive])
+      expect(Array.isArray(list)).toBe(true);
   });
 });

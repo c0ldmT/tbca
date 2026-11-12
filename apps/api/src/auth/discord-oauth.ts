@@ -30,10 +30,10 @@ export class DiscordOAuthClient implements DiscordOAuth {
     private readonly fetchFn: typeof fetch = fetch,
   ) {}
 
-  authorizeUrl(state: string): string {
+  authorizeUrl(state: string, redirectUri: string): string {
     const params = new URLSearchParams({
       client_id: this.requireClientId(),
-      redirect_uri: this.env.DISCORD_REDIRECT_URI,
+      redirect_uri: redirectUri,
       response_type: 'code',
       scope: 'identify',
       state,
@@ -42,7 +42,7 @@ export class DiscordOAuthClient implements DiscordOAuth {
     return `${DISCORD_AUTHORIZE_URL}?${params.toString()}`;
   }
 
-  async fetchProfile(code: string): Promise<ExternalProfile> {
+  async fetchProfile(code: string, redirectUri: string): Promise<ExternalProfile> {
     const clientId = this.requireClientId();
     const secret = this.env.DISCORD_CLIENT_SECRET;
     if (!secret) throw new DiscordOAuthError('DISCORD_CLIENT_SECRET fehlt');
@@ -56,7 +56,7 @@ export class DiscordOAuthClient implements DiscordOAuth {
       body: new URLSearchParams({
         grant_type: 'authorization_code',
         code,
-        redirect_uri: this.env.DISCORD_REDIRECT_URI,
+        redirect_uri: redirectUri,
       }),
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });

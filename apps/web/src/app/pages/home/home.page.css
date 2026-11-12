@@ -87,6 +87,16 @@
   min-height: var(--tbca-touch-target);
 }
 
+.dev-login {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 10px;
+  flex-basis: 100%;
+  padding-top: 10px;
+  border-top: 1px dashed var(--tbca-line);
+}
+
 .hero__user {
   color: var(--tbca-neon-cyan);
 }

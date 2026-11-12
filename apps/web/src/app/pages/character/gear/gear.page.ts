@@ -35,6 +35,7 @@ import { Bar } from '../../../shared/ui/bar';
 import { WRENCH_ICON } from '../character.page';
 import { HEAD_STATS, formatHeadStat, headStats } from '../derive';
 import { GearState } from './gear-state';
+import { ItemNamePipe } from '../../../shared/item-name';
 
 const LEFT: EquipSlot[] = ['head', 'torso', 'hands', 'legs', 'feet'];
 const RIGHT: EquipSlot[] = ['implant_1', 'core_implant', 'implant_2', 'main_hand', 'off_hand'];
@@ -77,7 +78,16 @@ interface Drag {
  */
 @Component({
   selector: 'tbca-gear-page',
-  imports: [TranslocoDirective, RouterLink, ItemIcon, Stars, Segments, SilhouetteFigure, Bar],
+  imports: [
+    TranslocoDirective,
+    RouterLink,
+    ItemIcon,
+    Stars,
+    Segments,
+    SilhouetteFigure,
+    Bar,
+    ItemNamePipe,
+  ],
   templateUrl: './gear.page.html',
   styleUrl: './gear.page.css',
   host: {

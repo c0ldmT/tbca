@@ -28,6 +28,20 @@ afterEach(async () => {
 });
 
 describe('Season-Konfiguration', () => {
+  it('legt einen Entwurf aus den Startwerten des Codes an', async () => {
+    t.configs.versions[0]!.data.game = { ...DEFAULT_GAME_CONFIG, maxLevel: 50 };
+    const draft = (
+      await call('POST', '/api/admin/config/drafts', { from: 'defaults', notes: 'Rebalancing' })
+    ).json();
+    expect(draft.status).toBe('draft');
+    expect(draft.data.game.maxLevel).toBe(DEFAULT_GAME_CONFIG.maxLevel);
+    expect(draft.data.game.stats.initiative).toEqual(DEFAULT_GAME_CONFIG.stats.initiative);
+    expect(t.admin.entries[0]).toMatchObject({
+      action: 'config.draft',
+      data: { from: 'defaults' },
+    });
+  });
+
   it('legt einen Entwurf an, prüft Änderungen und veröffentlicht ihn', async () => {
     const draft = (
       await call('POST', '/api/admin/config/drafts', { from: null, notes: 'Neue Waffe' })

@@ -47,7 +47,8 @@ const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull(
 // --- Enums ------------------------------------------------------------------
 
 export const locale = pgEnum('locale', ['de', 'en']);
-export const identityProvider = pgEnum('identity_provider', ['discord', 'twitch']);
+/** `dev`: lokale Test-Anmeldung ohne Discord. */
+export const identityProvider = pgEnum('identity_provider', ['discord', 'twitch', 'dev']);
 export const globalRole = pgEnum('global_role', ['player', 'superadmin']);
 export const communityRole = pgEnum('community_role', ['member', 'moderator', 'admin']);
 export const channelKind = pgEnum('channel_kind', [
@@ -644,6 +645,29 @@ export const xpLedgerDaily = pgTable(
     messages: integer('messages').notNull().default(0),
   },
   (t) => [primaryKey({ columns: [t.seasonId, t.accountId, t.day] })],
+);
+
+/**
+ * Vom Admin zurückgesetzte Tageslimits: Dungeon-Runs bzw. belohnte Kämpfe des Tages `day`
+ * zählen nur noch, wenn sie nach dem jüngsten passenden Eintrag entstanden sind. Ohne
+ * Charakter gilt der Eintrag für alle Charaktere der Season.
+ */
+export const dailyReset = pgTable(
+  'daily_reset',
+  {
+    id: id(),
+    seasonId: uuid('season_id')
+      .notNull()
+      .references(() => season.id, { onDelete: 'cascade' }),
+    characterId: uuid('character_id').references(() => character.id, { onDelete: 'cascade' }),
+    kind: text('kind').$type<'dungeon' | 'fights'>().notNull(),
+    day: text('day').notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index('daily_reset_lookup_idx').on(t.seasonId, t.day, t.kind),
+    check('daily_reset_kind_check', sql`${t.kind} IN ('dungeon', 'fights')`),
+  ],
 );
 
 // --- Teams (Abschnitt 9) -------------------------------------------------------

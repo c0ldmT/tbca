@@ -18,6 +18,33 @@
       <div class="hero__auth" aria-live="polite">
         @if (auth.state() === null) {
           <a class="tbca-button tbca-button--lg" [href]="auth.loginUrl()">{{ t('auth.login') }}</a>
+          @if (auth.options()?.devLogin) {
+            <form class="dev-login" (submit)="$event.preventDefault(); devLogin()">
+              <label class="tbca-label">
+                {{ t('auth.dev.label') }}
+                <input
+                  class="tbca-input"
+                  [value]="devName()"
+                  (input)="devName.set($any($event.target).value)"
+                  minlength="2"
+                  maxlength="24"
+                  autocomplete="nickname"
+                />
+              </label>
+              <button
+                type="submit"
+                class="tbca-button tbca-button--ghost"
+                [disabled]="devName().trim().length < 2"
+              >
+                {{ t('auth.dev.submit') }}
+              </button>
+              @if (devFailed()) {
+                <span class="tbca-notice tbca-notice--bad" role="alert">{{
+                  t('auth.dev.failed')
+                }}</span>
+              }
+            </form>
+          }
         } @else if (auth.user()) {
           <span class="tbca-label-mono hero__user">{{
             t('auth.signedInAs', { name: auth.displayName() })

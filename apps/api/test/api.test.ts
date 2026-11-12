@@ -206,3 +206,81 @@ describe('Sessions und CSRF', () => {
     expect(start.headers['strict-transport-security']).toContain('max-age=');
   });
 });
+
+describe('Zugriff aus dem Heimnetz', () => {
+  const LAN = 'http://192.168.178.20:4200';
+
+  beforeEach(async () => {
+    await t.app.close();
+    t = await createTestApp(testEnv({ WEB_EXTRA_ORIGINS: `${LAN}, http://tbca.local:4200` }));
+  });
+
+  it('nutzt Rücksprung und Ziel der Adresse, über die der Browser kam', async () => {
+    const start = await inject({
+      method: 'GET',
+      url: '/api/auth/discord',
+      headers: { host: '192.168.178.20:4200' },
+    });
+    expect(t.discord.redirectUri).toBe(`${LAN}/api/auth/discord/callback`);
+    const state = new URL(start.headers.location as string).searchParams.get('state')!;
+    const stateCookie = cookiesOf(start.headers).get('tbca_oauth_state')!;
+    const callback = await inject({
+      method: 'GET',
+      url: `/api/auth/discord/callback?code=valid-code&state=${state}`,
+      headers: { host: '192.168.178.20:4200' },
+      cookies: { tbca_oauth_state: cookieValue(stateCookie) },
+    });
+    expect(callback.headers.location).toBe(`${LAN}/?login=success`);
+    const cookie = cookieValue(cookiesOf(callback.headers).get('tbca_session'));
+    const me = await inject({
+      method: 'GET',
+      url: '/api/auth/me',
+      cookies: { tbca_session: cookie },
+    });
+    // Schreibende Anfragen von der LAN-Adresse sind erlaubt
+    const out = await inject({
+      method: 'POST',
+      url: '/api/auth/logout',
+      cookies: { tbca_session: cookie },
+      headers: { 'x-csrf-token': me.json().csrfToken, origin: LAN },
+    });
+    expect(out.statusCode).toBe(204);
+  });
+
+  it('fällt bei unbekannten Hosts auf die Hauptadresse zurück', async () => {
+    await inject({ method: 'GET', url: '/api/auth/discord', headers: { host: 'evil.example' } });
+    expect(t.discord.redirectUri).toBe(`${WEB_ORIGIN}/api/auth/discord/callback`);
+  });
+});
+
+describe('Test-Anmeldung ohne Discord', () => {
+  const devLogin = (name: string, origin = WEB_ORIGIN) =>
+    inject({ method: 'POST', url: '/api/auth/dev-login', payload: { name }, headers: { origin } });
+
+  it('ist ohne DEV_LOGIN nicht erreichbar', async () => {
+    expect((await inject({ method: 'GET', url: '/api/auth/options' })).json()).toEqual({
+      discord: true,
+      devLogin: false,
+    });
+    expect((await devLogin('Tester')).statusCode).toBe(404);
+  });
+
+  it('meldet mit Namen an, derselbe Name ergibt denselben Account', async () => {
+    await t.app.close();
+    t = await createTestApp(testEnv({ DEV_LOGIN: 'true' }));
+    expect((await inject({ method: 'GET', url: '/api/auth/options' })).json().devLogin).toBe(true);
+    expect((await devLogin('Tester', 'https://evil.example')).statusCode).toBe(403);
+    expect((await devLogin('<script>')).statusCode).toBe(400);
+    const first = await devLogin('Tester');
+    expect(first.statusCode).toBe(204);
+    const cookie = cookieValue(cookiesOf(first.headers).get('tbca_session'));
+    const me = await inject({
+      method: 'GET',
+      url: '/api/auth/me',
+      cookies: { tbca_session: cookie },
+    });
+    expect(me.json().identities[0]).toMatchObject({ provider: 'dev', displayName: 'Tester' });
+    await devLogin('tester');
+    expect(t.accounts.accounts.size).toBe(1);
+  });
+});

@@ -2,7 +2,7 @@ import { defaultLoadout, deriveSnapshot } from '../character/build.js';
 import { planFloor } from '../dungeon/dungeon.js';
 import { CONSUMABLES } from '../items/types.js';
 import { rollItem } from '../items/items.js';
-import { ITEM_STATS, type ItemCategory } from '../items/types.js';
+import { ITEM_NAME_LOCALES, ITEM_STATS, type ItemCategory } from '../items/types.js';
 import { ATTRIBUTES, CLASS_IDS, type GameConfig } from './types.js';
 
 const CATEGORIES: readonly ItemCategory[] = [
@@ -116,6 +116,12 @@ export function validateGameConfig(config: GameConfig): string[] {
       if (ids.has(t.id)) add(`${p}: ID ist doppelt`);
       ids.add(t.id);
       if (!CATEGORIES.includes(t.category)) add(`${p}: unbekannte Kategorie ${t.category}`);
+      for (const [locale, name] of Object.entries(t.names ?? {})) {
+        if (!(ITEM_NAME_LOCALES as readonly string[]).includes(locale))
+          add(`${p}: unbekannte Sprache ${locale} im Namen`);
+        if (typeof name !== 'string' || name.trim().length < 2 || name.length > 40)
+          add(`${p}: Name (${locale}) muss 2–40 Zeichen haben`);
+      }
       const isWeapon = t.category === 'weapon_1h' || t.category === 'weapon_2h';
       if (isWeapon !== Boolean(t.weapon))
         add(`${p}: Waffenwerte ${isWeapon ? 'fehlen' : 'nur bei Waffen'}`);

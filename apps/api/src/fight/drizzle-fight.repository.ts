@@ -4,6 +4,7 @@ import { character, fight, fightParticipant, transferCredits, type Database } fr
 import type { BattleEvent } from '@tbca/game-core';
 import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 
+import { resetSince } from '../limits/daily-reset.js';
 import type { FightRepository, FightTx, NewFight, RewardCounts, StoredFight } from './types.js';
 
 type Executor = Pick<Database, 'select' | 'insert' | 'update'>;
@@ -23,6 +24,7 @@ async function countRewards(db: Executor, characterId: string, day: string): Pro
         eq(fightParticipant.characterId, characterId),
         eq(fightParticipant.rewarded, true),
         eq(fight.rewardDay, day),
+        sql`${fight.createdAt} > ${resetSince('fights', characterId, day)}`,
       ),
     )
     .groupBy(

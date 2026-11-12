@@ -23,7 +23,12 @@
       "cancelled": "Sign-in cancelled. You can try again any time.",
       "failed": "Sign-in failed. Please try again."
     },
-    "logoutFailed": "Signing out didn't work. Please reload the page."
+    "logoutFailed": "Signing out didn't work. Please reload the page.",
+    "dev": {
+      "label": "Test login without Discord (development only)",
+      "submit": "Sign in as tester",
+      "failed": "Test login failed."
+    }
   },
   "home": {
     "tagline": "Turn-based fights for your community – on Discord, Twitch and the web.",
@@ -406,7 +411,9 @@
     "not_community_staff": "You don't have the rights for that in this community.",
     "last_admin": "The community needs at least one admin.",
     "xp_limit": "Moderators correct at most ±5,000 XP.",
-    "invalid_name": "That name isn't allowed (3–20 characters, no reserved words)."
+    "invalid_name": "That name isn't allowed (3–20 characters, no reserved words).",
+    "confirm_mismatch": "The confirmation does not match the running season.",
+    "season_end_before_start": "The end must be after the season start."
   },
   "pvp": {
     "title": "Arena",
@@ -788,7 +795,116 @@
       "jsonHint": "For values without their own editor (classes, abilities, dungeon, shop …). The server validates everything when saving.",
       "applyJson": "Apply JSON",
       "saved": "Draft saved and validated.",
-      "published": "Published – applies to new fights and items right away."
+      "published": "Published – applies to new fights and items right away.",
+      "newDraftDefaults": "Draft from defaults (code)",
+      "defaultsHint": "Takes all values from the current code, e.g. after a rebalancing update. Compare with the simulation before publishing.",
+      "defaultsNote": "Defaults from code",
+      "defaultsCreated": "Draft created from the defaults. Tip: compare it with the published version in the simulation.",
+      "readOnly": "Published versions are read-only – create a draft to make changes.",
+      "tools": "Tools",
+      "panels": {
+        "edit": "Edit",
+        "generate": "Generator",
+        "exchange": "Import/export"
+      },
+      "search": "Search name or ID",
+      "allCategories": "All categories",
+      "noMatch": "No template matches.",
+      "id": "ID (internal)",
+      "idAuto": "New template: the ID follows the name automatically (English preferred).",
+      "idLocked": "This template is published and used by items – its ID stays fixed. Names can be changed at any time.",
+      "name": {
+        "de": "Name (German)",
+        "en": "Name (English)"
+      },
+      "weapon": "Weapon",
+      "kinds": {
+        "physical": "Physical (vs. armour)",
+        "tech": "Tech (vs. firewall)"
+      },
+      "perPoint": "Damage per attribute point",
+      "baseHint": "Weights split the base budget; the share is shown on the right. Implants live on affixes only.",
+      "duplicate": "Duplicate",
+      "removeLocked": "Published templates are used by items and cannot be removed.",
+      "curve": {
+        "badge": "Match against the balancing curve (100 % = exactly on the curve)",
+        "title": "Balancing curve",
+        "ok": "On the curve: uses the budget like a reference template.",
+        "high": "Above the curve: stronger than the budget intends, usually due to high weapon scaling.",
+        "low": "Below the curve: wastes budget, e.g. due to a small affix pool or low scaling.",
+        "explain": "The curve is the power budget per category, level and rarity. 100 % means the template delivers on average exactly as much combat value as a reference with a full affix pool and 0.9 damage per attribute point."
+      },
+      "gen": {
+        "open": "Generate …",
+        "title": "Item generator",
+        "intro": "Designs a template from a style with names (DE/EN) and fitting values, aligned to the balancing curve. Not happy? Reroll.",
+        "style": "Style",
+        "auto": "Random",
+        "reroll": "Reroll",
+        "adopt": "Add to draft",
+        "adopted": "Template added – adjust it and save."
+      },
+      "styles": {
+        "bulwark": {
+          "name": "Bulwark",
+          "hint": "Armour and HP, stamina affixes – for tanks."
+        },
+        "firewall": {
+          "name": "Firewall",
+          "hint": "Protection against tech damage, INT and energy affixes."
+        },
+        "agile": {
+          "name": "Agile",
+          "hint": "Evasion and initiative, DEX and crit affixes."
+        },
+        "brawler": {
+          "name": "Brawler",
+          "hint": "Physical weapon scaling with STR."
+        },
+        "marksman": {
+          "name": "Marksman",
+          "hint": "Physical weapon scaling with DEX, precision affixes."
+        },
+        "hacker": {
+          "name": "Hacker",
+          "hint": "Tech weapon scaling with INT."
+        },
+        "medic": {
+          "name": "Medic",
+          "hint": "Tech weapon with INT, stamina and energy affixes."
+        },
+        "offense": {
+          "name": "Offense",
+          "hint": "Implant for attributes, crits and damage."
+        },
+        "defense": {
+          "name": "Defense",
+          "hint": "Implant for stamina, armour and firewall."
+        },
+        "utility": {
+          "name": "Utility",
+          "hint": "Implant for speed and energy."
+        }
+      },
+      "exchange": {
+        "title": "Exchange item values",
+        "intro": "Normalised format tbca-items/v1: base weights in percent, scaling as damage per attribute point, plus the curve match. For analysis, sharing and re-importing.",
+        "export": "Export item values",
+        "importTitle": "Import",
+        "mode": "Import mode",
+        "modes": {
+          "merge": "Merge",
+          "replace": "Replace"
+        },
+        "withRules": "Also take budget rules",
+        "choose": "Choose file …",
+        "diff": "{{ added }} new, {{ changed }} changed, {{ removed }} removed",
+        "adopt": "Apply to draft",
+        "adopted": "Import applied – review and save."
+      },
+      "removeWeight": "Remove {{ stat }}",
+      "noWeights": "No base values – the item lives on affixes only.",
+      "addWeight": "Add base value"
     },
     "kicker": "Superadmin · tools",
     "shop": {
@@ -863,7 +979,117 @@
       "histAxis": "Horizontal: floors cleared without consumables, vertical: number of runs.",
       "perClass": "Depth per class",
       "class": "Class",
-      "best": "Best run"
+      "best": "Best run",
+      "export": {
+        "json": "As JSON",
+        "csv": "As CSV"
+      },
+      "report": {
+        "title": "Balancing report",
+        "intro": "Simulates levels 3 to 80 with typical gear (matrix and dungeon) and downloads the result together with the full configuration – for analysis or to hand over for rebalancing.",
+        "run": "Create report",
+        "caption": "Overall win rate per class and stage, plus average dungeon depth",
+        "hint": "Computed in {{ ms }} ms. The file has been downloaded.",
+        "depth": "Avg. dungeon depth"
+      }
+    },
+    "season": {
+      "title": "Season controls",
+      "teaser": "Reset daily limits, run jobs now, move the season end or reset the season.",
+      "open": "Open season controls",
+      "intro": "Everything applies to the running season and is written to the audit log.",
+      "test": "Test",
+      "slug": "Slug",
+      "day": "Game day",
+      "gameNow": "Game time",
+      "period": "Period",
+      "median": "Median level",
+      "stats": {
+        "characters": "Players",
+        "bots": "+ {{ n }} bots",
+        "played": "Active today",
+        "runs": "Dungeon runs today",
+        "active": "{{ n }} running now",
+        "fights": "Rewarded fights today",
+        "passive": "Chat XP today"
+      },
+      "limits": "Limits per player and day: {{ runs }} dungeon runs, {{ fights }} rewarded fights.",
+      "reason": "Reason (for the audit log)",
+      "daily": {
+        "title": "Reset daily limits",
+        "intro": "Today's earlier runs and fights no longer count towards the limit. Rewards and fight logs are kept.",
+        "what": "What",
+        "kinds": {
+          "dungeon": "Dungeon runs",
+          "fights": "Rewarded fights",
+          "passive": "Chat XP cap"
+        },
+        "scope": "For",
+        "all": "All players",
+        "player": "One player",
+        "chosen": "Selected: {{ name }}",
+        "run": "Reset",
+        "today": "Reset today",
+        "done": "Daily limits reset."
+      },
+      "jobs": {
+        "title": "Run jobs now",
+        "intro": "The worker does this on a schedule; here it runs once right away.",
+        "run": "Run",
+        "season-stats": {
+          "name": "Season stats",
+          "hint": "Recalculate the median level for the catch-up bonus (otherwise every 10 minutes)."
+        },
+        "flush-passive-xp": {
+          "name": "Book chat XP",
+          "hint": "Credit queued XP from Discord now (otherwise every 30 seconds)."
+        },
+        "expire-dungeon-runs": {
+          "name": "Close idle runs",
+          "hint": "End runs without a decision for 10 minutes, keeping the loot."
+        },
+        "end-dungeon-runs": {
+          "name": "End all runs",
+          "hint": "End every running run now and credit the loot – e.g. before a config change."
+        },
+        "bot-agents": {
+          "name": "Let bots act",
+          "hint": "Let every bot with an agent type play once (test seasons only)."
+        }
+      },
+      "end": {
+        "title": "Season end",
+        "label": "Ends at",
+        "save": "Save",
+        "done": "Season end saved."
+      },
+      "reset": {
+        "title": "Reset season",
+        "intro": "Deletes fights, dungeon runs, items, materials, credits and chat XP counters of the running season. Cannot be undone.",
+        "realSeason": "Warning: this is not a test season. Real player progress will be lost.",
+        "mode": "Scope",
+        "modes": {
+          "progress": {
+            "name": "Reset progress",
+            "hint": "Characters keep name and class but restart at level 1 with starter gear."
+          },
+          "wipe": {
+            "name": "Wipe everything",
+            "hint": "Player characters are deleted and must be created again; bots stay at level 1."
+          }
+        },
+        "confirm": "Type “{{ slug }}” to confirm",
+        "run": "Reset season",
+        "done": "Done: {{ characters }} characters, {{ fights }} fights, {{ runs }} runs, {{ items }} items."
+      }
+    },
+    "export": {
+      "title": "Export data",
+      "intro": "Anonymised game data for balancing analysis: configuration, character builds with gear, fights with all participants' values, dungeon runs, economy and chat XP. No names, Discord or account IDs.",
+      "days": "Period for fights and runs",
+      "lastDays": "Last {{ days }} days",
+      "run": "Export (JSON)",
+      "done": "Export downloaded."
     }
   },
   "account": {

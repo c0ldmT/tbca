@@ -33,4 +33,16 @@ describe('loadEnv', () => {
     expect(() => loadEnv({ ...base, DATABASE_URL: 'mysql://x' })).toThrow(/DATABASE_URL/);
     expect(() => loadEnv({ ...base, API_PORT: 'abc' })).toThrow(/API_PORT/);
   });
+
+  it('liest weitere Website-Adressen und sperrt DEV_LOGIN in Produktion', () => {
+    const env = loadEnv({
+      ...base,
+      WEB_EXTRA_ORIGINS: 'http://192.168.178.20:4200/, http://localhost:4200',
+    });
+    expect(env.WEB_ORIGINS).toEqual(['http://localhost:4200', 'http://192.168.178.20:4200']);
+    expect(() => loadEnv({ ...base, WEB_EXTRA_ORIGINS: 'ftp://x' })).toThrow(/Keine gültige/);
+    expect(() => loadEnv({ ...base, NODE_ENV: 'production', DEV_LOGIN: 'true' })).toThrow(
+      /DEV_LOGIN/,
+    );
+  });
 });

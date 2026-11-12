@@ -1,0 +1,288 @@
+<ng-container *transloco="let t">
+  <header class="head">
+    <a routerLink="/admin" class="back">← {{ t('admin.title') }}</a>
+    <span class="tbca-kicker">{{ t('admin.kicker') }}</span>
+    <h1 class="tbca-title tbca-gl tbca-gl--f">{{ t('admin.season.title') }}</h1>
+    <p class="tbca-hint">{{ t('admin.season.intro') }}</p>
+  </header>
+
+  @if (error()) {
+    <p class="tbca-error" role="alert">{{ t('errors.' + error()) }}</p>
+  }
+  @if (notice()) {
+    <p class="notice" role="status">{{ t(notice()!) }}</p>
+  }
+
+  @if (view(); as v) {
+    <section class="tbca-panel" aria-labelledby="season-now">
+      <h2 id="season-now">
+        {{ v.season.name }}
+        @if (v.season.isTest) {
+          <span class="badge">{{ t('admin.season.test') }}</span>
+        }
+      </h2>
+      <dl class="facts">
+        <div>
+          <dt>{{ t('admin.season.slug') }}</dt>
+          <dd>{{ v.season.slug }}</dd>
+        </div>
+        <div>
+          <dt>{{ t('admin.season.day') }}</dt>
+          <dd>{{ v.day }}</dd>
+        </div>
+        <div>
+          <dt>{{ t('admin.season.gameNow') }}</dt>
+          <dd>{{ formatDate(v.gameNow) }}</dd>
+        </div>
+        <div>
+          <dt>{{ t('admin.season.period') }}</dt>
+          <dd>{{ formatDate(v.season.startsAt) }} – {{ formatDate(v.season.endsAt) }}</dd>
+        </div>
+        <div>
+          <dt>{{ t('admin.season.median') }}</dt>
+          <dd>{{ v.medianLevel ?? '–' }}</dd>
+        </div>
+      </dl>
+      <div class="tiles">
+        <div class="tile">
+          <span class="tbca-label-mono">{{ t('admin.season.stats.characters') }}</span>
+          <b>{{ v.stats.characters }}</b>
+          <small>{{ t('admin.season.stats.bots', { n: v.stats.bots }) }}</small>
+        </div>
+        <div class="tile">
+          <span class="tbca-label-mono">{{ t('admin.season.stats.played') }}</span>
+          <b>{{ v.stats.playedToday }}</b>
+        </div>
+        <div class="tile">
+          <span class="tbca-label-mono">{{ t('admin.season.stats.runs') }}</span>
+          <b>{{ v.stats.dungeonRunsToday }}</b>
+          <small>{{ t('admin.season.stats.active', { n: v.stats.activeRuns }) }}</small>
+        </div>
+        <div class="tile">
+          <span class="tbca-label-mono">{{ t('admin.season.stats.fights') }}</span>
+          <b>{{ v.stats.rewardedFightsToday }}</b>
+        </div>
+        <div class="tile">
+          <span class="tbca-label-mono">{{ t('admin.season.stats.passive') }}</span>
+          <b>{{ v.stats.passiveXpToday }}</b>
+        </div>
+      </div>
+      <p class="tbca-hint">
+        {{
+          t('admin.season.limits', {
+            runs: v.limits.dungeonRunsPerDay,
+            fights: v.limits.rewardedFightsPerDay,
+          })
+        }}
+      </p>
+    </section>
+
+    <section class="tbca-panel" aria-labelledby="daily-title">
+      <h2 id="daily-title">{{ t('admin.season.daily.title') }}</h2>
+      <p class="tbca-hint">{{ t('admin.season.daily.intro') }}</p>
+      <fieldset class="checks">
+        <legend class="tbca-label-mono">{{ t('admin.season.daily.what') }}</legend>
+        @for (k of limitKinds; track k) {
+          <label class="check">
+            <input type="checkbox" [checked]="kinds().has(k)" (change)="toggleKind(k)" />
+            {{ t('admin.season.daily.kinds.' + k) }}
+          </label>
+        }
+      </fieldset>
+      <div class="field">
+        <span class="tbca-label-mono" id="daily-scope">{{ t('admin.season.daily.scope') }}</span>
+        <span class="tbca-seg" role="group" aria-labelledby="daily-scope">
+          <button type="button" [attr.aria-pressed]="scope() === 'all'" (click)="scope.set('all')">
+            {{ t('admin.season.daily.all') }}
+          </button>
+          <button
+            type="button"
+            [attr.aria-pressed]="scope() === 'player'"
+            (click)="scope.set('player')"
+          >
+            {{ t('admin.season.daily.player') }}
+          </button>
+        </span>
+      </div>
+      @if (scope() === 'player') {
+        <form class="row" (submit)="$event.preventDefault(); search()">
+          <label class="tbca-label grow">
+            {{ t('admin.players.search') }}
+            <input
+              class="tbca-input"
+              [value]="query()"
+              (input)="query.set(input($event))"
+              autocomplete="off"
+            />
+          </label>
+          <button type="submit" class="tbca-button tbca-button--ghost" [disabled]="busy()">
+            {{ t('admin.players.find') }}
+          </button>
+        </form>
+        @if (found().length) {
+          <ul class="picks">
+            @for (a of found(); track a.accountId) {
+              <li>
+                <button type="button" class="pick" (click)="pick(a)">
+                  <b>{{ a.character?.name ?? '–' }}</b>
+                  <span class="tbca-hint">{{ a.identities[0]?.displayName }}</span>
+                </button>
+              </li>
+            }
+          </ul>
+        }
+        @if (player(); as p) {
+          <p class="chosen" role="status">
+            {{ t('admin.season.daily.chosen', { name: p.character?.name ?? p.accountId }) }}
+          </p>
+        }
+      }
+      <div class="row">
+        <label class="tbca-label grow">
+          {{ t('admin.season.reason') }}
+          <input
+            class="tbca-input"
+            [value]="reason()"
+            (input)="reason.set(input($event))"
+            maxlength="200"
+          />
+        </label>
+        <button
+          type="button"
+          class="tbca-button"
+          [disabled]="busy() || !canResetDaily()"
+          (click)="resetDaily()"
+        >
+          {{ t('admin.season.daily.run') }}
+        </button>
+      </div>
+      @if (v.resetsToday.length) {
+        <h3>{{ t('admin.season.daily.today') }}</h3>
+        <ul class="log">
+          @for (r of v.resetsToday; track r.at + r.kind) {
+            <li>
+              <time>{{ formatDate(r.at) }}</time>
+              {{ t('admin.season.daily.kinds.' + r.kind) }} ·
+              {{ r.characterName ?? t('admin.season.daily.all') }}
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <section class="tbca-panel" aria-labelledby="jobs-title">
+      <h2 id="jobs-title">{{ t('admin.season.jobs.title') }}</h2>
+      <p class="tbca-hint">{{ t('admin.season.jobs.intro') }}</p>
+      <ul class="jobs">
+        @for (j of jobs; track j) {
+          <li>
+            <div>
+              <b>{{ t('admin.season.jobs.' + j + '.name') }}</b>
+              <p class="tbca-hint">{{ t('admin.season.jobs.' + j + '.hint') }}</p>
+            </div>
+            <button
+              type="button"
+              class="tbca-button tbca-button--ghost"
+              [disabled]="busy()"
+              (click)="runJob(j)"
+            >
+              {{ t('admin.season.jobs.run') }}
+            </button>
+          </li>
+        }
+      </ul>
+      @if (jobResult(); as r) {
+        <p class="result" role="status">
+          {{ t('admin.season.jobs.' + r.job + '.name') }} · {{ r.ms }} ms ·
+          @for (e of entries(r.result); track e.key) {
+            <code>{{ e.key }}={{ e.value }}</code>
+          }
+        </p>
+      }
+    </section>
+
+    <section class="tbca-panel" aria-labelledby="end-title">
+      <h2 id="end-title">{{ t('admin.season.end.title') }}</h2>
+      <div class="row">
+        <label class="tbca-label">
+          {{ t('admin.season.end.label') }}
+          <input
+            class="tbca-input"
+            type="datetime-local"
+            [value]="endsAt()"
+            (input)="endsAt.set(input($event))"
+          />
+        </label>
+        <button type="button" class="tbca-button" [disabled]="busy()" (click)="saveEnd()">
+          {{ t('admin.season.end.save') }}
+        </button>
+      </div>
+    </section>
+
+    <section class="tbca-panel danger-zone" aria-labelledby="reset-title">
+      <h2 id="reset-title">{{ t('admin.season.reset.title') }}</h2>
+      <p class="tbca-hint">{{ t('admin.season.reset.intro') }}</p>
+      @if (!v.season.isTest) {
+        <p class="warn" role="note">{{ t('admin.season.reset.realSeason') }}</p>
+      }
+      <fieldset class="checks">
+        <legend class="tbca-label-mono">{{ t('admin.season.reset.mode') }}</legend>
+        @for (m of ['progress', 'wipe']; track m) {
+          <label class="check check--block">
+            <input
+              type="radio"
+              name="reset-mode"
+              [checked]="resetMode() === m"
+              (change)="resetMode.set($any(m))"
+            />
+            <span>
+              <b>{{ t('admin.season.reset.modes.' + m + '.name') }}</b>
+              <span class="tbca-hint">{{ t('admin.season.reset.modes.' + m + '.hint') }}</span>
+            </span>
+          </label>
+        }
+      </fieldset>
+      <div class="row">
+        <label class="tbca-label grow">
+          {{ t('admin.season.reason') }}
+          <input
+            class="tbca-input"
+            [value]="resetReason()"
+            (input)="resetReason.set(input($event))"
+            maxlength="200"
+          />
+        </label>
+        <label class="tbca-label grow">
+          {{ t('admin.season.reset.confirm', { slug: v.season.slug }) }}
+          <input
+            class="tbca-input"
+            [value]="confirm()"
+            (input)="confirm.set(input($event))"
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </label>
+        <button
+          type="button"
+          class="tbca-button danger"
+          [disabled]="busy() || !canResetSeason()"
+          (click)="resetSeason()"
+        >
+          {{ t('admin.season.reset.run') }}
+        </button>
+      </div>
+      @if (resetResult(); as r) {
+        <p class="result" role="status">
+          {{
+            t('admin.season.reset.done', {
+              characters: r.characters,
+              fights: r.fights,
+              runs: r.runs,
+              items: r.items,
+            })
+          }}
+        </p>
+      }
+    </section>
+  }
+</ng-container>

@@ -11,23 +11,27 @@ import {
   Put,
   Query,
   Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import {
   adminAmountSchema,
+  adminDataExportQuery,
   adminBanSchema,
   adminConfigDraftSchema,
   adminConfigUpdateSchema,
   adminTimeSchema,
+  adminSimulationReportSchema,
   adminSimulationSchema,
 } from '@tbca/shared';
 import type { SeasonConfigData } from '@tbca/db';
-import type { FastifyRequest } from 'fastify';
+import type { FastifyReply, FastifyRequest } from 'fastify';
 
 import { CsrfGuard, SessionGuard, SuperadminGuard } from '../auth/guards.js';
 import { parseBody } from '../common/api-error.js';
 import { AdminService } from './admin.service.js';
 import { ConfigService } from './config.service.js';
+import { ExportService } from './export.service.js';
 
 @Controller('admin')
 @UseGuards(SessionGuard, CsrfGuard, SuperadminGuard)
@@ -35,6 +39,7 @@ export class AdminController {
   constructor(
     @Inject(AdminService) private readonly admin: AdminService,
     @Inject(ConfigService) private readonly configs: ConfigService,
+    @Inject(ExportService) private readonly exports: ExportService,
   ) {}
 
   @Get('time')
@@ -84,6 +89,23 @@ export class AdminController {
     return this.admin.adjustCredits(req.auth!.accountId, id, amount, reason);
   }
 
+  /** Anonymisierter Datenexport (JSON) für Balancing-Auswertungen. */
+  @Get('export')
+  async dataExport(
+    @Req() req: FastifyRequest,
+    @Query() query: unknown,
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ) {
+    const doc = await this.exports.export(
+      req.auth!.accountId,
+      parseBody(adminDataExportQuery, query),
+    );
+    reply
+      .header('cache-control', 'no-store')
+      .header('content-disposition', `attachment; filename="tbca-data-${doc.season.day}.json"`);
+    return doc;
+  }
+
   @Get('audit')
   audit() {
     return this.admin.auditLog();
@@ -126,6 +148,13 @@ export class AdminController {
   @HttpCode(200)
   simulate(@Body() body: unknown) {
     return this.configs.simulate(parseBody(adminSimulationSchema, body));
+  }
+
+  /** Balancing-Report über mehrere Stufen, zum Herunterladen und Auswerten. */
+  @Post('simulations/report')
+  @HttpCode(200)
+  simulationReport(@Body() body: unknown) {
+    return this.configs.report(parseBody(adminSimulationReportSchema, body));
   }
 
   @Post('config/:version/publish')

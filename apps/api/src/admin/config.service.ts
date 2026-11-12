@@ -10,11 +10,14 @@ import {
   type BattleRules,
   type GameConfig,
 } from '@tbca/game-core';
-import type {
-  AdminConfigList,
-  AdminConfigVersion,
-  AdminSimulationRequest,
-  AdminSimulationResponse,
+import {
+  SIM_REPORT_FORMAT,
+  SIM_REPORT_POINTS,
+  type AdminConfigList,
+  type AdminConfigVersion,
+  type AdminSimulationReport,
+  type AdminSimulationRequest,
+  type AdminSimulationResponse,
 } from '@tbca/shared';
 
 import { ApiError } from '../common/api-error.js';
@@ -74,11 +77,19 @@ export class ConfigService {
 
   async createDraft(
     actor: string,
-    from: number | null,
+    from: number | 'defaults' | null,
     notes: string | null,
   ): Promise<AdminConfigVersion> {
     const season = await this.seasons.current();
-    const source = from ? await this.get(from) : await this.get(season.configVersion);
+    // Startwerte aus dem Code, z. B. nach einem Rebalancing in einem Update
+    const defaults: SeasonConfigData = {
+      battle: { ...DEFAULT_BATTLE_RULES },
+      game: DEFAULT_GAME_CONFIG,
+    };
+    const source =
+      from === 'defaults'
+        ? { version: 'defaults' as const, data: defaults }
+        : await this.get(from ?? season.configVersion);
     const version = await this.configs.createDraft(
       season.id,
       source.data as unknown as SeasonConfigData,
@@ -189,5 +200,55 @@ export class ConfigService {
           })
         : null;
     return { version, status: v.status, seed, ms: Date.now() - started, matchups, dungeon };
+  }
+
+  /**
+   * Balancing-Report: Gewinnraten-Matrix und Dungeon-Tiefe auf mehreren Stufen mit typischer
+   * Ausrüstung, dazu die vollständige Konfiguration – als Datei exportierbar.
+   */
+  async report(req: {
+    version?: number | undefined;
+    fights: number;
+    runs: number;
+    seed?: string | undefined;
+  }): Promise<AdminSimulationReport> {
+    const list = await this.list();
+    const version =
+      req.version ?? list.versions.find((v) => v.status === 'published')?.version ?? 1;
+    const v = await this.get(version);
+    const game = v.data.game as unknown as GameConfig;
+    const battle = v.data.battle as unknown as BattleRules;
+    const seed = req.seed ?? 'tbca-report';
+    const started = Date.now();
+    const points = SIM_REPORT_POINTS.filter((p) => p.level <= game.maxLevel).map((p) => ({
+      level: p.level,
+      gear: p.gear,
+      matchups: simulateMatchups(game, battle, {
+        level: p.level,
+        fightsPerPair: req.fights,
+        gear: p.gear,
+        seed: `${seed}:${p.level}`,
+        configVersion: version,
+      }),
+      dungeon: simulateDungeon(game, battle, {
+        level: p.level,
+        runsPerClass: req.runs,
+        gear: p.gear,
+        seed: `${seed}:${p.level}`,
+        configVersion: version,
+      }),
+    }));
+    return {
+      format: SIM_REPORT_FORMAT,
+      generatedAt: new Date().toISOString(),
+      version,
+      status: v.status,
+      seed,
+      fights: req.fights,
+      runs: req.runs,
+      ms: Date.now() - started,
+      points,
+      config: v.data as unknown as Record<string, unknown>,
+    };
   }
 }

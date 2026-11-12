@@ -30,5 +30,6 @@ import { ServiceTokenGuard } from './service-token.guard.js';
       useFactory: (conn: DbConnection) => new DrizzleCharacterRepository(conn.db),
     },
   ],
+  exports: [DiscordService],
 })
 export class DiscordModule {}

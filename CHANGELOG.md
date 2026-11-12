@@ -8,6 +8,32 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ### Hinzugefügt
 
+- Admin, Season-Steuerung (`/admin/season`): Kennzahlen des Spieltags, Tageslimits für alle
+  oder einen Spieler zurücksetzen (Dungeon-Runs, belohnte Kämpfe, Chat-XP-Deckel), Hintergrund-
+  Jobs sofort ausführen (Season-Kennzahlen, Chat-XP buchen, verwaiste Runs abschließen, alle
+  Runs beenden, Bots handeln lassen), Season-Ende verschieben und die Season zurücksetzen
+  (Fortschritt oder alles; Bestätigung mit dem Season-Slug). Rücksetzungen der Tageslimits
+  löschen nichts, sondern stehen in der neuen Tabelle `daily_reset` (Migration 0012); alles
+  landet im Audit-Log.
+- Entwicklung im Heimnetz: `scripts/dev.sh lan` macht den Dev-Server im LAN erreichbar, ermittelt
+  die Adresse (oder `TBCA_LAN_HOST`), trägt sie als `WEB_EXTRA_ORIGINS` ein und zeigt die
+  Discord-Redirects, Firewall- und WSL2-Hinweise an. Der Discord-Login springt an die Adresse
+  zurück, über die er gestartet wurde. Optionaler Testzugang ohne Discord per Name
+  (`DEV_LOGIN=true`, Anbieter `dev`, Migration 0013; in Produktion verweigert die API den Start).
+- Balancing-Exporte: Simulationsergebnis als JSON oder CSV, Balancing-Report über Level 3–80
+  mit vollständiger Konfiguration (`POST /api/admin/simulations/report`, `tbca-sim-report/v1`)
+  und anonymisierter Datenexport der Plattform (`GET /api/admin/export`, `tbca-data/v1`:
+  Builds, Kämpfe mit den Werten aller Beteiligten, Dungeon-Runs, Wirtschaft, Chat-XP – ohne
+  Namen und IDs, Kürzel je Export neu).
+- Item-Editor überarbeitet: Namen je Sprache (DE/EN) in der Konfiguration, die ID folgt bei
+  neuen Vorlagen dem Namen und bleibt bei veröffentlichten fest; Suche, Kategorie-Filter, Icons,
+  lesbare Bezeichnungen, Basisgewichte mit Anteil, Waffen-Skalierung als Schaden je Punkt,
+  Duplizieren. Neu: Abgleich jeder Vorlage mit der Balancing-Kurve, Item-Generator nach Stil
+  (z. B. Bollwerk, Schütze, Hacker) mit Namen und an der Kurve ausgerichteten Werten,
+  Export/Import der Item-Werte im normierten Format `tbca-items/v1` mit Vorschau der
+  Änderungen, Entwurf aus den Startwerten des Codes (`from: "defaults"`).
+- Website: Item-Namen kommen aus der Konfiguration, sonst aus der Übersetzung, sonst aus der
+  lesbar gemachten ID (vorher erschien bei neuen Vorlagen der Übersetzungsschlüssel).
 - Balancing-Simulation (Phase 2, Spezifikation Abschnitt 14): `simulateMatchups` (Gewinnraten-
   Matrix Klasse × Klasse mit Ausreißern, beide Startpositionen) und `simulateDungeon`
   (Verteilung der erreichten Tiefe) in game-core, rein und deterministisch. Admin-Endpunkt

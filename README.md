@@ -45,18 +45,37 @@ mit lokal installierten Diensten kollidieren; ändern lässt sich das in `.env.d
 
 Unter Windows laufen alle Scripts in WSL2 (Ubuntu) mit Docker Desktop oder Docker Engine.
 
+### Im Heimnetz testen
+
+`scripts/dev.sh lan` startet alles wie `scripts/dev.sh`, nur lauscht der Dev-Server auf allen
+Schnittstellen. Das Script findet die LAN-Adresse selbst (oder nimmt `TBCA_LAN_HOST=<IP>`),
+erlaubt sie der API als Origin (`WEB_EXTRA_ORIGINS`) und zeigt an, was noch zu tun ist:
+
+- **Discord-Login:** Der Rücksprung geht an die Adresse, über die der Browser kam. Dafür muss
+  `http://<IP>:4200/api/auth/discord/callback` zusätzlich in der Discord-App unter
+  OAuth2 → Redirects stehen; das Script gibt die genaue Adresse aus. Eine feste IP im Router
+  erspart das erneute Eintragen.
+- **Ohne Discord:** Mit `DEV_LOGIN=true` in `.env.development` gibt es auf der Startseite einen
+  Testzugang per Name – praktisch für Mitspieler ohne eingetragenen Redirect. In Produktion
+  verweigert die API den Start mit dieser Einstellung.
+- **Von außerhalb des Heimnetzes:** ein Tunnel mit fester HTTPS-Adresse (z. B. Tailscale Funnel
+  oder Cloudflare Tunnel); deren Adresse als `WEB_EXTRA_ORIGINS` und Discord-Redirect eintragen.
+- **WSL2:** Andere Geräte erreichen WSL nur über Windows – entweder `networkingMode=mirrored` in
+  `%UserProfile%\.wslconfig` (Windows 11) oder eine Portweiterleitung mit `netsh`; das Script
+  zeigt den Befehl an. In beiden Fällen Port 4200 in der Windows-Firewall freigeben.
+
 ## Scripts
 
-| Script               | Zweck                                                               |
-| -------------------- | ------------------------------------------------------------------- |
-| `scripts/setup.sh`   | pnpm und Abhängigkeiten installieren, `.env.<umgebung>` anlegen     |
-| `scripts/dev.sh`     | Dienste per Docker, Apps nativ; `services`, `down`, `reset`, `logs` |
-| `scripts/test.sh`    | Prettier, ESLint, Typprüfung, Unit-Tests, `pnpm audit`              |
-| `scripts/migrate.sh` | Migrationen ausführen; `generate`, `seed`                           |
-| `scripts/bot.sh`     | Discord-Bot: `register-commands`                                    |
-| `scripts/build.sh`   | Produktions-Images bauen (`--platform`, `--save`, `--push`)         |
-| `scripts/deploy.sh`  | Ausrollen mit Backup, Migration, Healthcheck und Rollback           |
-| `scripts/backup.sh`  | Datenbank sichern, auflisten, wiederherstellen                      |
+| Script               | Zweck                                                                      |
+| -------------------- | -------------------------------------------------------------------------- |
+| `scripts/setup.sh`   | pnpm und Abhängigkeiten installieren, `.env.<umgebung>` anlegen            |
+| `scripts/dev.sh`     | Dienste per Docker, Apps nativ; `lan`, `services`, `down`, `reset`, `logs` |
+| `scripts/test.sh`    | Prettier, ESLint, Typprüfung, Unit-Tests, `pnpm audit`                     |
+| `scripts/migrate.sh` | Migrationen ausführen; `generate`, `seed`                                  |
+| `scripts/bot.sh`     | Discord-Bot: `register-commands`                                           |
+| `scripts/build.sh`   | Produktions-Images bauen (`--platform`, `--save`, `--push`)                |
+| `scripts/deploy.sh`  | Ausrollen mit Backup, Migration, Healthcheck und Rollback                  |
+| `scripts/backup.sh`  | Datenbank sichern, auflisten, wiederherstellen                             |
 
 Jedes Script zeigt mit `--help` seine Optionen. Die Umgebung wählt `TBCA_ENV`
 (`development` oder `production`); Variablen sind in `.env.example` dokumentiert.

@@ -64,6 +64,35 @@ export {
 } from './items/items.js';
 export { rollLoot, rollRarity } from './items/loot.js';
 export {
+  CURVE_POINTS,
+  REFERENCE_WEAPON_SCALING,
+  templateCurve,
+  templateCurveSummary,
+  typicalPrimary,
+  type TemplateCurve,
+} from './items/curve.js';
+export {
+  generateTemplate,
+  ITEM_STYLES,
+  slug,
+  stylesFor,
+  uniqueId,
+  type GeneratedTemplate,
+  type GenerateTemplateInput,
+  type ItemStyle,
+} from './items/generator.js';
+export {
+  exportItems,
+  importItems,
+  ITEM_EXCHANGE_FORMAT,
+  toPercent,
+  type ItemExchange,
+  type ItemExchangeRules,
+  type ItemExchangeTemplate,
+  type ItemImportOptions,
+  type ItemImportResult,
+} from './items/exchange.js';
+export {
   affixShare,
   CraftingError,
   effectiveItem,

@@ -99,6 +99,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/account/account.page').then((m) => m.AccountPage),
   },
   {
+    path: 'admin/season',
+    loadComponent: () => import('./pages/admin/season.page').then((m) => m.SeasonPage),
+  },
+  {
     path: 'admin/simulation',
     loadComponent: () => import('./pages/admin/simulation.page').then((m) => m.SimulationPage),
   },

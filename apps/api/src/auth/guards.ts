@@ -63,7 +63,7 @@ export class CsrfGuard implements CanActivate {
     if (SAFE_METHODS.has(request.method)) return true;
 
     const origin = request.headers.origin;
-    if (origin !== undefined && origin !== this.env.WEB_ORIGIN) {
+    if (origin !== undefined && !this.env.WEB_ORIGINS.includes(origin)) {
       throw new ForbiddenException('Ungültiger Origin');
     }
     const header = request.headers[CSRF_HEADER];

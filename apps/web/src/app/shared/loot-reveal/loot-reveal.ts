@@ -16,6 +16,7 @@ import { statLabel } from '../item-format';
 import { tier } from '../item-format';
 import { ItemIcon } from '../ui/item-icon';
 import { Stars } from '../ui/stars';
+import { ItemNamePipe } from '../item-name';
 
 /**
  * Loot-Reveal nach Rarität (Spezifikation, Abschnitt 18): jede Datenkapsel öffnet sich einzeln,
@@ -24,7 +25,7 @@ import { Stars } from '../ui/stars';
  */
 @Component({
   selector: 'tbca-loot-reveal',
-  imports: [TranslocoDirective, ItemIcon, Stars],
+  imports: [TranslocoDirective, ItemIcon, Stars, ItemNamePipe],
   templateUrl: './loot-reveal.html',
   styleUrl: './loot-reveal.css',
   host: {

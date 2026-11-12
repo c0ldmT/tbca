@@ -2,6 +2,8 @@
 # Lokale Entwicklung: Postgres und Valkey laufen in Docker, die Apps nativ mit Hot Reload.
 #
 #   scripts/dev.sh             Dienste starten, migrieren, Dev-Daten, alle Apps im Watch-Modus
+#   scripts/dev.sh lan         wie oben, Website zusätzlich im Heimnetz erreichbar
+#                              (Adresse: TBCA_LAN_HOST=<IP oder Name>, sonst automatisch)
 #   scripts/dev.sh services    nur Postgres und Valkey starten
 #   scripts/dev.sh down        Dienste stoppen (Daten bleiben erhalten)
 #   scripts/dev.sh reset       Dienste stoppen und alle lokalen Daten löschen
@@ -37,7 +39,76 @@ start_services() {
   ok "Dienste laufen (Postgres :${POSTGRES_PORT}, Valkey :${VALKEY_PORT})"
 }
 
+# IPv4-Adressen dieses Rechners im lokalen Netz (ohne Loopback und Docker-Brücken).
+lan_addresses() {
+  local list=""
+  if has_cmd ip; then
+    list="$(ip -4 -o addr show scope global 2>/dev/null | awk '{print $2" "$4}' |
+      grep -Ev '^(docker|br-|veth|virbr|cni|flannel)' | awk '{sub(/\/.*/, "", $2); print $2}' || true)"
+  elif has_cmd ipconfig; then # macOS
+    list="$(ipconfig getifaddr en0 2>/dev/null; ipconfig getifaddr en1 2>/dev/null)"
+  fi
+  printf '%s\n' "$list" | grep -E '^[0-9]+\.' | sort -u || true
+}
+
+is_wsl() { grep -qi microsoft /proc/version 2>/dev/null; }
+
+# Website im Heimnetz freigeben: Dev-Server auf allen Schnittstellen, API erlaubt die
+# LAN-Adressen als Origin und nutzt sie als Discord-Rücksprung.
+prepare_lan() {
+  local port="${WEB_PORT:-4200}" hosts=() origins=() h
+  if [[ -n "${TBCA_LAN_HOST:-}" ]]; then
+    IFS=',' read -r -a hosts <<<"${TBCA_LAN_HOST// /}"
+  else
+    mapfile -t hosts < <(lan_addresses)
+  fi
+  [[ ${#hosts[@]} -gt 0 ]] || die "Keine LAN-Adresse gefunden. Bitte TBCA_LAN_HOST=<IP> setzen."
+  for h in "${hosts[@]}"; do origins+=("http://${h}:${port}"); done
+
+  export TBCA_WEB_HOST=0.0.0.0
+  local joined
+  joined="$(IFS=,; printf '%s' "${origins[*]}")"
+  export WEB_EXTRA_ORIGINS="${WEB_EXTRA_ORIGINS:+${WEB_EXTRA_ORIGINS},}${joined}"
+
+  info "Website im Heimnetz:"
+  for h in "${origins[@]}"; do printf '    %s\n' "$h"; done
+  for h in "${hosts[@]}"; do
+    if [[ ! "$h" =~ ^[0-9.]+$ ]]; then
+      warn "Hostname $h: Der Dev-Server beantwortet nur IP-Adressen und localhost. Den Namen in
+  apps/web/angular.json unter serve → options → allowedHosts eintragen oder die IP verwenden."
+    fi
+  done
+  if [[ -n "${DISCORD_CLIENT_ID:-}" ]]; then
+    info "Discord-Login: diese Redirects in der Discord-App (OAuth2 → Redirects) eintragen:"
+    for h in "${origins[@]}"; do printf '    %s/api/auth/discord/callback\n' "$h"; done
+    printf '    (der localhost-Redirect bleibt zusätzlich eingetragen)\n'
+  fi
+  if [[ "${DEV_LOGIN:-}" =~ ^(true|1)$ ]]; then
+    info "Testzugang ohne Discord ist aktiv (DEV_LOGIN=true) – Anmeldung per Name auf der Startseite."
+  else
+    printf '    Ohne Discord testen: DEV_LOGIN=true in %s setzen.\n' "$(basename "$(env_file)")"
+  fi
+  if is_wsl; then
+    warn "WSL erkannt: Geräte im Heimnetz erreichen WSL nur über Windows. Entweder in
+  %UserProfile%\\.wslconfig unter [wsl2] networkingMode=mirrored setzen (Windows 11, danach
+  'wsl --shutdown') oder Port ${port} weiterleiten (PowerShell als Admin):
+    netsh interface portproxy add v4tov4 listenport=${port} listenaddress=0.0.0.0 connectport=${port} connectaddress=\$(wsl hostname -I)
+  und in der Windows-Firewall eingehend TCP ${port} erlauben. TBCA_LAN_HOST=<Windows-IP> setzen,
+  damit Login und Origin die Adresse kennen, die die anderen Geräte aufrufen."
+  else
+    printf '    Firewall: eingehend TCP %s erlauben (z. B. sudo ufw allow %s/tcp).\n' "$port" "$port"
+  fi
+}
+
 case "${1:-all}" in
+  lan)
+    prepare_lan
+    start_services
+    "$ROOT_DIR/scripts/migrate.sh"
+    "$ROOT_DIR/scripts/migrate.sh" seed
+    info "Starte Apps im Heimnetz-Modus (Strg+C zum Beenden)"
+    exec pnpm --recursive --parallel --if-present --stream run dev
+    ;;
   all)
     start_services
     "$ROOT_DIR/scripts/migrate.sh"
@@ -54,6 +125,6 @@ case "${1:-all}" in
     compose_dev down --volumes
     ;;
   logs) compose_dev logs --follow ;;
-  -h | --help) sed -n '2,9p' "$0" ;;
+  -h | --help) sed -n '2,11p' "$0" ;;
   *) die "Unbekannter Befehl: $1 (siehe scripts/dev.sh --help)" ;;
 esac

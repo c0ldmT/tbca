@@ -85,6 +85,20 @@
       "when": 1794417577094,
       "tag": "0011_bot_agents",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1794492598800,
+      "tag": "0012_daily_reset",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1794493258120,
+      "tag": "0013_dev_login",
+      "breakpoints": true
     }
   ]
 }

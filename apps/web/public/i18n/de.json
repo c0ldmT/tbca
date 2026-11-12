@@ -23,7 +23,12 @@
       "cancelled": "Anmeldung abgebrochen. Du kannst es jederzeit erneut versuchen.",
       "failed": "Anmeldung fehlgeschlagen. Bitte versuch es noch einmal."
     },
-    "logoutFailed": "Abmelden hat nicht geklappt. Bitte lade die Seite neu."
+    "logoutFailed": "Abmelden hat nicht geklappt. Bitte lade die Seite neu.",
+    "dev": {
+      "label": "Testzugang ohne Discord (nur Entwicklung)",
+      "submit": "Als Tester anmelden",
+      "failed": "Test-Anmeldung fehlgeschlagen."
+    }
   },
   "home": {
     "tagline": "Rundenbasierte Kämpfe für deine Community – auf Discord, Twitch und im Web.",
@@ -406,7 +411,9 @@
     "not_community_staff": "Dafür fehlen dir die Rechte in dieser Community.",
     "last_admin": "Die Community braucht mindestens einen Admin.",
     "xp_limit": "Moderatoren korrigieren höchstens ±5 000 XP.",
-    "invalid_name": "Dieser Name ist nicht erlaubt (3–20 Zeichen, keine reservierten Wörter)."
+    "invalid_name": "Dieser Name ist nicht erlaubt (3–20 Zeichen, keine reservierten Wörter).",
+    "confirm_mismatch": "Die Bestätigung passt nicht zur laufenden Season.",
+    "season_end_before_start": "Das Ende muss nach dem Start der Season liegen."
   },
   "pvp": {
     "title": "Arena",
@@ -788,7 +795,116 @@
       "jsonHint": "Für Werte ohne eigenen Editor (Klassen, Fähigkeiten, Dungeon, Shop …). Der Server prüft beim Speichern alles.",
       "applyJson": "JSON übernehmen",
       "saved": "Entwurf gespeichert und geprüft.",
-      "published": "Veröffentlicht – gilt ab sofort für neue Kämpfe und Items."
+      "published": "Veröffentlicht – gilt ab sofort für neue Kämpfe und Items.",
+      "newDraftDefaults": "Entwurf aus Startwerten (Code)",
+      "defaultsHint": "Übernimmt alle Werte aus dem aktuellen Programmstand, z. B. nach einem Rebalancing-Update. Vor dem Veröffentlichen mit der Simulation vergleichen.",
+      "defaultsNote": "Startwerte aus dem Code",
+      "defaultsCreated": "Entwurf aus den Startwerten angelegt. Tipp: in der Simulation mit der veröffentlichten Version vergleichen.",
+      "readOnly": "Veröffentlichte Versionen sind schreibgeschützt – für Änderungen einen Entwurf anlegen.",
+      "tools": "Werkzeuge",
+      "panels": {
+        "edit": "Bearbeiten",
+        "generate": "Generator",
+        "exchange": "Import/Export"
+      },
+      "search": "Name oder ID suchen",
+      "allCategories": "Alle Kategorien",
+      "noMatch": "Keine Vorlage passt.",
+      "id": "ID (intern)",
+      "idAuto": "Neue Vorlage: Die ID folgt automatisch dem Namen (englisch bevorzugt).",
+      "idLocked": "Diese Vorlage ist veröffentlicht und steckt in Items – ihre ID bleibt fest. Namen lassen sich jederzeit ändern.",
+      "name": {
+        "de": "Name (Deutsch)",
+        "en": "Name (Englisch)"
+      },
+      "weapon": "Waffe",
+      "kinds": {
+        "physical": "Physisch (gegen Rüstung)",
+        "tech": "Tech (gegen Firewall)"
+      },
+      "perPoint": "Schaden je Attributpunkt",
+      "baseHint": "Gewichte verteilen das Basis-Budget; rechts der Anteil. Implantate leben nur von Affixen.",
+      "duplicate": "Duplizieren",
+      "removeLocked": "Veröffentlichte Vorlagen stecken in Items und lassen sich nicht entfernen.",
+      "curve": {
+        "badge": "Abgleich mit der Balancing-Kurve (100 % = genau auf der Kurve)",
+        "title": "Balancing-Kurve",
+        "ok": "Liegt auf der Kurve: nutzt das Budget wie eine Referenz-Vorlage.",
+        "high": "Über der Kurve: stärker als das Budget vorsieht, meist durch hohe Waffen-Skalierung.",
+        "low": "Unter der Kurve: verschenkt Budget, z. B. durch einen kleinen Affix-Pool oder niedrige Skalierung.",
+        "explain": "Die Kurve ist das Power-Budget je Kategorie, Level und Rarität. 100 % heißt: Die Vorlage bringt im Mittel genau so viel Kampfwert wie eine Referenz mit vollem Affix-Pool und 0,9 Schaden je Attributpunkt."
+      },
+      "gen": {
+        "open": "Generieren …",
+        "title": "Item-Generator",
+        "intro": "Entwirft eine Vorlage aus einem Stil mit Namen (DE/EN) und passenden Werten und richtet sie an der Balancing-Kurve aus. Gefällt sie nicht, neu würfeln.",
+        "style": "Stil",
+        "auto": "Zufällig",
+        "reroll": "Neu würfeln",
+        "adopt": "In den Entwurf übernehmen",
+        "adopted": "Vorlage übernommen – jetzt anpassen und speichern."
+      },
+      "styles": {
+        "bulwark": {
+          "name": "Bollwerk",
+          "hint": "Rüstung und HP, Affixe für Ausdauer – für Tanks."
+        },
+        "firewall": {
+          "name": "Firewall",
+          "hint": "Schutz gegen Tech-Schaden, Affixe für INT und Energie."
+        },
+        "agile": {
+          "name": "Agil",
+          "hint": "Ausweichen und Initiative, Affixe für GES und Crits."
+        },
+        "brawler": {
+          "name": "Schläger",
+          "hint": "Physische Waffe, skaliert mit STR."
+        },
+        "marksman": {
+          "name": "Schütze",
+          "hint": "Physische Waffe, skaliert mit GES, Affixe für Präzision."
+        },
+        "hacker": {
+          "name": "Hacker",
+          "hint": "Tech-Waffe, skaliert mit INT."
+        },
+        "medic": {
+          "name": "Sanitäter",
+          "hint": "Tech-Waffe mit INT, Affixe für Ausdauer und Energie."
+        },
+        "offense": {
+          "name": "Angriff",
+          "hint": "Implantat für Attribute, Crits und Schaden."
+        },
+        "defense": {
+          "name": "Abwehr",
+          "hint": "Implantat für Ausdauer, Rüstung und Firewall."
+        },
+        "utility": {
+          "name": "Werkzeug",
+          "hint": "Implantat für Tempo und Energie."
+        }
+      },
+      "exchange": {
+        "title": "Item-Werte austauschen",
+        "intro": "Normiertes Format tbca-items/v1: Basisgewichte in Prozent, Skalierung als Schaden je Attributpunkt, dazu der Kurven-Abgleich. Zum Auswerten, Weitergeben und Wieder-Einspielen.",
+        "export": "Item-Werte exportieren",
+        "importTitle": "Importieren",
+        "mode": "Art des Imports",
+        "modes": {
+          "merge": "Zusammenführen",
+          "replace": "Ersetzen"
+        },
+        "withRules": "Budget-Regeln mit übernehmen",
+        "choose": "Datei wählen …",
+        "diff": "{{ added }} neu, {{ changed }} geändert, {{ removed }} entfernt",
+        "adopt": "In den Entwurf übernehmen",
+        "adopted": "Import übernommen – prüfen und speichern."
+      },
+      "removeWeight": "{{ stat }} entfernen",
+      "noWeights": "Keine Basiswerte – das Item lebt nur von Affixen.",
+      "addWeight": "Basiswert hinzufügen"
     },
     "kicker": "Superadmin · Werkzeuge",
     "shop": {
@@ -863,7 +979,117 @@
       "histAxis": "Waagerecht: geschaffte Etagen ohne Verbrauchsgüter, senkrecht: Anzahl Runs.",
       "perClass": "Tiefe je Klasse",
       "class": "Klasse",
-      "best": "Bester Run"
+      "best": "Bester Run",
+      "export": {
+        "json": "Als JSON",
+        "csv": "Als CSV"
+      },
+      "report": {
+        "title": "Balancing-Report",
+        "intro": "Simuliert Level 3 bis 80 mit typischer Ausrüstung (Matrix und Dungeon) und lädt das Ergebnis samt vollständiger Konfiguration als Datei herunter – zum Auswerten oder Weitergeben fürs Rebalancing.",
+        "run": "Report erstellen",
+        "caption": "Gesamt-Siegquote je Klasse und Stufe, dazu mittlere Dungeon-Tiefe",
+        "hint": "Berechnet in {{ ms }} ms. Die Datei wurde heruntergeladen.",
+        "depth": "Ø Dungeon-Tiefe"
+      }
+    },
+    "season": {
+      "title": "Season-Steuerung",
+      "teaser": "Tageslimits zurücksetzen, Jobs sofort ausführen, Season-Ende verschieben oder die Season zurücksetzen.",
+      "open": "Season steuern",
+      "intro": "Alles wirkt auf die laufende Season und landet im Audit-Log.",
+      "test": "Test",
+      "slug": "Kennung",
+      "day": "Spieltag",
+      "gameNow": "Spielzeit",
+      "period": "Zeitraum",
+      "median": "Median-Level",
+      "stats": {
+        "characters": "Spieler",
+        "bots": "+ {{ n }} Bots",
+        "played": "Heute aktiv",
+        "runs": "Dungeon-Runs heute",
+        "active": "{{ n }} laufen gerade",
+        "fights": "Belohnte Kämpfe heute",
+        "passive": "Chat-XP heute"
+      },
+      "limits": "Limits je Spieler und Tag: {{ runs }} Dungeon-Runs, {{ fights }} belohnte Kämpfe.",
+      "reason": "Begründung (für das Audit-Log)",
+      "daily": {
+        "title": "Tageslimits zurücksetzen",
+        "intro": "Bisherige Runs und Kämpfe des Tages zählen danach nicht mehr gegen das Limit. Belohnungen und Kampfverläufe bleiben erhalten.",
+        "what": "Was",
+        "kinds": {
+          "dungeon": "Dungeon-Runs",
+          "fights": "Belohnte Kämpfe",
+          "passive": "Chat-XP-Deckel"
+        },
+        "scope": "Für",
+        "all": "Alle Spieler",
+        "player": "Einen Spieler",
+        "chosen": "Ausgewählt: {{ name }}",
+        "run": "Zurücksetzen",
+        "today": "Heute zurückgesetzt",
+        "done": "Tageslimits zurückgesetzt."
+      },
+      "jobs": {
+        "title": "Jobs sofort ausführen",
+        "intro": "Der Worker erledigt das sonst regelmäßig; hier läuft es einmal sofort.",
+        "run": "Ausführen",
+        "season-stats": {
+          "name": "Season-Kennzahlen",
+          "hint": "Median-Level für den Aufholbonus neu berechnen (sonst alle 10 Minuten)."
+        },
+        "flush-passive-xp": {
+          "name": "Chat-XP buchen",
+          "hint": "Vorgemerkte XP aus Discord sofort gutschreiben (sonst alle 30 Sekunden)."
+        },
+        "expire-dungeon-runs": {
+          "name": "Verwaiste Runs abschließen",
+          "hint": "Runs ohne Entscheidung seit 10 Minuten mit Loot beenden."
+        },
+        "end-dungeon-runs": {
+          "name": "Alle Runs beenden",
+          "hint": "Jeden laufenden Run sofort beenden, Loot wird gutgeschrieben – z. B. vor einer Konfigurationsänderung."
+        },
+        "bot-agents": {
+          "name": "Bots handeln lassen",
+          "hint": "Alle Bots mit Agententyp einmal spielen lassen (nur Test-Seasons)."
+        }
+      },
+      "end": {
+        "title": "Season-Ende",
+        "label": "Endet am",
+        "save": "Speichern",
+        "done": "Season-Ende gespeichert."
+      },
+      "reset": {
+        "title": "Season zurücksetzen",
+        "intro": "Löscht Kämpfe, Dungeon-Runs, Items, Materialien, Credits und Chat-XP-Zähler der laufenden Season. Nicht umkehrbar.",
+        "realSeason": "Achtung: Das ist keine Test-Season. Echte Spielerfortschritte gehen verloren.",
+        "mode": "Umfang",
+        "modes": {
+          "progress": {
+            "name": "Fortschritt zurücksetzen",
+            "hint": "Charaktere bleiben mit Name und Klasse, starten aber wieder auf Level 1 mit Startausrüstung."
+          },
+          "wipe": {
+            "name": "Alles löschen",
+            "hint": "Spieler-Charaktere werden gelöscht und müssen neu erstellt werden; Bots bleiben auf Level 1."
+          }
+        },
+        "confirm": "Zur Bestätigung „{{ slug }}“ eintippen",
+        "run": "Season zurücksetzen",
+        "done": "Erledigt: {{ characters }} Charaktere, {{ fights }} Kämpfe, {{ runs }} Runs, {{ items }} Items."
+      }
+    },
+    "export": {
+      "title": "Daten exportieren",
+      "intro": "Anonymisierte Spieldaten für Balancing-Auswertungen: Konfiguration, Charakter-Builds mit Ausrüstung, Kämpfe mit Werten aller Beteiligten, Dungeon-Runs, Wirtschaft und Chat-XP. Ohne Namen, Discord- oder Account-IDs.",
+      "days": "Zeitraum für Kämpfe und Runs",
+      "lastDays": "Letzte {{ days }} Tage",
+      "run": "Exportieren (JSON)",
+      "done": "Export heruntergeladen."
     }
   },
   "account": {

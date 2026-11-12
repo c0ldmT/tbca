@@ -20,6 +20,33 @@ export const envSchema = z
     DB_MAX_CONNECTIONS: z.coerce.number().int().min(1).max(100).default(10),
     /** Öffentliche Adresse der Website; Ziel nach dem Login und erlaubter Origin. */
     WEB_ORIGIN: z.url().transform((u) => u.replace(/\/+$/, '')),
+    /**
+     * Weitere Adressen, unter denen die Website erreichbar ist (Komma-getrennt), z. B.
+     * http://192.168.178.20:4200 für Tests im Heimnetz. Login, Rücksprung und CSRF-Prüfung
+     * gelten dann für jede dieser Adressen.
+     */
+    WEB_EXTRA_ORIGINS: z
+      .string()
+      .optional()
+      .transform((raw, ctx) => {
+        const origins: string[] = [];
+        for (const item of (raw ?? '')
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)) {
+          try {
+            const url = new URL(item);
+            if (url.protocol !== 'http:' && url.protocol !== 'https:') throw new Error();
+            origins.push(url.origin);
+          } catch {
+            ctx.addIssue({ code: 'custom', message: `Keine gültige Adresse: ${item}` });
+            return z.NEVER;
+          }
+        }
+        return origins;
+      }),
+    /** Anmeldung ohne Discord mit frei gewähltem Namen – nur für lokale Tests. */
+    DEV_LOGIN: bool.default(false),
     COOKIE_SECRET: z.string().min(32, 'COOKIE_SECRET muss mindestens 32 Zeichen haben'),
     /** Secure-Flag für Cookies; Standard: nur in Produktion. */
     COOKIE_SECURE: bool.optional(),
@@ -51,8 +78,14 @@ export const envSchema = z
       .min(32, 'BOT_SERVICE_TOKEN muss mindestens 32 Zeichen haben')
       .optional(),
   })
+  .refine((env) => !(env.DEV_LOGIN && env.NODE_ENV === 'production'), {
+    message: 'DEV_LOGIN ist in Produktion nicht erlaubt',
+    path: ['DEV_LOGIN'],
+  })
   .transform((env) => ({
     ...env,
+    /** Alle erlaubten Adressen der Website, die Hauptadresse zuerst. */
+    WEB_ORIGINS: [env.WEB_ORIGIN, ...env.WEB_EXTRA_ORIGINS.filter((o) => o !== env.WEB_ORIGIN)],
     COOKIE_SECURE: env.COOKIE_SECURE ?? env.NODE_ENV === 'production',
     DISCORD_REDIRECT_URI: env.DISCORD_REDIRECT_URI ?? `${env.WEB_ORIGIN}/api/auth/discord/callback`,
   }));
@@ -69,6 +102,26 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
     throw new Error(`Ungültige Umgebung:\n${issues.join('\n')}`);
   }
   return result.data;
+}
+
+/**
+ * Adresse der Website, über die eine Anfrage kam (Host-Header, beim Dev-Server unverändert
+ * weitergereicht). Nur erlaubte Adressen zählen, sonst gilt die Hauptadresse.
+ */
+export function originOf(
+  env: Env,
+  request: { protocol: string; headers: { host?: string | undefined } },
+): string {
+  const host = request.headers.host;
+  const origin = host ? `${request.protocol}://${host}` : null;
+  return origin && env.WEB_ORIGINS.includes(origin) ? origin : env.WEB_ORIGIN;
+}
+
+/** Discord-Rücksprung-Adresse für eine Website-Adresse. */
+export function discordRedirectFor(env: Env, origin: string): string {
+  return origin === env.WEB_ORIGIN
+    ? env.DISCORD_REDIRECT_URI
+    : `${origin}/api/auth/discord/callback`;
 }
 
 export function isDiscordConfigured(env: Env): boolean {

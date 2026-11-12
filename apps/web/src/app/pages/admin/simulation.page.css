@@ -213,3 +213,20 @@ h3 {
   text-transform: uppercase;
   color: var(--tbca-text-muted);
 }
+
+.meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+
+.meta-row .meta {
+  flex: 1;
+  min-width: 14rem;
+}
+
+.report td {
+  min-width: 72px;
+  height: 40px;
+}

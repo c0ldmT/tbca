@@ -12,6 +12,7 @@ import type {
 import { AdminService } from '../../core/admin.service';
 import { ApiFailure } from '../../core/api-failure';
 import { AuthService } from '../../core/auth.service';
+import { downloadJson } from '../../core/download';
 
 const HOUR = 3_600_000;
 
@@ -42,6 +43,7 @@ export class AdminPage {
   protected readonly notice = signal<string | null>(null);
   protected readonly factor = signal(1);
   protected readonly query = signal('');
+  protected readonly exportDays = signal(30);
   /** Eingaben je Account: Betrag und Begründung. */
   protected readonly forms = signal<Record<string, { amount: string; reason: string }>>({});
 
@@ -134,6 +136,15 @@ export class AdminPage {
       ]);
       this.accounts.set(accounts);
       this.audit.set(audit);
+    });
+  }
+
+  /** Anonymisierter Datenexport für Balancing-Auswertungen als JSON-Datei. */
+  protected exportData(): Promise<void> {
+    return this.run(async () => {
+      const doc = await this.api.dataExport(this.exportDays());
+      downloadJson(`tbca-data-${doc.season.day}.json`, doc);
+      this.notice.set('admin.export.done');
     });
   }
 

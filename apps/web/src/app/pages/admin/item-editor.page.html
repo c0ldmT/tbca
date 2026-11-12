@@ -8,7 +8,7 @@
         {{ t('admin.items.version', { version: d.version }) }} ·
         {{ t('admin.items.status.' + d.status) }}
         @if (dirty()) {
-          · {{ t('admin.items.unsaved') }}
+          · <b class="unsaved">{{ t('admin.items.unsaved') }}</b>
         }
       </p>
     }
@@ -34,6 +34,16 @@
         <button type="button" class="tbca-button" [disabled]="busy()" (click)="createDraft()">
           {{ t('admin.items.newDraft') }}
         </button>
+        <button
+          type="button"
+          class="tbca-button tbca-button--ghost"
+          [disabled]="busy()"
+          [title]="t('admin.items.defaultsHint')"
+          (click)="createDraft('defaults')"
+        >
+          {{ t('admin.items.newDraftDefaults') }}
+        </button>
+        <p class="tbca-hint grow">{{ t('admin.items.readOnly') }}</p>
       } @else {
         <button
           type="button"
@@ -47,185 +57,499 @@
           {{ t('admin.items.publish') }}
         </button>
       }
+      <span class="tbca-seg modes" role="tablist" [attr.aria-label]="t('admin.items.tools')">
+        @for (p of ['edit', 'generate', 'exchange']; track p) {
+          <button
+            type="button"
+            role="tab"
+            [attr.aria-selected]="panel() === p"
+            [attr.aria-pressed]="panel() === p"
+            (click)="panel.set($any(p))"
+          >
+            {{ t('admin.items.panels.' + p) }}
+          </button>
+        }
+      </span>
     </div>
 
     <div class="layout">
       <nav class="tbca-panel list" [attr.aria-label]="t('admin.items.templates')">
+        <input
+          class="tbca-input search"
+          type="search"
+          [placeholder]="t('admin.items.search')"
+          [attr.aria-label]="t('admin.items.search')"
+          [value]="query()"
+          (input)="query.set(valueOf($event))"
+        />
+        <select
+          class="tbca-select"
+          [attr.aria-label]="t('admin.items.category')"
+          (change)="filter.set($any(valueOf($event)))"
+        >
+          <option value="all" [selected]="filter() === 'all'">
+            {{ t('admin.items.allCategories') }}
+          </option>
+          @for (c of categories; track c) {
+            <option [value]="c" [selected]="filter() === c">{{ categoryLabel(c) }}</option>
+          }
+        </select>
         <ul>
-          @for (tpl of templates(); track tpl.id) {
+          @for (e of entries(); track e.tpl.id) {
             <li>
               <button
                 type="button"
                 class="pick"
-                [attr.aria-current]="tpl.id === selectedId() ? 'true' : null"
-                (click)="selectedId.set(tpl.id)"
+                [attr.aria-current]="e.tpl.id === selectedId() ? 'true' : null"
+                (click)="selectedId.set(e.tpl.id); panel.set('edit')"
               >
-                <span>{{ tpl.id }}</span>
-                <span class="tbca-hint">{{ tpl.category }}</span>
+                <tbca-item-icon [item]="e.icon" [size]="40" />
+                <span class="pick__text">
+                  <b>{{ e.name }}</b>
+                  <small>{{ e.tpl.id }}</small>
+                </span>
+                <span
+                  class="curve-badge"
+                  [attr.data-state]="curveState(e.ratio)"
+                  [title]="t('admin.items.curve.badge')"
+                  >{{ percent(e.ratio) }}</span
+                >
               </button>
             </li>
+          } @empty {
+            <li class="tbca-hint">{{ t('admin.items.noMatch') }}</li>
           }
         </ul>
         @if (editable()) {
-          <button type="button" class="tbca-button tbca-button--ghost" (click)="addTemplate()">
-            {{ t('admin.items.add') }}
-          </button>
+          <div class="list__actions">
+            <button type="button" class="tbca-button tbca-button--ghost" (click)="addTemplate()">
+              {{ t('admin.items.add') }}
+            </button>
+            <button
+              type="button"
+              class="tbca-button tbca-button--ghost"
+              (click)="panel.set('generate')"
+            >
+              {{ t('admin.items.gen.open') }}
+            </button>
+          </div>
         }
       </nav>
 
-      @if (selected(); as tpl) {
-        <section class="tbca-panel editor" [attr.aria-label]="tpl.id">
-          <fieldset [disabled]="!editable()">
+      @switch (panel()) {
+        @case ('generate') {
+          <section class="tbca-panel editor" aria-labelledby="gen-title">
+            <h2 id="gen-title">{{ t('admin.items.gen.title') }}</h2>
+            <p class="tbca-hint">{{ t('admin.items.gen.intro') }}</p>
             <div class="row">
               <label class="tbca-label">
-                ID
-                <input
-                  class="tbca-input"
-                  [value]="tpl.id"
-                  (change)="update({ id: $any($event.target).value })"
-                />
-              </label>
-              <label class="tbca-label">
                 {{ t('admin.items.category') }}
-                <select class="tbca-select" (change)="setCategory($any($event.target).value)">
+                <select class="tbca-select" (change)="setGenCategory($any(valueOf($event)))">
                   @for (c of categories; track c) {
-                    <option [value]="c" [selected]="tpl.category === c">{{ c }}</option>
+                    <option [value]="c" [selected]="genCategory() === c">
+                      {{ categoryLabel(c) }}
+                    </option>
                   }
                 </select>
               </label>
+              <label class="tbca-label">
+                {{ t('admin.items.gen.style') }}
+                <select class="tbca-select" (change)="genStyle.set($any(valueOf($event)))">
+                  <option value="auto" [selected]="genStyle() === 'auto'">
+                    {{ t('admin.items.gen.auto') }}
+                  </option>
+                  @for (s of genStyles(); track s) {
+                    <option [value]="s" [selected]="genStyle() === s">
+                      {{ t('admin.items.styles.' + s + '.name') }}
+                    </option>
+                  }
+                </select>
+              </label>
+              <button type="button" class="tbca-button tbca-button--ghost" (click)="reroll()">
+                {{ t('admin.items.gen.reroll') }}
+              </button>
             </div>
-            @if (tpl.weapon; as w) {
-              <div class="row">
-                <label class="tbca-label">
-                  {{ t('admin.items.damageKind') }}
-                  <select
-                    class="tbca-select"
-                    (change)="setWeapon({ kind: $any($event.target).value })"
-                  >
-                    <option value="physical" [selected]="w.kind === 'physical'">physical</option>
-                    <option value="tech" [selected]="w.kind === 'tech'">tech</option>
-                  </select>
-                </label>
-                <label class="tbca-label">
-                  {{ t('admin.items.scalesWith') }}
-                  <select
-                    class="tbca-select"
-                    (change)="setWeapon({ scalesWith: $any($event.target).value })"
-                  >
-                    @for (a of attributes; track a) {
-                      <option [value]="a" [selected]="w.scalesWith === a">
-                        {{ t('attributes.' + a) }}
-                      </option>
+            @if (generated(); as g) {
+              <article class="gen-card">
+                <div class="gen-card__head">
+                  <span>
+                    <b>{{ g.template.names?.[locale() === 'en' ? 'en' : 'de'] }}</b>
+                    <small
+                      >{{ g.template.names?.[locale() === 'en' ? 'de' : 'en'] }} ·
+                      {{ g.template.id }}</small
+                    >
+                  </span>
+                  <span class="curve-badge" [attr.data-state]="curveState(g.ratioPermille)">{{
+                    percent(g.ratioPermille)
+                  }}</span>
+                </div>
+                <p class="tbca-hint">{{ t('admin.items.styles.' + g.style + '.hint') }}</p>
+                <dl class="values">
+                  @if (g.template.weapon; as w) {
+                    <div>
+                      <dt>{{ t('admin.items.damageKind') }}</dt>
+                      <dd>{{ t('admin.items.kinds.' + w.kind) }}</dd>
+                    </div>
+                    <div>
+                      <dt>{{ t('admin.items.perPoint') }}</dt>
+                      <dd>{{ perPoint(w.scaling) }} × {{ t('attributes.' + w.scalesWith) }}</dd>
+                    </div>
+                  }
+                  @for (k of baseKeys; track k) {
+                    @if (g.template.base[k]; as w) {
+                      <div>
+                        <dt>{{ statName(k) }}</dt>
+                        <dd>{{ w }}</dd>
+                      </div>
                     }
-                  </select>
-                </label>
-                <label class="tbca-label">
-                  {{ t('admin.items.scaling') }}
-                  <input
-                    class="tbca-input narrow"
-                    type="number"
-                    min="0"
-                    step="500"
-                    [value]="w.scaling"
-                    (change)="setWeapon({ scaling: +$any($event.target).value })"
-                  />
-                </label>
-              </div>
+                  }
+                </dl>
+                <p class="chips chips--static">
+                  @for (s of g.template.affixPool; track s) {
+                    <span class="chip chip--on">{{ statName(s) }}</span>
+                  }
+                </p>
+                <button
+                  type="button"
+                  class="tbca-button"
+                  [disabled]="!editable()"
+                  (click)="adoptGenerated()"
+                >
+                  {{ t('admin.items.gen.adopt') }}
+                </button>
+                @if (!editable()) {
+                  <p class="tbca-hint">{{ t('admin.items.readOnly') }}</p>
+                }
+              </article>
             }
-            <h3>{{ t('admin.items.baseWeights') }}</h3>
-            <div class="weights">
-              @for (k of baseKeys; track k) {
-                <label class="tbca-label">
-                  {{ k }}
-                  <input
-                    class="tbca-input"
-                    type="number"
-                    min="0"
-                    [value]="weightOf(k)"
-                    (change)="setWeight(k, $any($event.target).value)"
-                  />
-                </label>
-              }
+          </section>
+        }
+        @case ('exchange') {
+          <section class="tbca-panel editor" aria-labelledby="ex-title">
+            <h2 id="ex-title">{{ t('admin.items.exchange.title') }}</h2>
+            <p class="tbca-hint">{{ t('admin.items.exchange.intro') }}</p>
+            <div class="row">
+              <button type="button" class="tbca-button" (click)="exportValues()">
+                {{ t('admin.items.exchange.export') }}
+              </button>
             </div>
-            <h3>{{ t('admin.items.affixPool') }}</h3>
-            <div class="chips">
-              @for (s of stats; track s) {
+            <h3>{{ t('admin.items.exchange.importTitle') }}</h3>
+            <fieldset [disabled]="!editable()">
+              <div class="row">
+                <span
+                  class="tbca-seg"
+                  role="group"
+                  [attr.aria-label]="t('admin.items.exchange.mode')"
+                >
+                  @for (m of ['merge', 'replace']; track m) {
+                    <button
+                      type="button"
+                      [attr.aria-pressed]="importMode() === m"
+                      (click)="importMode.set($any(m)); importResult.set(null)"
+                    >
+                      {{ t('admin.items.exchange.modes.' + m) }}
+                    </button>
+                  }
+                </span>
                 <label class="chip">
                   <input
                     type="checkbox"
-                    [checked]="tpl.affixPool.includes(s)"
-                    (change)="toggleAffix(s)"
+                    [checked]="importRules()"
+                    (change)="importRules.set(!importRules()); importResult.set(null)"
                   />
-                  {{ s }}
+                  {{ t('admin.items.exchange.withRules') }}
                 </label>
-              }
-            </div>
-            @if (editable()) {
-              <button
-                type="button"
-                class="tbca-button tbca-button--ghost danger"
-                (click)="removeTemplate()"
-              >
-                {{ t('admin.items.remove') }}
-              </button>
+              </div>
+              <label class="tbca-button tbca-button--ghost file">
+                {{ t('admin.items.exchange.choose') }}
+                <input type="file" accept="application/json,.json" (change)="chooseFile($event)" />
+              </label>
+            </fieldset>
+            @if (importResult(); as r) {
+              <div class="import-result" role="status">
+                <p>
+                  <b>{{ importName() }}</b
+                  >:
+                  {{
+                    t('admin.items.exchange.diff', {
+                      added: r.added.length,
+                      changed: r.changed.length,
+                      removed: r.removed.length,
+                    })
+                  }}
+                </p>
+                @if (r.added.length) {
+                  <p class="tbca-hint">+ {{ r.added.join(', ') }}</p>
+                }
+                @if (r.changed.length) {
+                  <p class="tbca-hint">~ {{ r.changed.join(', ') }}</p>
+                }
+                @if (r.removed.length) {
+                  <p class="tbca-hint">− {{ r.removed.join(', ') }}</p>
+                }
+                @if (r.problems.length) {
+                  <ul class="problems">
+                    @for (p of r.problems; track p) {
+                      <li>{{ p }}</li>
+                    }
+                  </ul>
+                } @else {
+                  <button
+                    type="button"
+                    class="tbca-button"
+                    [disabled]="!editable()"
+                    (click)="adoptImport()"
+                  >
+                    {{ t('admin.items.exchange.adopt') }}
+                  </button>
+                }
+              </div>
             }
-          </fieldset>
-        </section>
+          </section>
+        }
+        @default {
+          @if (selected(); as tpl) {
+            <section class="tbca-panel editor" [attr.aria-label]="nameOf(tpl)">
+              <fieldset [disabled]="!editable()">
+                <h2 class="editor__title">{{ nameOf(tpl) }}</h2>
+                <div class="row">
+                  @for (l of locales; track l) {
+                    <label class="tbca-label grow">
+                      {{ t('admin.items.name.' + l) }}
+                      <input
+                        class="tbca-input"
+                        maxlength="40"
+                        [value]="tpl.names?.[l] ?? ''"
+                        [placeholder]="nameOf(tpl)"
+                        (change)="setName(l, valueOf($event))"
+                      />
+                    </label>
+                  }
+                </div>
+                <div class="row">
+                  <label class="tbca-label">
+                    {{ t('admin.items.id') }}
+                    <input
+                      class="tbca-input mono"
+                      [value]="tpl.id"
+                      [readOnly]="liveIds().has(tpl.id)"
+                      (change)="setId(valueOf($event))"
+                    />
+                  </label>
+                  <label class="tbca-label">
+                    {{ t('admin.items.category') }}
+                    <select class="tbca-select" (change)="setCategory($any(valueOf($event)))">
+                      @for (c of categories; track c) {
+                        <option [value]="c" [selected]="tpl.category === c">
+                          {{ categoryLabel(c) }}
+                        </option>
+                      }
+                    </select>
+                  </label>
+                </div>
+                <p class="tbca-hint">
+                  {{ t(liveIds().has(tpl.id) ? 'admin.items.idLocked' : 'admin.items.idAuto') }}
+                </p>
 
-        <section
-          class="tbca-panel preview"
-          aria-labelledby="preview-title"
-          [attr.data-tier]="tier()"
-        >
-          <h2 id="preview-title">{{ t('admin.items.preview') }}</h2>
-          <div class="row">
-            <label class="tbca-label">
-              {{ t('admin.items.itemLevel', { level: level() }) }}
-              <input
-                type="range"
-                min="1"
-                max="100"
-                [value]="level()"
-                (input)="level.set(+$any($event.target).value)"
-              />
-            </label>
-            <label class="tbca-label">
-              {{ t('admin.items.rarity', { rarity: rarity() }) }}
-              <input
-                type="range"
-                min="1"
-                max="20"
-                [value]="rarity()"
-                (input)="rarity.set(+$any($event.target).value)"
-              />
-            </label>
-          </div>
-          @if (preview(); as p) {
-            <p class="budget">{{ t('admin.items.budget', { budget: p.budget }) }}</p>
-            <dl class="values">
-              @for (e of p.base | keyvalue; track e.key) {
-                <div>
-                  <dt>{{ e.key }}</dt>
-                  <dd>{{ e.value }}</dd>
+                @if (tpl.weapon; as w) {
+                  <h3>{{ t('admin.items.weapon') }}</h3>
+                  <div class="row">
+                    <label class="tbca-label">
+                      {{ t('admin.items.damageKind') }}
+                      <select
+                        class="tbca-select"
+                        (change)="setWeapon({ kind: $any(valueOf($event)) })"
+                      >
+                        @for (k of ['physical', 'tech']; track k) {
+                          <option [value]="k" [selected]="w.kind === k">
+                            {{ t('admin.items.kinds.' + k) }}
+                          </option>
+                        }
+                      </select>
+                    </label>
+                    <label class="tbca-label">
+                      {{ t('admin.items.scalesWith') }}
+                      <select
+                        class="tbca-select"
+                        (change)="setWeapon({ scalesWith: $any(valueOf($event)) })"
+                      >
+                        @for (a of attributes; track a) {
+                          <option [value]="a" [selected]="w.scalesWith === a">
+                            {{ t('attributes.' + a) }}
+                          </option>
+                        }
+                      </select>
+                    </label>
+                    <label class="tbca-label">
+                      {{ t('admin.items.perPoint') }}
+                      <input
+                        class="tbca-input narrow"
+                        type="number"
+                        min="0"
+                        step="0.05"
+                        [value]="perPoint(w.scaling)"
+                        (change)="setPerPoint(valueOf($event))"
+                      />
+                    </label>
+                  </div>
+                }
+
+                <h3>{{ t('admin.items.baseWeights') }}</h3>
+                <p class="tbca-hint">{{ t('admin.items.baseHint') }}</p>
+                <ul class="weights">
+                  @for (k of activeWeights(); track k) {
+                    <li class="weight">
+                      <span class="weight__name">{{ statName(k) }}</span>
+                      <input
+                        class="tbca-input"
+                        type="number"
+                        min="0"
+                        [attr.aria-label]="statName(k)"
+                        [value]="weightOf(k)"
+                        (change)="setWeight(k, valueOf($event))"
+                      />
+                      <span class="weight__bar" aria-hidden="true"
+                        ><i [style.width.%]="(weightOf(k) * 100) / (weightTotal() || 1)"></i
+                      ></span>
+                      <small>{{ percent((weightOf(k) * 1000) / (weightTotal() || 1)) }}</small>
+                      @if (editable() && k !== 'weaponDamage') {
+                        <button
+                          type="button"
+                          class="weight__remove"
+                          [attr.aria-label]="t('admin.items.removeWeight', { stat: statName(k) })"
+                          (click)="setWeight(k, '0')"
+                        >
+                          ×
+                        </button>
+                      }
+                    </li>
+                  } @empty {
+                    <li class="tbca-hint">{{ t('admin.items.noWeights') }}</li>
+                  }
+                </ul>
+                @if (editable() && inactiveWeights().length) {
+                  <p class="chips chips--add">
+                    <span class="tbca-label-mono">{{ t('admin.items.addWeight') }}</span>
+                    @for (k of inactiveWeights(); track k) {
+                      <button type="button" class="chip" (click)="setWeight(k, '1')">
+                        + {{ statName(k) }}
+                      </button>
+                    }
+                  </p>
+                }
+
+                <h3>{{ t('admin.items.affixPool') }}</h3>
+                <div class="chips">
+                  @for (s of stats; track s) {
+                    <label class="chip" [class.chip--on]="tpl.affixPool.includes(s)">
+                      <input
+                        type="checkbox"
+                        [checked]="tpl.affixPool.includes(s)"
+                        (change)="toggleAffix(s)"
+                      />
+                      {{ statName(s) }}
+                    </label>
+                  }
                 </div>
-              }
-            </dl>
-            <p class="tbca-hint">
-              {{ t('admin.items.affixCount', { min: p.affixCount[0], max: p.affixCount[1] }) }}
-            </p>
-            <dl class="values">
-              @for (r of p.affixRanges; track r.stat) {
-                <div>
-                  <dt>{{ r.stat }}</dt>
-                  <dd>{{ r.min }}–{{ r.max }}</dd>
-                </div>
-              }
-            </dl>
-          } @else {
-            <p class="tbca-hint">{{ t('admin.items.noPreview') }}</p>
+                @if (editable()) {
+                  <div class="row">
+                    <button
+                      type="button"
+                      class="tbca-button tbca-button--ghost"
+                      (click)="duplicate()"
+                    >
+                      {{ t('admin.items.duplicate') }}
+                    </button>
+                    <button
+                      type="button"
+                      class="tbca-button tbca-button--ghost danger"
+                      [disabled]="liveIds().has(tpl.id)"
+                      [title]="liveIds().has(tpl.id) ? t('admin.items.removeLocked') : ''"
+                      (click)="removeTemplate()"
+                    >
+                      {{ t('admin.items.remove') }}
+                    </button>
+                  </div>
+                }
+              </fieldset>
+            </section>
           }
-        </section>
+        }
       }
+
+      <section class="tbca-panel preview" aria-labelledby="preview-title" [attr.data-tier]="tier()">
+        <h2 id="preview-title">{{ t('admin.items.preview') }}</h2>
+        <div class="row">
+          <label class="tbca-label grow">
+            {{ t('admin.items.itemLevel', { level: level() }) }}
+            <input
+              type="range"
+              min="1"
+              max="100"
+              [value]="level()"
+              (input)="level.set(numberOf($event))"
+            />
+          </label>
+          <label class="tbca-label grow">
+            {{ t('admin.items.rarity', { rarity: rarity() }) }}
+            <input
+              type="range"
+              min="1"
+              max="20"
+              [value]="rarity()"
+              (input)="rarity.set(numberOf($event))"
+            />
+          </label>
+        </div>
+        @if (panel() === 'edit' && preview(); as p) {
+          <p class="budget">{{ t('admin.items.budget', { budget: p.budget }) }}</p>
+          <dl class="values">
+            @for (k of baseKeys; track k) {
+              @if (p.base[k] !== undefined) {
+                <div>
+                  <dt>{{ statName(k) }}</dt>
+                  <dd>{{ statText(k, p.base[k]!) }}</dd>
+                </div>
+              }
+            }
+          </dl>
+          <p class="tbca-hint">
+            {{ t('admin.items.affixCount', { min: p.affixCount[0], max: p.affixCount[1] }) }}
+          </p>
+          <dl class="values">
+            @for (r of p.affixRanges; track r.stat) {
+              <div>
+                <dt>{{ statName(r.stat) }}</dt>
+                <dd>{{ statText(r.stat, r.min) }}–{{ statText(r.stat, r.max) }}</dd>
+              </div>
+            }
+          </dl>
+          @if (curve(); as c) {
+            <div class="curve" [attr.data-state]="curveState(c.ratioPermille)">
+              <h3>{{ t('admin.items.curve.title') }}</h3>
+              <p class="curve__value">{{ percent(c.ratioPermille) }}</p>
+              <div class="curve__bar" aria-hidden="true">
+                <i [style.left.%]="curvePos(c.ratioPermille)"></i>
+              </div>
+              <dl class="values">
+                @for (pt of c.points; track pt.level) {
+                  <div>
+                    <dt>L{{ pt.level }} ★{{ pt.rarity }}</dt>
+                    <dd>{{ percent(pt.ratioPermille) }}</dd>
+                  </div>
+                }
+              </dl>
+              <p class="tbca-hint">
+                {{ t('admin.items.curve.' + curveState(c.ratioPermille)) }}
+              </p>
+            </div>
+          }
+        } @else if (panel() === 'edit') {
+          <p class="tbca-hint">{{ t('admin.items.noPreview') }}</p>
+        } @else {
+          <p class="tbca-hint">{{ t('admin.items.curve.explain') }}</p>
+        }
+      </section>
     </div>
 
     <details class="tbca-panel">
@@ -236,7 +560,7 @@
         spellcheck="false"
         [disabled]="!editable()"
         [value]="json()"
-        (input)="json.set($any($event.target).value)"
+        (input)="json.set(valueOf($event))"
       ></textarea>
       @if (editable()) {
         <button type="button" class="tbca-button tbca-button--ghost" (click)="applyJson()">

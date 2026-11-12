@@ -83,5 +83,6 @@ export class BotJobsController {
       useFactory: (c: DbConnection) => new DrizzleAdminRepository(c.db),
     },
   ],
+  exports: [BotAgentService],
 })
 export class BotsModule {}

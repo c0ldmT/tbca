@@ -51,7 +51,16 @@ import {
   type TeamRepository,
 } from '../src/team/types.js';
 import type { AccountDataRepository } from '../src/account/types.js';
-import type { AccountOverview, AdminRepository, AuditEntry } from '../src/admin/types.js';
+import type {
+  AccountOverview,
+  AdminRepository,
+  AuditEntry,
+  AdminExportRepository,
+  DailyResetEntry,
+  ExportRows,
+  SeasonAdminRepository,
+  SeasonStats,
+} from '../src/admin/types.js';
 import type { ConfigRepository, ConfigVersionInfo } from '../src/admin/config.repository.js';
 import type { BotInfo, BotRepository } from '../src/bots/bot.repository.js';
 import type { BotAgent, SeasonConfigData } from '@tbca/db';
@@ -76,6 +85,8 @@ import {
   RATE_LIMITER,
   TEAM_REPOSITORY,
   ADMIN_REPOSITORY,
+  ADMIN_EXPORT_REPOSITORY,
+  SEASON_ADMIN_REPOSITORY,
   CONFIG_REPOSITORY,
   BOT_REPOSITORY,
   ACCOUNT_DATA_REPOSITORY,
@@ -99,6 +110,10 @@ export function testEnv(overrides: Record<string, string> = {}): Env {
     ...overrides,
   });
 }
+
+/** Fortlaufende Reihenfolge statt Uhrzeit: Einträge derselben Millisekunde bleiben unterscheidbar. */
+let sequence = 0;
+const nextSeq = () => ++sequence;
 
 export class InMemoryAccounts implements AccountRepository {
   readonly accounts = new Map<string, { identities: ExternalProfile[] }>();
@@ -198,11 +213,16 @@ export class FakeDiscord implements DiscordOAuth {
   };
   fail = false;
 
-  authorizeUrl(state: string): string {
+  /** Zuletzt verwendete Rücksprung-Adresse. */
+  redirectUri: string | null = null;
+
+  authorizeUrl(state: string, redirectUri: string): string {
+    this.redirectUri = redirectUri;
     return `https://discord.test/authorize?state=${state}`;
   }
 
-  async fetchProfile(code: string): Promise<ExternalProfile> {
+  async fetchProfile(code: string, redirectUri: string): Promise<ExternalProfile> {
+    if (redirectUri !== this.redirectUri) throw new Error('andere Rücksprung-Adresse');
     if (this.fail || code !== 'valid-code') throw new Error('ungültiger Code');
     return this.profile;
   }
@@ -457,6 +477,8 @@ export class InMemoryEconomy implements EconomyRepository {
 
 export class InMemoryDungeon implements DungeonRepository {
   readonly runs: DungeonRun[] = [];
+  readonly seq = new Map<string, number>();
+  resets: InMemorySeasonAdmin | null = null;
 
   constructor(
     private readonly fights: InMemoryFights,
@@ -468,11 +490,16 @@ export class InMemoryDungeon implements DungeonRepository {
     return fn({
       activeRun: async (id) =>
         this.runs.find((r) => r.characterId === id && r.status === 'active') ?? null,
-      runsOnDay: async (id, day) =>
-        this.runs.filter((r) => r.characterId === id && r.rewardDay === day).length,
+      runsOnDay: async (id, day) => {
+        const since = this.resets?.since('dungeon', id, day) ?? 0;
+        return this.runs.filter(
+          (r) => r.characterId === id && r.rewardDay === day && (this.seq.get(r.id!) ?? 0) > since,
+        ).length;
+      },
       saveRun: async (run) => {
         if (!run.id) {
           const created = { ...structuredClone(run), id: randomUUID() };
+          this.seq.set(created.id, nextSeq());
           this.runs.push(created);
           return created;
         }
@@ -889,6 +916,9 @@ export class InMemoryAccountData implements AccountDataRepository {
 
 export class InMemoryFights implements FightRepository {
   readonly fights: StoredFight[] = [];
+  /** Reihenfolge der Kämpfe für zurückgesetzte Tageslimits. */
+  readonly seq = new Map<string, number>();
+  resets: InMemorySeasonAdmin | null = null;
 
   constructor(private readonly characters: InMemoryCharacters) {}
 
@@ -901,6 +931,7 @@ export class InMemoryFights implements FightRepository {
       rewardCounts: (id, day) => this.rewardCounts(id, day),
       insert: async (f: NewFight) => {
         const id = randomUUID();
+        this.seq.set(id, nextSeq());
         this.fights.push({
           ...structuredClone(f),
           id,
@@ -922,7 +953,10 @@ export class InMemoryFights implements FightRepository {
   async rewardCounts(characterId: string, day: string): Promise<RewardCounts> {
     const byOpponent = new Map<string, number>();
     let today = 0;
-    for (const f of this.fights.filter((x) => x.rewardDay === day)) {
+    const since = this.resets?.since('fights', characterId, day) ?? 0;
+    for (const f of this.fights.filter(
+      (x) => x.rewardDay === day && (this.seq.get(x.id) ?? 0) > since,
+    )) {
       for (const p of f.participants) {
         if (p.characterId !== characterId || !p.rewarded) continue;
         today++;
@@ -945,6 +979,211 @@ export class InMemoryFights implements FightRepository {
   }
 }
 
+export class InMemorySeasonAdmin implements SeasonAdminRepository {
+  readonly resets: {
+    seasonId: string;
+    characterId: string | null;
+    kind: 'dungeon' | 'fights';
+    day: string;
+    seq: number;
+    createdAt: Date;
+  }[] = [];
+  info_ = {
+    slug: 'test-season',
+    startsAt: new Date('2026-11-01T00:00:00Z'),
+    endsAt: new Date('2027-01-31T00:00:00Z'),
+  };
+
+  constructor(
+    private readonly characters: InMemoryCharacters,
+    private readonly fights: InMemoryFights,
+    private readonly dungeon: InMemoryDungeon,
+    private readonly guilds: InMemoryDiscord,
+    private readonly inventory: InMemoryInventory,
+  ) {
+    fights.resets = this;
+    dungeon.resets = this;
+  }
+
+  /** Reihenfolge-Marke der jüngsten passenden Rücksetzung (0 = keine). */
+  since(kind: 'dungeon' | 'fights', characterId: string, day: string): number {
+    const seasonId = this.characters.records.find((r) => r.id === characterId)?.seasonId;
+    return Math.max(
+      0,
+      ...this.resets
+        .filter(
+          (r) =>
+            r.kind === kind &&
+            r.day === day &&
+            (r.characterId === characterId || (r.characterId === null && r.seasonId === seasonId)),
+        )
+        .map((r) => r.seq),
+    );
+  }
+
+  async info(_seasonId: string) {
+    return this.info_;
+  }
+
+  async stats(seasonId: string, day: string): Promise<SeasonStats> {
+    const fights = this.fights.fights.filter((f) => f.seasonId === seasonId && f.rewardDay === day);
+    const runs = this.dungeon.runs.filter((r) => r.seasonId === seasonId && r.rewardDay === day);
+    const played = new Set([
+      ...fights.flatMap((f) => f.participants.map((p) => p.characterId)),
+      ...runs.map((r) => r.characterId),
+    ]);
+    played.delete(null as unknown as string);
+    const chars = this.characters.records.filter((r) => r.seasonId === seasonId);
+    return {
+      characters: chars.filter((c) => !c.isBot).length,
+      bots: chars.filter((c) => c.isBot).length,
+      playedToday: played.size,
+      dungeonRunsToday: runs.length,
+      activeRuns: this.dungeon.runs.filter((r) => r.seasonId === seasonId && r.status === 'active')
+        .length,
+      rewardedFightsToday: fights.reduce(
+        (n, f) => n + f.participants.filter((p) => p.rewarded).length,
+        0,
+      ),
+      passiveXpToday: 0,
+    };
+  }
+
+  async resetsOn(seasonId: string, day: string): Promise<DailyResetEntry[]> {
+    return this.resets
+      .filter((r) => r.seasonId === seasonId && r.day === day)
+      .reverse()
+      .map((r) => ({
+        kind: r.kind,
+        characterName: this.characters.records.find((c) => c.id === r.characterId)?.name ?? null,
+        createdAt: r.createdAt,
+      }));
+  }
+
+  async resetDaily(input: Parameters<SeasonAdminRepository['resetDaily']>[0]) {
+    for (const kind of input.kinds) {
+      if (kind === 'passive') {
+        for (const key of this.guilds.ledger.keys()) {
+          const [seasonId, accountId, day] = key.split(':');
+          if (
+            seasonId === input.seasonId &&
+            day === input.day &&
+            (!input.account || accountId === input.account.accountId)
+          )
+            this.guilds.ledger.set(key, 0);
+        }
+        continue;
+      }
+      this.resets.push({
+        seasonId: input.seasonId,
+        characterId: input.account?.characterId ?? null,
+        kind,
+        day: input.day,
+        seq: nextSeq(),
+        createdAt: new Date(),
+      });
+    }
+  }
+
+  async resetSeason(seasonId: string, mode: 'progress' | 'wipe') {
+    const take = <T>(list: T[], hit: (x: T) => boolean): number => {
+      let removed = 0;
+      for (let i = list.length - 1; i >= 0; i--) {
+        if (hit(list[i]!)) {
+          list.splice(i, 1);
+          removed++;
+        }
+      }
+      return removed;
+    };
+    const fights = take(this.fights.fights, (f) => f.seasonId === seasonId);
+    const runs = take(this.dungeon.runs, (r) => r.seasonId === seasonId);
+    const items = take(this.inventory.items, (i) => i.seasonId === seasonId);
+    for (const key of [...this.characters.wallets.keys()])
+      if (key.startsWith(`${seasonId}:`)) this.characters.wallets.delete(key);
+    for (const key of [...this.guilds.ledger.keys()])
+      if (key.startsWith(`${seasonId}:`)) this.guilds.ledger.delete(key);
+    take(this.resets, (r) => r.seasonId === seasonId);
+    const removed =
+      mode === 'wipe'
+        ? take(this.characters.records, (c) => c.seasonId === seasonId && !c.isBot)
+        : 0;
+    const rest = this.characters.records.filter((c) => c.seasonId === seasonId);
+    for (const c of rest)
+      Object.assign(c, { level: 1, xp: 0, allocated: { str: 0, dex: 0, int: 0, con: 0 } });
+    return { characters: removed + rest.length, fights, runs, items };
+  }
+
+  async setEnd(_seasonId: string, endsAt: Date) {
+    this.info_ = { ...this.info_, endsAt };
+  }
+}
+
+export class InMemoryExport implements AdminExportRepository {
+  constructor(
+    private readonly characters: InMemoryCharacters,
+    private readonly fights: InMemoryFights,
+    private readonly dungeon: InMemoryDungeon,
+    private readonly inventory: InMemoryInventory,
+  ) {}
+
+  async rows(seasonId: string, since: Date, limit: number): Promise<ExportRows> {
+    return {
+      characters: this.characters.records
+        .filter((c) => c.seasonId === seasonId)
+        .map((c) => ({
+          id: c.id,
+          isBot: Boolean(c.isBot),
+          classId: c.classId,
+          level: c.level,
+          xp: c.xp,
+          allocated: { ...c.allocated },
+          createdAt: new Date(),
+          loadout: (c.loadouts[c.classId] as ExportRows['characters'][0]['loadout']) ?? null,
+          equipment: Object.entries(this.inventory.gearOf(c.id)).map(([slot, item]) => ({
+            slot,
+            item: item!,
+          })),
+        })),
+      fights: this.fights.fights
+        .filter((f) => f.seasonId === seasonId && f.createdAt >= since)
+        .reverse()
+        .slice(0, limit)
+        .map((f) => ({
+          kind: f.kind,
+          createdAt: f.createdAt,
+          rewardDay: f.rewardDay,
+          configVersion: f.configVersion,
+          engineVersion: f.engineVersion,
+          rounds: f.result.rounds,
+          winnerTeam: f.result.winner,
+          reason: f.result.reason,
+          teams: f.input.teams,
+          participants: f.participants,
+        })),
+      runs: this.dungeon.runs
+        .filter((r) => r.seasonId === seasonId)
+        .map((r) => ({
+          characterId: r.characterId,
+          classId: r.snapshot.classId,
+          level: r.snapshot.level,
+          floor: r.floor,
+          status: r.status,
+          xpGained: r.xpGained,
+          lootCredits: r.loot.credits,
+          lootItems: r.loot.items.length,
+          injectors: r.injectors,
+          backupChip: r.backupChip,
+          rewardDay: r.rewardDay,
+        })),
+      credits: [],
+      items: [],
+      purchases: [],
+      passive: [],
+    };
+  }
+}
+
 export interface TestApp {
   app: NestFastifyApplication;
   accounts: InMemoryAccounts;
@@ -959,6 +1198,8 @@ export interface TestApp {
   guilds: InMemoryDiscord;
   teams: InMemoryTeams;
   admin: InMemoryAdmin;
+  seasonAdmin: InMemorySeasonAdmin;
+  exports: InMemoryExport;
   configs: InMemoryConfigs;
   bots: InMemoryBots;
   accountData: InMemoryAccountData;
@@ -980,6 +1221,8 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
   const guilds = new InMemoryDiscord(characters);
   const teams = new InMemoryTeams();
   const admin = new InMemoryAdmin(accounts, characters, sessions);
+  const seasonAdmin = new InMemorySeasonAdmin(characters, fights, dungeon, guilds, inventory);
+  const exportRepo = new InMemoryExport(characters, fights, dungeon, inventory);
   const configs = new InMemoryConfigs(seasons.current!.id);
   const bots = new InMemoryBots(characters);
   const accountData = new InMemoryAccountData(accounts, characters, sessions, fights);
@@ -1012,6 +1255,10 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
     .useValue(teams)
     .overrideProvider(ADMIN_REPOSITORY)
     .useValue(admin)
+    .overrideProvider(ADMIN_EXPORT_REPOSITORY)
+    .useValue(exportRepo)
+    .overrideProvider(SEASON_ADMIN_REPOSITORY)
+    .useValue(seasonAdmin)
     .overrideProvider(CONFIG_REPOSITORY)
     .useValue(configs)
     .overrideProvider(BOT_REPOSITORY)
@@ -1048,6 +1295,8 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
     guilds,
     teams,
     admin,
+    seasonAdmin,
+    exports: exportRepo,
     configs,
     bots,
     accountData,

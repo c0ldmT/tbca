@@ -2,10 +2,11 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { CLASS_IDS, type ClassId, type MatchupCell } from '@tbca/game-core';
-import type { AdminConfigList, AdminSimulationResponse } from '@tbca/shared';
+import type { AdminConfigList, AdminSimulationReport, AdminSimulationResponse } from '@tbca/shared';
 
 import { AdminService } from '../../core/admin.service';
 import { ApiFailure } from '../../core/api-failure';
+import { downloadJson, downloadText, toCsv } from '../../core/download';
 
 type Kind = 'matchups' | 'dungeon';
 type Gear = 'none' | 'common' | 'rare' | 'epic';
@@ -42,6 +43,10 @@ export class SimulationPage {
   protected readonly error = signal<string | null>(null);
   protected readonly result = signal<AdminSimulationResponse | null>(null);
   protected readonly baseline = signal<AdminSimulationResponse | null>(null);
+  protected readonly reportFights = signal(60);
+  protected readonly reportRuns = signal(20);
+  protected readonly report = signal<AdminSimulationReport | null>(null);
+  protected readonly reportBusy = signal(false);
 
   protected readonly published = computed(
     () => this.list()?.versions.find((v) => v.status === 'published')?.version ?? null,
@@ -95,6 +100,120 @@ export class SimulationPage {
     } finally {
       this.busy.set(false);
     }
+  }
+
+  /** Aktuelles Ergebnis (und ggf. Vergleich) als JSON-Datei. */
+  protected exportJson(): void {
+    const r = this.result();
+    if (!r) return;
+    downloadJson(
+      `tbca-sim-${r.matchups ? 'matrix' : 'dungeon'}-v${r.version}-L${this.level()}.json`,
+      {
+        format: 'tbca-sim/v1',
+        request: {
+          kind: this.kind(),
+          level: this.level(),
+          gear: this.gear(),
+          samples: this.samples(),
+        },
+        result: r,
+        baseline: this.baseline(),
+      },
+    );
+  }
+
+  /** Aktuelles Ergebnis als CSV: Matrix-Zellen bzw. Tiefe je Klasse und Histogramm. */
+  protected exportCsv(): void {
+    const r = this.result();
+    if (!r) return;
+    const rows: (string | number | null)[][] = [];
+    if (r.matchups) {
+      rows.push(['level', 'gear', 'a', 'b', 'wins', 'losses', 'draws', 'winPermille', 'avgRounds']);
+      for (const c of r.matchups.cells)
+        rows.push([
+          r.matchups.level,
+          r.matchups.gear,
+          c.a,
+          c.b,
+          c.wins,
+          c.losses,
+          c.draws,
+          c.winPermille,
+          c.avgRounds,
+        ]);
+    } else if (r.dungeon) {
+      rows.push(['level', 'gear', 'class', 'average', 'best']);
+      for (const c of this.classes)
+        rows.push([
+          r.dungeon.level,
+          r.dungeon.gear,
+          c,
+          r.dungeon.perClass[c].average,
+          r.dungeon.perClass[c].best,
+        ]);
+      rows.push([]);
+      rows.push(['floor', 'runs']);
+      r.dungeon.histogram.forEach((n, floor) => rows.push([floor, n]));
+    }
+    downloadText(`tbca-sim-v${r.version}-L${this.level()}.csv`, toCsv(rows), 'text/csv');
+  }
+
+  /** Report über alle Stufen erstellen und direkt als JSON herunterladen. */
+  protected async runReport(): Promise<void> {
+    this.reportBusy.set(true);
+    this.error.set(null);
+    try {
+      const report = await this.api.simulationReport({
+        fights: this.reportFights(),
+        runs: this.reportRuns(),
+        ...(this.version() ? { version: this.version()! } : {}),
+      });
+      this.report.set(report);
+      downloadJson(
+        `tbca-sim-report-v${report.version}-${report.generatedAt.slice(0, 10)}.json`,
+        report,
+      );
+    } catch (error) {
+      this.error.set(error instanceof ApiFailure ? error.code : 'unknown');
+    } finally {
+      this.reportBusy.set(false);
+    }
+  }
+
+  /** Report als CSV im Langformat (eine Zeile je Stufe und Paarung). */
+  protected exportReportCsv(): void {
+    const report = this.report();
+    if (!report) return;
+    const rows: (string | number | null)[][] = [
+      ['version', 'level', 'gear', 'a', 'b', 'wins', 'losses', 'draws', 'winPermille', 'avgRounds'],
+    ];
+    for (const p of report.points)
+      for (const c of p.matchups.cells)
+        rows.push([
+          report.version,
+          p.level,
+          p.gear,
+          c.a,
+          c.b,
+          c.wins,
+          c.losses,
+          c.draws,
+          c.winPermille,
+          c.avgRounds,
+        ]);
+    rows.push([]);
+    rows.push(['version', 'level', 'gear', 'class', 'dungeonAverage', 'dungeonBest']);
+    for (const p of report.points)
+      for (const c of this.classes)
+        rows.push([
+          report.version,
+          p.level,
+          p.gear,
+          c,
+          p.dungeon.perClass[c].average,
+          p.dungeon.perClass[c].best,
+        ]);
+    downloadText(`tbca-sim-report-v${report.version}.csv`, toCsv(rows), 'text/csv');
   }
 
   protected cell(a: ClassId, b: ClassId): MatchupCell | undefined {

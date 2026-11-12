@@ -86,16 +86,95 @@
     </div>
   </section>
 
+  <section class="tbca-panel editor" aria-labelledby="sim-report">
+    <h2 id="sim-report">{{ t('admin.sim.report.title') }}</h2>
+    <p class="tbca-hint">{{ t('admin.sim.report.intro') }}</p>
+    <div class="sim-form">
+      <label class="field">
+        <span class="tbca-label-mono">{{ t('admin.sim.samplesFights') }}</span>
+        <input
+          class="tbca-input"
+          type="number"
+          min="10"
+          max="200"
+          [value]="reportFights()"
+          (change)="reportFights.set(numberInput($event.target, 10, 200))"
+        />
+      </label>
+      <label class="field">
+        <span class="tbca-label-mono">{{ t('admin.sim.samplesRuns') }}</span>
+        <input
+          class="tbca-input"
+          type="number"
+          min="4"
+          max="100"
+          [value]="reportRuns()"
+          (change)="reportRuns.set(numberInput($event.target, 4, 100))"
+        />
+      </label>
+      <button type="button" class="tbca-button" [disabled]="reportBusy()" (click)="runReport()">
+        {{ reportBusy() ? t('admin.sim.running') : t('admin.sim.report.run') }}
+      </button>
+      @if (report()) {
+        <button type="button" class="tbca-button tbca-button--ghost" (click)="exportReportCsv()">
+          {{ t('admin.sim.export.csv') }}
+        </button>
+      }
+    </div>
+    @if (report(); as rep) {
+      <div class="matrix-wrap">
+        <table class="matrix report">
+          <caption class="visually-hidden">
+            {{
+              t('admin.sim.report.caption')
+            }}
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">{{ t('admin.sim.level') }}</th>
+              @for (c of classes; track c) {
+                <th scope="col">{{ t('classes.' + c) }}</th>
+              }
+              <th scope="col">{{ t('admin.sim.report.depth') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of rep.points; track p.level) {
+              <tr>
+                <th scope="row">L{{ p.level }} · {{ t('admin.sim.gears.' + p.gear) }}</th>
+                @for (c of classes; track c) {
+                  <td [style.background]="fill(p.matchups.overall[c])">
+                    {{ percent(p.matchups.overall[c]) }}
+                  </td>
+                }
+                <td class="overall">{{ p.dungeon.average }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="tbca-hint">{{ t('admin.sim.report.hint', { ms: rep.ms }) }}</p>
+    }
+  </section>
+
   @if (result(); as r) {
-    <p class="tbca-hint meta" role="status">
-      {{
-        t('admin.sim.meta', {
-          version: r.version,
-          ms: r.ms,
-          seed: r.seed,
-        })
-      }}
-    </p>
+    <div class="meta-row">
+      <p class="tbca-hint meta" role="status">
+        {{
+          t('admin.sim.meta', {
+            version: r.version,
+            ms: r.ms,
+            seed: r.seed,
+          })
+        }}
+      </p>
+      <button type="button" class="tbca-button tbca-button--ghost" (click)="exportJson()">
+        {{ t('admin.sim.export.json') }}
+      </button>
+      <button type="button" class="tbca-button tbca-button--ghost" (click)="exportCsv()">
+        {{ t('admin.sim.export.csv') }}
+      </button>
+    </div>
 
     @if (r.matchups; as m) {
       <section class="tbca-panel editor" aria-labelledby="sim-matrix">

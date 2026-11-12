@@ -34,7 +34,7 @@
                   >{{ t('reveal.tierName.' + currentTier()) }} · TIER {{ currentTier() }}</span
                 >
                 <tbca-item-icon [item]="item" [size]="120" />
-                <h3 class="name tbca-tier-text">{{ t('items.' + item.templateId) }}</h3>
+                <h3 class="name tbca-tier-text">{{ item.templateId | itemName }}</h3>
                 <tbca-stars
                   [rarity]="item.rarity"
                   [size]="18"
@@ -72,7 +72,7 @@
         @for (item of items(); track $index) {
           <div class="sum" [class]="'sum tier-' + tierOf(item.rarity)">
             <tbca-item-icon [item]="item" [size]="64" />
-            <span class="tbca-tier-text">{{ t('items.' + item.templateId) }}</span>
+            <span class="tbca-tier-text">{{ item.templateId | itemName }}</span>
             <tbca-stars [rarity]="item.rarity" [size]="9" />
           </div>
         }

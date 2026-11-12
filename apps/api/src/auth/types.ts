@@ -53,7 +53,8 @@ export interface SessionStore {
 }
 
 export interface DiscordOAuth {
-  authorizeUrl(state: string): string;
-  /** Tauscht den Code gegen ein Token und lädt das Profil. */
-  fetchProfile(code: string): Promise<ExternalProfile>;
+  /** `redirectUri` muss in der Discord-App eingetragen sein. */
+  authorizeUrl(state: string, redirectUri: string): string;
+  /** Tauscht den Code gegen ein Token und lädt das Profil (gleiche `redirectUri` wie oben). */
+  fetchProfile(code: string, redirectUri: string): Promise<ExternalProfile>;
 }

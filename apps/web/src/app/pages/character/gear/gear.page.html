@@ -36,7 +36,7 @@
                   t('slots.' + slot) +
                   ': ' +
                   (v.item
-                    ? t('items.' + v.item.templateId) +
+                    ? (v.item.templateId | itemName) +
                       ', ' +
                       t('inventory.rarity', { rarity: v.item.rarity })
                     : t('inventory.empty'))
@@ -49,7 +49,7 @@
                 <span class="stxt">
                   <span class="tbca-label-mono">{{ t('slots.' + slot) }}</span>
                   @if (v.item; as it) {
-                    <span class="sname tbca-tier-text">{{ t('items.' + it.templateId) }}</span>
+                    <span class="sname tbca-tier-text">{{ it.templateId | itemName }}</span>
                     <span class="smeta">
                       ★{{ it.rarity }} · iLvl {{ it.itemLevel }}
                       @if (it.upgrade) {
@@ -119,7 +119,7 @@
               </div>
               <div class="hero__txt">
                 <h3 class="dname tbca-tier-text">
-                  {{ t('items.' + d.item.templateId) }}
+                  {{ d.item.templateId | itemName }}
                   @if (d.up) {
                     <span class="up">+{{ d.up }}</span>
                   }
@@ -188,7 +188,7 @@
                   @if (cmp.against; as other) {
                     {{
                       t('gear.compareWith', {
-                        item: t('items.' + other.templateId),
+                        item: (other.templateId | itemName),
                         rarity: other.rarity,
                         slot: t('slots.' + cmp.slot),
                       })
@@ -310,7 +310,7 @@
                   >
                     <tbca-item-icon [item]="it" [size]="36" />
                     <span class="tbca-tier-text"
-                      >{{ t('items.' + it.templateId) }} ★{{ it.rarity }}</span
+                      >{{ it.templateId | itemName }} ★{{ it.rarity }}</span
                     >
                   </button>
                 }
@@ -383,7 +383,7 @@
           [class.tile--drag]="drag()?.active && drag()?.item?.id === it.id"
           [attr.aria-pressed]="sel.kind === 'item' && sel.id === it.id"
           [attr.aria-label]="
-            t('items.' + it.templateId) +
+            (it.templateId | itemName) +
             ', ' +
             t('inventory.rarity', { rarity: it.rarity }) +
             ', ' +
@@ -396,7 +396,7 @@
             <span class="new">{{ t('gear.new') }}</span>
           }
           <tbca-item-icon [item]="it" [size]="64" />
-          <span class="tname tbca-tier-text">{{ t('items.' + it.templateId) }}</span>
+          <span class="tname tbca-tier-text">{{ it.templateId | itemName }}</span>
           <tbca-stars [rarity]="it.rarity" [size]="9" />
           <span class="smeta">
             iLvl {{ it.itemLevel }}

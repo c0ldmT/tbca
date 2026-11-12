@@ -66,7 +66,7 @@
             [class.ware--sold]="o.sold"
           >
             <tbca-item-icon [item]="o.item" [size]="76" />
-            <b class="tbca-tier-text">{{ t('items.' + o.item.templateId) }}</b>
+            <b class="tbca-tier-text">{{ o.item.templateId | itemName }}</b>
             <tbca-stars
               [rarity]="o.item.rarity"
               [size]="11"

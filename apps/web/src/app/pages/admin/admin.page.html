@@ -71,6 +71,14 @@
       </section>
     }
 
+    <section class="tbca-panel" aria-labelledby="season-title">
+      <h2 id="season-title">{{ t('admin.season.title') }}</h2>
+      <p class="tbca-hint">{{ t('admin.season.teaser') }}</p>
+      <a class="tbca-button tbca-button--ghost" routerLink="/admin/season">{{
+        t('admin.season.open')
+      }}</a>
+    </section>
+
     <section class="tbca-panel" aria-labelledby="config-title">
       <h2 id="config-title">{{ t('admin.config.title') }}</h2>
       <p class="tbca-hint">{{ t('admin.config.intro') }}</p>
@@ -83,6 +91,26 @@
       <a class="tbca-button tbca-button--ghost" routerLink="/admin/simulation">{{
         t('admin.sim.open')
       }}</a>
+    </section>
+
+    <section class="tbca-panel" aria-labelledby="export-title">
+      <h2 id="export-title">{{ t('admin.export.title') }}</h2>
+      <p class="tbca-hint">{{ t('admin.export.intro') }}</p>
+      <div class="row">
+        <label class="tbca-label">
+          {{ t('admin.export.days') }}
+          <select class="tbca-select" (change)="exportDays.set(+$any($event.target).value)">
+            @for (d of [7, 30, 90, 365]; track d) {
+              <option [value]="d" [selected]="exportDays() === d">
+                {{ t('admin.export.lastDays', { days: d }) }}
+              </option>
+            }
+          </select>
+        </label>
+        <button type="button" class="tbca-button" [disabled]="busy()" (click)="exportData()">
+          {{ t('admin.export.run') }}
+        </button>
+      </div>
     </section>
 
     <section class="tbca-panel" aria-labelledby="bots-title">

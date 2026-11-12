@@ -32,6 +32,22 @@ export class HomePage {
     return result === 'success' && !this.auth.user() ? null : result;
   });
   protected readonly logoutFailed = signal(false);
+  protected readonly devName = signal('');
+  protected readonly devFailed = signal(false);
+
+  constructor() {
+    void this.auth.loadOptions();
+  }
+
+  /** Test-Anmeldung ohne Discord (nur in der Entwicklung mit DEV_LOGIN=true). */
+  protected async devLogin(): Promise<void> {
+    this.devFailed.set(false);
+    try {
+      await this.auth.devLogin(this.devName().trim());
+    } catch {
+      this.devFailed.set(true);
+    }
+  }
   protected readonly hubs = HUBS;
   /** Versetzte Glitch-Takte, damit die Kacheln nicht gleichzeitig zucken. */
   protected readonly glitch = ['a', 'c', 'e', 'b'];

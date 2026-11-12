@@ -10,7 +10,8 @@ export const DEFAULT_LOCALE: Locale = 'de';
 export const FALLBACK_LOCALE: Locale = 'en';
 
 /** Plattformen, über die sich Spieler anmelden bzw. Identitäten verknüpfen. */
-export const IDENTITY_PROVIDERS = ['discord', 'twitch'] as const;
+/** `dev`: lokale Test-Anmeldung ohne Discord (DEV_LOGIN). */
+export const IDENTITY_PROVIDERS = ['discord', 'twitch', 'dev'] as const;
 export type IdentityProvider = (typeof IDENTITY_PROVIDERS)[number];
 
 export const GLOBAL_ROLES = ['player', 'superadmin'] as const;

@@ -54,7 +54,7 @@
             [disabled]="salvaging && it.equippedIn !== null"
             [attr.aria-pressed]="salvaging ? checked : selected"
             [attr.aria-label]="
-              t('items.' + it.templateId) +
+              (it.templateId | itemName) +
               ', ' +
               t('inventory.rarity', { rarity: it.rarity }) +
               (it.equippedIn
@@ -73,7 +73,7 @@
             </span>
             <tbca-item-icon [item]="it" [size]="46" />
             <span class="ili__txt">
-              <b class="tbca-tier-text">{{ t('items.' + it.templateId) }}</b>
+              <b class="tbca-tier-text">{{ it.templateId | itemName }}</b>
               <small>
                 ★{{ it.rarity }} · iLvl {{ it.itemLevel }}
                 @if (it.equippedIn) {
@@ -102,7 +102,7 @@
             @if (op() === 'salvage') {
               {{ t('workshop.multiSalvage') }}
             } @else if (view(); as v) {
-              {{ t('items.' + v.item.templateId) }} · Tier {{ v.tier }}
+              {{ v.item.templateId | itemName }} · Tier {{ v.tier }}
             }
           </span>
         </div>
@@ -121,7 +121,7 @@
                   {{ t('gear.fromInventory') }} · {{ t('itemCategory.' + v.item.category) }}
                 }
               </span>
-              <h3 class="tbca-tier-text">{{ t('items.' + v.item.templateId) }}</h3>
+              <h3 class="tbca-tier-text">{{ v.item.templateId | itemName }}</h3>
               <tbca-stars
                 [rarity]="v.item.rarity"
                 [attr.aria-label]="t('inventory.rarity', { rarity: v.item.rarity })"
@@ -323,7 +323,7 @@
                     <tbca-item-icon [item]="d" [size]="40" />
                     <span>
                       <span class="tbca-tier-text"
-                        >{{ t('items.' + d.templateId) }} ★{{ d.rarity }}</span
+                        >{{ d.templateId | itemName }} ★{{ d.rarity }}</span
                       >
                       <small>
                         @for (a of d.affixes; track a.stat; let last = $last) {

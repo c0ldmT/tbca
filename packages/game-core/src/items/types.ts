@@ -47,8 +47,17 @@ export const ITEM_STATS = [
 ] as const;
 export type ItemStat = (typeof ITEM_STATS)[number];
 
+/** Sprachen, in denen Item-Namen gepflegt werden. */
+export const ITEM_NAME_LOCALES = ['de', 'en'] as const;
+export type ItemNameLocale = (typeof ITEM_NAME_LOCALES)[number];
+
 export interface ItemTemplate {
   readonly id: string;
+  /**
+   * Anzeigenamen je Sprache. Fehlen sie, nutzt die Oberfläche die Übersetzung `items.<id>`
+   * bzw. eine aus der ID abgeleitete Schreibweise.
+   */
+  readonly names?: Readonly<Partial<Record<ItemNameLocale, string>>>;
   readonly category: ItemCategory;
   /** Waffenwerte; nur bei Waffen. */
   readonly weapon?: {

@@ -77,6 +77,24 @@ export class DungeonService {
     return expired;
   }
 
+  /**
+   * Beendet alle laufenden Runs sofort wie eine Zeitüberschreitung (Admin, z. B. vor einer
+   * Konfigurationsänderung): Gesammeltes wird wie dort abgerechnet.
+   */
+  async endActiveRuns(): Promise<number> {
+    const season = await this.seasons.current();
+    let ended = 0;
+    for (const { characterId } of await this.runs.idleRuns(new Date(8_640_000_000_000_000))) {
+      await this.runs.locked(characterId, async (tx) => {
+        const run = await tx.activeRun(characterId);
+        if (!run || run.seasonId !== season.id) return;
+        await this.finish(tx, run, 'timed_out');
+        ended++;
+      });
+    }
+    return ended;
+  }
+
   async start(accountId: string, req: DungeonStartRequest): Promise<DungeonView> {
     const { season, me } = await this.mine(accountId);
     const rules = season.game.dungeon;

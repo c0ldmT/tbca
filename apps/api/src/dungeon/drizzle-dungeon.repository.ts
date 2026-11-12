@@ -3,6 +3,7 @@ import { and, count, desc, eq, lt, sql } from 'drizzle-orm';
 
 import { commitEconomy } from '../economy/drizzle-economy.repository.js';
 import { insertFight } from '../fight/drizzle-fight.repository.js';
+import { resetSince } from '../limits/daily-reset.js';
 import type { DungeonRepository, DungeonRun, DungeonTx } from './types.js';
 
 type Row = typeof dungeonRun.$inferSelect;
@@ -48,7 +49,13 @@ export class DrizzleDungeonRepository implements DungeonRepository {
           const [row] = await tx
             .select({ n: count() })
             .from(dungeonRun)
-            .where(and(eq(dungeonRun.characterId, id), eq(dungeonRun.rewardDay, day)));
+            .where(
+              and(
+                eq(dungeonRun.characterId, id),
+                eq(dungeonRun.rewardDay, day),
+                sql`${dungeonRun.createdAt} > ${resetSince('dungeon', id, day)}`,
+              ),
+            );
           return row?.n ?? 0;
         },
         saveRun: async (run) => {

@@ -8,8 +8,16 @@ import type {
   AdminBotView,
   AdminConfigList,
   AdminConfigVersion,
+  AdminDataExport,
+  AdminSimulationReport,
+  AdminSimulationReportRequest,
+  AdminJobResult,
+  AdminSeasonResetResult,
+  AdminSeasonView,
   AdminTimeView,
   BotRunResult,
+  DailyLimitKind,
+  SeasonJobId,
 } from '@tbca/shared';
 import { CSRF_HEADER } from '@tbca/shared/constants';
 import { firstValueFrom, type Observable } from 'rxjs';
@@ -67,8 +75,45 @@ export class AdminService {
   publishConfig(version: number) {
     return this.write<AdminConfigList>('POST', `/api/admin/config/${version}/publish`, null);
   }
+  simulationReport(req: AdminSimulationReportRequest) {
+    return this.write<AdminSimulationReport>('POST', '/api/admin/simulations/report', req);
+  }
+  dataExport(days: number) {
+    return this.read(
+      this.http.get<AdminDataExport>('/api/admin/export', { params: { days: String(days) } }),
+    );
+  }
+  createDefaultsDraft(notes: string | null) {
+    return this.write<AdminConfigVersion>('POST', '/api/admin/config/drafts', {
+      from: 'defaults',
+      notes,
+    });
+  }
   simulate(req: AdminSimulationRequest) {
     return this.write<AdminSimulationResponse>('POST', '/api/admin/simulations', req);
+  }
+  season() {
+    return this.read(this.http.get<AdminSeasonView>('/api/admin/season'));
+  }
+  resetDaily(kinds: DailyLimitKind[], accountId: string | null, reason: string) {
+    return this.write<AdminSeasonView>('POST', '/api/admin/season/daily-reset', {
+      kinds,
+      accountId,
+      reason,
+    });
+  }
+  runJob(job: SeasonJobId) {
+    return this.write<AdminJobResult>('POST', `/api/admin/season/jobs/${job}`, null);
+  }
+  setSeasonEnd(endsAt: string) {
+    return this.write<AdminSeasonView>('PUT', '/api/admin/season/end', { endsAt });
+  }
+  resetSeason(mode: 'progress' | 'wipe', confirm: string, reason: string) {
+    return this.write<AdminSeasonResetResult>('POST', '/api/admin/season/reset', {
+      mode,
+      confirm,
+      reason,
+    });
   }
   audit() {
     return this.read(this.http.get<AdminAuditView[]>('/api/admin/audit'));

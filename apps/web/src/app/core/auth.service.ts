@@ -34,6 +34,27 @@ export class AuthService {
     }
   }
 
+  /** Angebotene Anmeldewege; null, solange unbekannt oder die API nicht antwortet. */
+  readonly options = signal<{ discord: boolean; devLogin: boolean } | null>(null);
+
+  async loadOptions(): Promise<void> {
+    try {
+      this.options.set(
+        await firstValueFrom(
+          this.http.get<{ discord: boolean; devLogin: boolean }>('/api/auth/options'),
+        ),
+      );
+    } catch {
+      this.options.set(null);
+    }
+  }
+
+  /** Test-Anmeldung ohne Discord (nur wenn die API DEV_LOGIN anbietet). */
+  async devLogin(name: string): Promise<void> {
+    await firstValueFrom(this.http.post<void>('/api/auth/dev-login', { name }));
+    await this.refresh();
+  }
+
   /** Vollständige Navigation, da der Login über Discord und zurück läuft. */
   loginUrl(): string {
     return LOGIN_URL;
