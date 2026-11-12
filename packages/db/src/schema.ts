@@ -958,3 +958,57 @@ export const teamLeagueMatch = pgTable(
     ),
   ],
 );
+
+// --- Tagesgegner und Herausforderungen mit Annahme (Abschnitt 9) ----------------
+
+/**
+ * Tägliche Auswahl zufälliger Gegner je Charakter. Auf der Website wird nur gegen sie
+ * herausgefordert; die Auswahl entsteht beim ersten Abruf des Tages und bleibt dann fest.
+ */
+export const dailyOpponent = pgTable(
+  'daily_opponent',
+  {
+    characterId: uuid('character_id')
+      .notNull()
+      .references(() => character.id, { onDelete: 'cascade' }),
+    day: text('day').notNull(),
+    slot: integer('slot').notNull(),
+    opponentId: uuid('opponent_id')
+      .notNull()
+      .references(() => character.id, { onDelete: 'cascade' }),
+  },
+  (t) => [primaryKey({ columns: [t.characterId, t.day, t.slot] })],
+);
+
+/** Direkte Herausforderung (Discord): läuft erst, wenn der Gegner annimmt. */
+export const challengeRequest = pgTable(
+  'challenge_request',
+  {
+    id: id(),
+    seasonId: uuid('season_id')
+      .notNull()
+      .references(() => season.id, { onDelete: 'cascade' }),
+    challengerId: uuid('challenger_id')
+      .notNull()
+      .references(() => character.id, { onDelete: 'cascade' }),
+    opponentId: uuid('opponent_id')
+      .notNull()
+      .references(() => character.id, { onDelete: 'cascade' }),
+    mode: text('mode').$type<'rated' | 'friendly'>().notNull(),
+    status: text('status')
+      .$type<'pending' | 'accepted' | 'declined' | 'expired'>()
+      .notNull()
+      .default('pending'),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    fightId: uuid('fight_id').references(() => fight.id, { onDelete: 'set null' }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index('challenge_request_opponent_idx').on(t.opponentId, t.status),
+    check(
+      'challenge_request_status_check',
+      sql`${t.status} IN ('pending', 'accepted', 'declined', 'expired')`,
+    ),
+    check('challenge_request_mode_check', sql`${t.mode} IN ('rated', 'friendly')`),
+  ],
+);

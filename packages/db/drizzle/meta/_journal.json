@@ -120,6 +120,13 @@
       "when": 1794512585628,
       "tag": "0016_team_league",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1794513651158,
+      "tag": "0017_daily_opponents",
+      "breakpoints": true
     }
   ]
 }

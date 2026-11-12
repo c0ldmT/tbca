@@ -81,7 +81,7 @@ export const playerCommand = new SlashCommandBuilder()
   .addSubcommand((s) =>
     s
       .setName('kampf')
-      .setDescription('Jemanden herausfordern (asynchron gegen die Momentaufnahme)')
+      .setDescription('Jemanden herausfordern – der Kampf läuft, sobald er annimmt')
       .addUserOption((o) => o.setName('gegner').setDescription('Gegner').setRequired(true))
       .addStringOption((o) =>
         o

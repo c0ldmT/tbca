@@ -70,3 +70,36 @@ export interface FightRepository {
   findById(id: string): Promise<StoredFight | null>;
   listForCharacter(characterId: string, limit: number): Promise<StoredFight[]>;
 }
+
+export interface ChallengeRequestRecord {
+  id: string;
+  seasonId: string;
+  challengerId: string;
+  opponentId: string;
+  mode: 'rated' | 'friendly';
+  status: 'pending' | 'accepted' | 'declined' | 'expired';
+  expiresAt: Date;
+  fightId: string | null;
+  createdAt: Date;
+}
+
+/** Tagesgegner und Herausforderungen mit Annahme. */
+export interface PvpRepository {
+  /** Auswahl des Tages in fester Reihenfolge; leer, wenn es noch keine gibt. */
+  dailyOpponents(characterId: string, day: string): Promise<string[]>;
+  /** Speichert die Auswahl, falls es für den Tag noch keine gibt, und liefert die gültige. */
+  saveDailyOpponents(characterId: string, day: string, ids: readonly string[]): Promise<string[]>;
+  createRequest(
+    input: Pick<
+      ChallengeRequestRecord,
+      'seasonId' | 'challengerId' | 'opponentId' | 'mode' | 'expiresAt'
+    >,
+  ): Promise<ChallengeRequestRecord>;
+  findRequest(id: string): Promise<ChallengeRequestRecord | null>;
+  /** Offene Anfrage zwischen zwei Charakteren (in dieser Richtung). */
+  pendingRequest(challengerId: string, opponentId: string): Promise<ChallengeRequestRecord | null>;
+  /** Wechselt nur aus „pending“; false, wenn schon entschieden. */
+  resolveRequest(id: string, status: 'accepted' | 'declined' | 'expired'): Promise<boolean>;
+  /** Kampf einer angenommenen Anfrage vermerken. */
+  setRequestFight(id: string, fightId: string): Promise<void>;
+}

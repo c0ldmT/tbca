@@ -8,6 +8,7 @@ import {
   deriveSnapshot,
   ENGINE_VERSION,
   levelFromXp,
+  pickDailyOpponents,
   pvpReward,
   simulateBattle,
   type Clock,
@@ -30,9 +31,9 @@ import type { Env } from '../config/env.js';
 import { SeasonService, type CurrentSeason } from '../game/season.js';
 import { RatingService } from '../league/rating.service.js';
 import { ProgressionService } from '../progression/progression.service.js';
-import { CHARACTER_REPOSITORY, CLOCK, ENV, FIGHT_REPOSITORY } from '../tokens.js';
+import { CHARACTER_REPOSITORY, CLOCK, ENV, FIGHT_REPOSITORY, PVP_REPOSITORY } from '../tokens.js';
 import { dayKey } from './day.js';
-import type { FightRepository, StoredFight } from './types.js';
+import type { FightRepository, PvpRepository, StoredFight } from './types.js';
 
 /**
  * Asynchrone PvP-Herausforderungen gegen die Momentaufnahme des Gegners (Abschnitt 9) und
@@ -48,6 +49,7 @@ export class FightService {
     @Inject(ENV) private readonly env: Env,
     @Inject(ProgressionService) private readonly progression: ProgressionService,
     @Inject(RatingService) private readonly ratings: RatingService,
+    @Inject(PVP_REPOSITORY) private readonly pvp: PvpRepository,
   ) {}
 
   async status(accountId: string): Promise<PvpStatus> {
@@ -57,38 +59,75 @@ export class FightService {
     return { day, rewardedToday: counts.today, dailyLimit: season.game.pvp.dailyRewardedFights };
   }
 
-  async opponents(accountId: string, query: string): Promise<OpponentView[]> {
+  /**
+   * Tagesgegner: eine kleine, täglich neue Auswahl zufälliger Gegner nahe am eigenen Level. Auf
+   * der Website wird nur gegen sie herausgefordert; freie Herausforderungen gibt es nur über
+   * Discord, und dort muss der Gegner annehmen.
+   */
+  async opponents(accountId: string): Promise<OpponentView[]> {
     const { season, me } = await this.mine(accountId);
-    const [list, counts] = await Promise.all([
-      this.characters.search(season.id, query.trim().slice(0, 20), accountId, me.level, 20),
-      this.fights.rewardCounts(me.id, this.today()),
-    ]);
+    const day = this.today();
+    const ids = await this.dailyOpponents(season, me, day);
+    const counts = await this.fights.rewardCounts(me.id, day);
     const median = await this.progression.median(season.id);
-    return list.map((o) => {
+    const rules = season.game.pvp;
+    const views: OpponentView[] = [];
+    for (const id of ids) {
+      const o = await this.characters.findById(id);
+      if (!o) continue;
+      const done = counts.byOpponent.get(o.id) ?? 0;
       const base = pvpReward(season.game, {
         mode: 'rated',
         won: true,
         level: me.level,
         opponentLevel: o.level,
         rewardedToday: counts.today,
-        rewardedVsOpponentToday: counts.byOpponent.get(o.id) ?? 0,
-        opponentIsBot: o.isBot,
+        rewardedVsOpponentToday: done,
+        opponentIsBot: o.isBot ?? false,
         testSeason: season.isTest,
       });
       const reward = this.progression.boost(season.game, base, me.level, median);
-      return {
+      views.push({
         id: o.id,
         name: o.name,
         level: o.level,
         classId: o.classId,
-        isBot: o.isBot,
+        isBot: o.isBot ?? false,
         winXp: reward.xp,
         limit: reward.limit,
-      };
-    });
+        rewardsLeft: rules.sameOpponentPermille.slice(done).filter((x) => x > 0).length,
+      });
+    }
+    return views;
   }
 
-  async challenge(accountId: string, req: ChallengeRequest): Promise<ChallengeResponse> {
+  /** Auswahl des Tages; entsteht beim ersten Abruf und bleibt bis Tagesende fest. */
+  private async dailyOpponents(
+    season: CurrentSeason,
+    me: CharacterRecord,
+    day: string,
+  ): Promise<string[]> {
+    const stored = await this.pvp.dailyOpponents(me.id, day);
+    if (stored.length > 0) return stored;
+    const candidates = await this.characters.search(season.id, '', me.accountId, me.level, 60);
+    const ids = pickDailyOpponents(season.game.pvp, {
+      level: me.level,
+      candidates,
+      seed: `${me.id}:${day}`,
+      testSeason: season.isTest,
+    });
+    return this.pvp.saveDailyOpponents(me.id, day, ids);
+  }
+
+  /**
+   * Herausforderung. Ohne `direct` nur gegen einen der Tagesgegner; `direct` nutzen angenommene
+   * Discord-Herausforderungen und vom Server gewählte Gegner (Platzierung).
+   */
+  async challenge(
+    accountId: string,
+    req: ChallengeRequest,
+    options: { direct?: boolean } = {},
+  ): Promise<ChallengeResponse> {
     const { season, me } = await this.mine(accountId);
     const opponent = await this.characters.findById(req.opponentId);
     if (!opponent || opponent.seasonId !== season.id) {
@@ -99,6 +138,16 @@ export class FightService {
         HttpStatus.BAD_REQUEST,
         'self_challenge',
         'Du kannst dich nicht selbst herausfordern',
+      );
+    }
+    if (
+      !options.direct &&
+      !(await this.dailyOpponents(season, me, this.today())).includes(opponent.id)
+    ) {
+      throw new ApiError(
+        HttpStatus.FORBIDDEN,
+        'not_daily_opponent',
+        'Nur Tagesgegner – andere über Discord herausfordern',
       );
     }
 

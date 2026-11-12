@@ -18,16 +18,6 @@
   gap: 18px;
 }
 
-.search {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.search .tbca-input {
-  width: 240px;
-}
-
 .intro,
 .pad {
   padding: 12px 22px;
@@ -130,4 +120,8 @@
   .search .tbca-input {
     width: 160px;
   }
+}
+
+.discord {
+  border-top: 1px solid rgb(255 255 255 / 0.05);
 }

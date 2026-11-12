@@ -7,16 +7,7 @@
       <i class="tbca-gx" aria-hidden="true"></i>
       <div class="tbca-ph">
         <h2 id="opp-t">{{ t('pvp.opponents') }}</h2>
-        <label class="search">
-          <span class="tbca-idx">{{ t('pvp.search') }}</span>
-          <input
-            class="tbca-input"
-            type="search"
-            autocomplete="off"
-            [value]="query()"
-            (input)="search($any($event.target).value)"
-          />
-        </label>
+        <span class="tbca-idx">{{ t('pvp.newDaily') }}</span>
       </div>
       <p class="intro tbca-hint">{{ t('pvp.intro') }}</p>
       @if (opponents(); as list) {
@@ -33,7 +24,8 @@
               <span>{{ t('classes.' + o.classId) }} · LV {{ o.level }}</span>
               <span class="rw" [class.rw--ok]="o.winXp > 0">
                 @if (o.winXp > 0) {
-                  {{ t('pvp.limit.none') }} · {{ t('pvp.winXp', { xp: o.winXp }) }}
+                  {{ t('pvp.winXp', { xp: o.winXp }) }} ·
+                  {{ t('pvp.rewardsLeft', { n: o.rewardsLeft }) }}
                 } @else {
                   {{ t('pvp.limit.' + o.limit) }}
                 }
@@ -68,6 +60,7 @@
       } @else {
         <p class="tbca-hint pad">{{ t('pvp.loading') }}</p>
       }
+      <p class="tbca-hint pad discord">{{ t('pvp.direct') }}</p>
     </section>
 
     <div class="side">

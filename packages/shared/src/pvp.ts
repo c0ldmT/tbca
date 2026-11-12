@@ -46,6 +46,8 @@ export interface OpponentView {
   /** Erwartete XP bei einem Sieg im gewerteten Modus; 0 wenn er nichts brächte. */
   winXp: number;
   limit: RewardLimit;
+  /** Noch belohnte Kämpfe gegen diesen Gegner heute (Abnahme gegen denselben Gegner). */
+  rewardsLeft: number;
 }
 
 export interface FightCombatantView {

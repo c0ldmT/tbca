@@ -36,8 +36,8 @@ afterEach(async () => {
 });
 
 describe('PvP-Herausforderungen', () => {
-  it('findet Gegner der Season ohne den eigenen Charakter', async () => {
-    const res = await call(alice, 'GET', '/api/pvp/opponents?q=bo');
+  it('zeigt die Tagesgegner mit Belohnungsstand', async () => {
+    const res = await call(alice, 'GET', '/api/pvp/opponents');
     expect(res.json()).toEqual([
       {
         id: bobId,
@@ -47,8 +47,47 @@ describe('PvP-Herausforderungen', () => {
         isBot: false,
         winXp: 60,
         limit: 'none',
+        rewardsLeft: 2,
       },
     ]);
+    await challenge();
+    const after = (await call(alice, 'GET', '/api/pvp/opponents')).json();
+    expect(after[0].rewardsLeft).toBe(1);
+  });
+
+  it('erlaubt auf der Website nur Tagesgegner, die Auswahl bleibt den Tag über fest', async () => {
+    // Weitere Spieler: mehr als die 5 Tagesgegner
+    const add = (i: number, name: string) => {
+      const id = `01933b5e-0000-7000-8000-0000000002${String(i).padStart(2, '0')}`;
+      t.characters.records.push({
+        id,
+        accountId: `acc-${i}`,
+        seasonId: t.seasons.current!.id,
+        name,
+        classId: 'gunner',
+        level: 1,
+        xp: 0,
+        allocated: { str: 0, dex: 3, int: 0, con: 2 },
+        loadouts: {},
+      });
+      return id;
+    };
+    for (let i = 0; i < 8; i++) add(i, `Runner${i}`);
+    const first = (await call(alice, 'GET', '/api/pvp/opponents')).json();
+    expect(first).toHaveLength(5);
+    // Neue Spieler im Laufe des Tages ändern die Auswahl nicht
+    const lateId = add(99, 'Late');
+    const again = (await call(alice, 'GET', '/api/pvp/opponents')).json();
+    expect(again.map((o: { id: string }) => o.id)).toEqual(first.map((o: { id: string }) => o.id));
+    const outsider = await challenge('rated', lateId);
+    expect(outsider.statusCode).toBe(403);
+    expect(outsider.json().code).toBe('not_daily_opponent');
+    expect((await challenge('rated', first[0].id)).statusCode).toBe(201);
+    // Am nächsten Tag gibt es eine neue Auswahl
+    t.time.tick(24 * 60 * 60 * 1000);
+    const next = (await call(alice, 'GET', '/api/pvp/opponents')).json();
+    expect(next).toHaveLength(5);
+    expect(t.pvp.daily.size).toBe(2);
   });
 
   it('rechnet einen gewerteten Kampf, speichert ihn und vergibt XP', async () => {
@@ -166,8 +205,11 @@ describe('Bots und Training', () => {
 
   it('zeigt Bots als Gegner und belohnt sie in Test-Seasons', async () => {
     const botId = addBot('Echo', 1);
-    const list = (await call(alice, 'GET', '/api/pvp/opponents?q=echo')).json();
-    expect(list[0]).toMatchObject({ name: 'Echo', isBot: true, limit: 'none' });
+    const list = (await call(alice, 'GET', '/api/pvp/opponents')).json();
+    expect(list.find((o: { name: string }) => o.name === 'Echo')).toMatchObject({
+      isBot: true,
+      limit: 'none',
+    });
     expect((await challenge('rated', botId)).json().reward.rewarded).toBe(true);
   });
 
@@ -190,7 +232,8 @@ describe('Bots und Training', () => {
   it('belohnt Bots nicht in echten Seasons', async () => {
     t.seasons.current = { ...t.seasons.current!, isTest: false };
     const botId = addBot('Echo', 1);
-    expect((await call(alice, 'GET', '/api/pvp/opponents?q=echo')).json()[0].limit).toBe('bot');
+    const list = (await call(alice, 'GET', '/api/pvp/opponents')).json();
+    expect(list.find((o: { name: string }) => o.name === 'Echo').limit).toBe('bot');
     expect((await challenge('rated', botId)).json().reward).toMatchObject({
       rewarded: false,
       limit: 'bot',

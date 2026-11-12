@@ -139,6 +139,7 @@ export {
 } from './progression/catch-up.js';
 export { BOT_NAMES, botBuild, type BotSpec } from './bots/bot-build.js';
 export { pvpReward, type PvpReward, type PvpRewardInput, type RewardLimit } from './pvp/rewards.js';
+export { pickDailyOpponents, type OpponentCandidate } from './pvp/daily.js';
 
 export {
   BASIC_ATTACK,

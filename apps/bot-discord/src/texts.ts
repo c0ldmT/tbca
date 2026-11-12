@@ -1,4 +1,6 @@
 import type {
+  DiscordChallengeAnswer,
+  DiscordChallengeRequestView,
   DiscordDungeonView,
   DiscordFightSummary,
   DiscordLeagueNews,
@@ -28,6 +30,15 @@ const de = {
     (f.xp > 0 ? ` +${f.xp} XP, +${f.credits} Credits.` : ' Keine Belohnung.') +
     (f.levelUp ? ` Level ${f.levelUp} erreicht!` : '') +
     `\nReplay: ${f.url}`,
+  challengeRequest: (r: DiscordChallengeRequestView): string =>
+    `⚔️ **${r.challenger}** fordert **${r.opponent}** heraus (${r.mode === 'rated' ? 'gewertet' : 'Freundschaft'}). ` +
+    `<@${r.opponentUserId}>, nimmst du an? Die Anfrage läuft ${stamp(r.expiresAt, 'R')} ab.`,
+  challengeButtons: { accept: 'Annehmen', decline: 'Ablehnen' },
+  challengeNotYours: 'Diese Herausforderung gilt nicht dir.',
+  challengeAnswered: (a: DiscordChallengeAnswer): string =>
+    a.status === 'declined' || !a.fight
+      ? `**${a.opponent}** hat die Herausforderung von **${a.challenger}** abgelehnt.`
+      : `**${a.opponent}** nimmt an! ` + de.fight(a.fight),
   setupDone: (name: string) =>
     `Dieser Server gehört jetzt zur Community **${name}**. Lege mit \`/tbca-admin xp-kanal\` fest, wo Nachrichten XP geben.`,
   channelXp: (enabled: boolean): string =>
@@ -159,6 +170,10 @@ const de = {
       .join('\n\n') + `\n${n.url}`,
   errors: {
     no_team: 'Du bist in keinem Team. Gründe eins auf der Website.',
+    challenge_expired: 'Diese Herausforderung ist abgelaufen.',
+    challenge_closed: 'Über diese Herausforderung ist schon entschieden.',
+    challenge_not_found: 'Diese Herausforderung gibt es nicht mehr.',
+    not_your_challenge: 'Diese Herausforderung gilt nicht dir.',
     already_placed: 'Deine Platzierung ist abgeschlossen.',
     no_opponent: 'Gerade ist kein passender Gegner da.',
     team_not_found: 'Kein Team mit diesem Kürzel gefunden.',
@@ -198,6 +213,15 @@ const en: typeof de = {
     (f.xp > 0 ? ` +${f.xp} XP, +${f.credits} credits.` : ' No reward.') +
     (f.levelUp ? ` Reached level ${f.levelUp}!` : '') +
     `\nReplay: ${f.url}`,
+  challengeRequest: (r) =>
+    `⚔️ **${r.challenger}** challenges **${r.opponent}** (${r.mode === 'rated' ? 'rated' : 'friendly'}). ` +
+    `<@${r.opponentUserId}>, do you accept? The request expires ${stamp(r.expiresAt, 'R')}.`,
+  challengeButtons: { accept: 'Accept', decline: 'Decline' },
+  challengeNotYours: "This challenge isn't for you.",
+  challengeAnswered: (a) =>
+    a.status === 'declined' || !a.fight
+      ? `**${a.opponent}** declined the challenge from **${a.challenger}**.`
+      : `**${a.opponent}** accepts! ` + en.fight(a.fight),
   setupDone: (name) =>
     `This server now belongs to the community **${name}**. Use \`/tbca-admin xp-kanal\` to choose where messages give XP.`,
   channelXp: (enabled) =>
@@ -327,6 +351,10 @@ const en: typeof de = {
       .join('\n\n') + `\n${n.url}`,
   errors: {
     no_team: "You're not in a team. Found one on the website.",
+    challenge_expired: 'This challenge has expired.',
+    challenge_closed: 'This challenge has already been decided.',
+    challenge_not_found: "This challenge doesn't exist anymore.",
+    not_your_challenge: "This challenge isn't for you.",
     already_placed: 'Your placement is complete.',
     no_opponent: 'No suitable opponent right now.',
     team_not_found: 'No team with that tag found.',
@@ -365,8 +393,8 @@ export function errorText(texts: Texts, code: string): string {
 }
 
 /** Discord-Zeitstempel: zeigt jedem die eigene Ortszeit. */
-function stamp(iso: string): string {
-  return `<t:${Math.floor(Date.parse(iso) / 1000)}:f>`;
+function stamp(iso: string, style: 'f' | 'R' = 'f'): string {
+  return `<t:${Math.floor(Date.parse(iso) / 1000)}:${style}>`;
 }
 
 function className(id: string): string {

@@ -147,6 +147,20 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ### Geändert
 
+- Keine freie Gegnersuche mehr: Jeder Spieler bekommt täglich eine kleine Auswahl zufälliger
+  Gegner nahe am eigenen Level (`pvp.dailyOpponents`, Standard 5; echte Spieler vor Bots, außer
+  in Test-Seasons). Mit der Abnahme gegen denselben Gegner (100 %, 50 %) ergibt das genau das
+  Tageslimit von 10 belohnten Kämpfen; die Konfigurationsprüfung verlangt, dass das Limit
+  erreichbar bleibt. Die Auswahl entsteht beim ersten Abruf des Tages und bleibt fest
+  (Tabelle `daily_opponent`). Auf der Website und über die API werden nur noch Tagesgegner
+  herausgefordert (`not_daily_opponent` sonst); die Arena zeigt je Gegner, wie oft er heute noch
+  belohnt. `GET /api/pvp/opponents` liefert die Tagesgegner (ohne Suchparameter), mit
+  `rewardsLeft`.
+- Herausforderungen über Discord brauchen die Zustimmung des Gegners: `/tbca kampf` stellt eine
+  Anfrage (Tabelle `challenge_request`, 15 Minuten gültig) mit Buttons zum Annehmen und
+  Ablehnen, die nur der Herausgeforderte drücken kann, und erwähnt ihn. Erst beim Annehmen wird
+  gekämpft (`POST /api/internal/discord/challenge-answer`). Migration 0017. Platzierungskämpfe
+  der Liga wählen ihren Gegner weiter selbst.
 - Netrunner-Fähigkeit „Virus“ trifft alle Gegner (vorher einen). Hebt den Netrunner im 3v3 von
   42–45 % auf 48–52 %, Duelle unverändert. Referenz-Fingerabdruck Team `a59d38c1`.
 - Medtech-Fähigkeit „Stimulans“ wirkt auf das ganze Team (neues Fähigkeitsziel `all_allies`):

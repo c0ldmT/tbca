@@ -7,7 +7,6 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
-  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -36,9 +35,10 @@ export class PvpController {
     return this.fights.status(req.auth!.accountId);
   }
 
+  /** Die Tagesgegner – eine kleine, täglich neue Auswahl. */
   @Get('opponents')
-  opponents(@Req() req: FastifyRequest, @Query('q') q: unknown): Promise<OpponentView[]> {
-    return this.fights.opponents(req.auth!.accountId, typeof q === 'string' ? q : '');
+  opponents(@Req() req: FastifyRequest): Promise<OpponentView[]> {
+    return this.fights.opponents(req.auth!.accountId);
   }
 
   @Post('challenges')

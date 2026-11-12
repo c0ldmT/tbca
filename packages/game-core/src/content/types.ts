@@ -178,6 +178,11 @@ export interface PvpRules {
    * dem jeweiligen Level, aufsteigend nach `fromLevel`. Leer = Bots kämpfen ohne Items.
    */
   readonly botGear: readonly { readonly fromLevel: number; readonly rarity: number }[];
+  /**
+   * Zufällige Gegner je Spieler und Tag, gegen die auf der Website herausgefordert wird. Mit der
+   * Abnahme gegen denselben Gegner muss das Tageslimit erreichbar sein.
+   */
+  readonly dailyOpponents: number;
 }
 
 export interface GameConfig {

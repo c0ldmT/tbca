@@ -203,7 +203,7 @@ describe('Interne Discord-API', () => {
     expect(res.json().code).toBe('no_team');
   });
 
-  it('fordert registrierte Spieler heraus und fasst den Kampf zusammen', async () => {
+  it('fordert über eine Anfrage heraus, die der Gegner annehmen muss', async () => {
     await setup();
     await bot('POST', 'register', {
       guildId: GUILD,
@@ -212,17 +212,41 @@ describe('Interne Discord-API', () => {
       name: 'Trinity',
       classId: 'bruiser',
     });
-    const res = (
-      await bot('POST', 'challenge', {
+    const ask = () =>
+      bot('POST', 'challenge', {
         userId: USER,
         displayName: 'Neo',
         opponentUserId: OTHER,
         mode: 'rated',
-      })
-    ).json();
-    expect(res.url).toMatch(new RegExp(`^${WEB_ORIGIN}/replay/`));
-    expect(res.rounds).toBeGreaterThan(0);
-    expect(res.bestHit.value).toBeGreaterThan(0);
+      });
+    const request = (await ask()).json();
+    expect(request).toMatchObject({
+      challenger: 'Neo',
+      opponent: 'Trinity',
+      opponentUserId: OTHER,
+      mode: 'rated',
+    });
+    // Noch kein Kampf; eine zweite Anfrage liefert dieselbe offene
+    expect(t.fights.fights).toHaveLength(0);
+    expect((await ask()).json().id).toBe(request.id);
+
+    const answer = (userId: string, accept: boolean) =>
+      bot('POST', 'challenge-answer', {
+        userId,
+        displayName: 'x',
+        requestId: request.id,
+        accept,
+      });
+    // Nur der Gegner darf antworten
+    expect((await answer(USER, true)).json().code).toBe('not_your_challenge');
+    const accepted = (await answer(OTHER, true)).json();
+    expect(accepted.status).toBe('accepted');
+    expect(accepted.fight.url).toMatch(new RegExp(`^${WEB_ORIGIN}/replay/`));
+    expect(accepted.fight.rounds).toBeGreaterThan(0);
+    expect(t.fights.fights).toHaveLength(1);
+    // Kein zweiter Kampf aus derselben Anfrage
+    expect((await answer(OTHER, true)).json().code).toBe('challenge_closed');
+
     const missing = await bot('POST', 'challenge', {
       userId: USER,
       displayName: 'Neo',
@@ -230,6 +254,46 @@ describe('Interne Discord-API', () => {
       mode: 'rated',
     });
     expect(missing.json().code).toBe('opponent_not_found');
+  });
+
+  it('lässt Anfragen ablehnen und ablaufen', async () => {
+    await setup();
+    await bot('POST', 'register', {
+      guildId: GUILD,
+      userId: OTHER,
+      displayName: 'Trin',
+      name: 'Trinity',
+      classId: 'bruiser',
+    });
+    const ask = async () =>
+      (
+        await bot('POST', 'challenge', {
+          userId: USER,
+          displayName: 'Neo',
+          opponentUserId: OTHER,
+          mode: 'friendly',
+        })
+      ).json();
+    const first = await ask();
+    const declined = await bot('POST', 'challenge-answer', {
+      userId: OTHER,
+      displayName: 'Trin',
+      requestId: first.id,
+      accept: false,
+    });
+    expect(declined.json()).toMatchObject({ status: 'declined', fight: null });
+
+    const second = await ask();
+    expect(second.id).not.toBe(first.id);
+    t.time.tick(16 * 60 * 1000);
+    const late = await bot('POST', 'challenge-answer', {
+      userId: OTHER,
+      displayName: 'Trin',
+      requestId: second.id,
+      accept: true,
+    });
+    expect(late.json().code).toBe('challenge_expired');
+    expect(t.fights.fights).toHaveLength(0);
   });
 });
 

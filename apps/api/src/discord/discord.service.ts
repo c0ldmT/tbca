@@ -14,6 +14,8 @@ import {
 import type {
   ChallengeResponse,
   DiscordActivityResult,
+  DiscordChallengeAnswer,
+  DiscordChallengeRequestView,
   DiscordDungeonView,
   DiscordFightSummary,
   DiscordLeagueNews,
@@ -33,6 +35,7 @@ import type { Env } from '../config/env.js';
 import { dayKey } from '../fight/day.js';
 import { DungeonService } from '../dungeon/dungeon.service.js';
 import { FightService } from '../fight/fight.service.js';
+import type { PvpRepository } from '../fight/types.js';
 import { LeagueService } from '../league/league.service.js';
 import { TeamService } from '../team/team.service.js';
 import { SeasonService } from '../game/season.js';
@@ -43,6 +46,7 @@ import {
   CLOCK,
   DISCORD_REPOSITORY,
   ENV,
+  PVP_REPOSITORY,
   RATE_LIMITER,
 } from '../tokens.js';
 import type { DiscordRepository, GuildCommunity } from './types.js';
@@ -53,6 +57,9 @@ import type { DiscordRepository, GuildCommunity } from './types.js';
  */
 /** Warteschlange vorgemerkter passiver XP in Valkey. */
 const PASSIVE_QUEUE = 'xp:passive:pending';
+
+/** So lange (Spielzeit) bleibt eine Herausforderung über Discord offen. */
+const CHALLENGE_TTL_MS = 15 * 60 * 1000;
 
 interface PassiveEntry {
   seasonId: string;
@@ -77,6 +84,7 @@ export class DiscordService {
     @Inject(DungeonService) private readonly dungeonService: DungeonService,
     @Inject(TeamService) private readonly teamService: TeamService,
     @Inject(LeagueService) private readonly league: LeagueService,
+    @Inject(PVP_REPOSITORY) private readonly pvp: PvpRepository,
   ) {}
 
   /** Dungeon über Discord: Status, Start oder Entscheidung; Antwort für Nachricht mit Buttons. */
@@ -266,15 +274,21 @@ export class DiscordService {
     };
   }
 
+  /**
+   * Direkte Herausforderung über Discord. Sie läuft erst, wenn der Gegner annimmt
+   * (`answerChallenge`); bis dahin gibt es eine offene Anfrage mit Ablaufzeit.
+   */
   async challenge(input: {
     userId: string;
     displayName: string;
     opponentUserId: string;
     mode: 'rated' | 'friendly';
-  }): Promise<DiscordFightSummary> {
+  }): Promise<DiscordChallengeRequestView> {
     const accountId = await this.requireAccount(input.userId);
-    const opponentAccount = await this.accounts.findAccountId('discord', input.opponentUserId);
     const season = await this.seasons.current();
+    const me = await this.characters.findForAccount(accountId, season.id);
+    if (!me) throw new ApiError(HttpStatus.NOT_FOUND, 'not_registered', 'Kein Charakter');
+    const opponentAccount = await this.accounts.findAccountId('discord', input.opponentUserId);
     const opponent =
       opponentAccount && (await this.characters.findForAccount(opponentAccount, season.id));
     if (!opponent)
@@ -283,12 +297,67 @@ export class DiscordService {
         'opponent_not_found',
         'Gegner ist nicht registriert',
       );
-
-    const result = await this.fights.challenge(accountId, {
+    if (opponent.id === me.id)
+      throw new ApiError(HttpStatus.BAD_REQUEST, 'self_challenge', 'Nicht gegen dich selbst');
+    const now = this.clock.now();
+    let request = await this.pvp.pendingRequest(me.id, opponent.id);
+    if (request && request.expiresAt.getTime() <= now) {
+      await this.pvp.resolveRequest(request.id, 'expired');
+      request = null;
+    }
+    request ??= await this.pvp.createRequest({
+      seasonId: season.id,
+      challengerId: me.id,
       opponentId: opponent.id,
       mode: input.mode,
+      expiresAt: new Date(now + CHALLENGE_TTL_MS),
     });
-    return this.summarize(result);
+    return {
+      id: request.id,
+      challenger: me.name,
+      opponent: opponent.name,
+      opponentUserId: input.opponentUserId,
+      mode: request.mode,
+      expiresAt: request.expiresAt.toISOString(),
+    };
+  }
+
+  /** Der Herausgeforderte nimmt an (der Kampf läuft sofort) oder lehnt ab. */
+  async answerChallenge(input: {
+    userId: string;
+    requestId: string;
+    accept: boolean;
+  }): Promise<DiscordChallengeAnswer> {
+    const accountId = await this.requireAccount(input.userId);
+    const request = await this.pvp.findRequest(input.requestId);
+    const opponent = request && (await this.characters.findById(request.opponentId));
+    const challenger = request && (await this.characters.findById(request.challengerId));
+    if (!request || !opponent || !challenger)
+      throw new ApiError(HttpStatus.NOT_FOUND, 'challenge_not_found', 'Anfrage nicht gefunden');
+    if (opponent.accountId !== accountId)
+      throw new ApiError(HttpStatus.FORBIDDEN, 'not_your_challenge', 'Nicht deine Anfrage');
+    if (request.status !== 'pending')
+      throw new ApiError(HttpStatus.CONFLICT, 'challenge_closed', 'Schon entschieden');
+    if (request.expiresAt.getTime() <= this.clock.now()) {
+      await this.pvp.resolveRequest(request.id, 'expired');
+      throw new ApiError(HttpStatus.CONFLICT, 'challenge_expired', 'Anfrage abgelaufen');
+    }
+    const names = { challenger: challenger.name, opponent: opponent.name };
+    if (!input.accept) {
+      if (!(await this.pvp.resolveRequest(request.id, 'declined')))
+        throw new ApiError(HttpStatus.CONFLICT, 'challenge_closed', 'Schon entschieden');
+      return { status: 'declined', ...names, fight: null };
+    }
+    // Erst die Anfrage schließen, damit ein doppelter Klick nicht zweimal kämpft
+    if (!(await this.pvp.resolveRequest(request.id, 'accepted')))
+      throw new ApiError(HttpStatus.CONFLICT, 'challenge_closed', 'Schon entschieden');
+    const result = await this.fights.challenge(
+      challenger.accountId,
+      { opponentId: opponent.id, mode: request.mode },
+      { direct: true },
+    );
+    await this.pvp.setRequestFight(request.id, result.fightId);
+    return { status: 'accepted', ...names, fight: await this.summarize(result) };
   }
 
   /** Kurzfassung eines Kampfes für eine Discord-Nachricht. */

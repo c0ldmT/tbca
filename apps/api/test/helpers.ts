@@ -36,9 +36,11 @@ import {
 } from '../src/character/types.js';
 import { loadEnv, type Env } from '../src/config/env.js';
 import type {
+  ChallengeRequestRecord,
   FightTx,
   FightRepository,
   NewFight,
+  PvpRepository,
   RewardCounts,
   StoredFight,
 } from '../src/fight/types.js';
@@ -110,6 +112,7 @@ import {
   DISCORD_OAUTH,
   LEAGUE_REPOSITORY,
   TEAM_LEAGUE_REPOSITORY,
+  PVP_REPOSITORY,
   SEASON_REPOSITORY,
   SESSION_STORE,
 } from '../src/tokens.js';
@@ -1643,6 +1646,63 @@ export class InMemoryTeamLeague implements TeamLeagueRepository {
   }
 }
 
+export class InMemoryPvp implements PvpRepository {
+  readonly daily = new Map<string, string[]>();
+  readonly requests: ChallengeRequestRecord[] = [];
+
+  async dailyOpponents(characterId: string, day: string) {
+    return [...(this.daily.get(`${characterId}:${day}`) ?? [])];
+  }
+
+  async saveDailyOpponents(characterId: string, day: string, ids: readonly string[]) {
+    const key = `${characterId}:${day}`;
+    if (!this.daily.get(key)?.length && ids.length) this.daily.set(key, [...ids]);
+    return this.dailyOpponents(characterId, day);
+  }
+
+  async createRequest(
+    input: Pick<
+      ChallengeRequestRecord,
+      'seasonId' | 'challengerId' | 'opponentId' | 'mode' | 'expiresAt'
+    >,
+  ) {
+    const r: ChallengeRequestRecord = {
+      ...input,
+      id: randomUUID(),
+      status: 'pending',
+      fightId: null,
+      createdAt: new Date(),
+    };
+    this.requests.push(r);
+    return { ...r };
+  }
+
+  async findRequest(id: string) {
+    const r = this.requests.find((x) => x.id === id);
+    return r ? { ...r } : null;
+  }
+
+  async pendingRequest(challengerId: string, opponentId: string) {
+    const r = this.requests.find(
+      (x) =>
+        x.challengerId === challengerId && x.opponentId === opponentId && x.status === 'pending',
+    );
+    return r ? { ...r } : null;
+  }
+
+  async resolveRequest(id: string, status: 'accepted' | 'declined' | 'expired') {
+    const r = this.requests.find((x) => x.id === id && x.status === 'pending');
+    if (!r) return false;
+    r.status = status;
+    return true;
+  }
+
+  async setRequestFight(id: string, fightId: string) {
+    const r = this.requests.find((x) => x.id === id);
+    if (r) r.fightId = fightId;
+  }
+}
+
 export interface TestApp {
   app: NestFastifyApplication;
   accounts: InMemoryAccounts;
@@ -1664,6 +1724,7 @@ export interface TestApp {
   accountData: InMemoryAccountData;
   league: InMemoryLeague;
   teamLeague: InMemoryTeamLeague;
+  pvp: InMemoryPvp;
   time: ManualTimeSource;
   dbUp: { value: boolean };
 }
@@ -1691,6 +1752,7 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
   league.discord = guilds;
   const teamLeague = new InMemoryTeamLeague();
   teamLeague.teams = teams;
+  const pvp = new InMemoryPvp();
   // 12.11.2026, 12:00 Uhr in Berlin
   const time = new ManualTimeSource(Date.UTC(2026, 10, 12, 11, 0));
   const dbUp = { value: true };
@@ -1734,6 +1796,8 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
     .useValue(league)
     .overrideProvider(TEAM_LEAGUE_REPOSITORY)
     .useValue(teamLeague)
+    .overrideProvider(PVP_REPOSITORY)
+    .useValue(pvp)
     .overrideProvider(RATE_LIMITER)
     .useValue(new MemoryRateLimiter(time.read))
     .overrideProvider(CLOCK)
@@ -1771,6 +1835,7 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
     accountData,
     league,
     teamLeague,
+    pvp,
     time,
     dbUp,
   };

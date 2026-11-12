@@ -39,6 +39,8 @@ export interface CommandReply {
   /** Nur für den Aufrufer sichtbar (Fehler, Admin-Antworten). */
   ephemeral: boolean;
   buttons?: ButtonSpec[];
+  /** Diesen Nutzer zusätzlich anpingen (z. B. den Herausgeforderten). */
+  ping?: string;
 }
 
 export interface ButtonInput {
@@ -119,6 +121,21 @@ export function leagueReply(t: Texts, v: DiscordLeagueView, ownerId: string): Co
 export async function handleButton(api: ApiClient, input: ButtonInput): Promise<CommandReply> {
   const t = textsFor(input.locale);
   const [prefix, action, ownerId, inj, chip] = input.customId.split(':');
+  if (prefix === 'ch') {
+    // Herausforderung: `ch:<accept|decline>:<anfrage>:<gegner>` – nur der Gegner entscheidet
+    const [, decision, requestId, opponentId] = input.customId.split(':');
+    if ((decision !== 'accept' && decision !== 'decline') || !requestId || !opponentId)
+      return { content: errorText(t, 'fallback'), ephemeral: true };
+    if (opponentId !== input.userId) return { content: t.challengeNotYours, ephemeral: true };
+    const res = await api.challengeAnswer({
+      userId: input.userId,
+      displayName: input.displayName,
+      requestId,
+      accept: decision === 'accept',
+    });
+    if (!res.ok) return { content: errorText(t, res.code), ephemeral: true };
+    return { content: t.challengeAnswered(res.data), ephemeral: false, buttons: [] };
+  }
   if (prefix === 'lg') {
     const actions: LeagueAction[] = ['join', 'leave', 'placement'];
     if (!actions.includes(action as LeagueAction) || !ownerId)
@@ -236,7 +253,25 @@ export async function handleCommand(api: ApiClient, input: CommandInput): Promis
           opponentUserId: opponent.id,
           mode,
         });
-        return res.ok ? { content: t.fight(res.data), ephemeral: false } : fail(res.code);
+        if (!res.ok) return fail(res.code);
+        // Der Kampf läuft erst, wenn der Gegner annimmt
+        return {
+          content: t.challengeRequest(res.data),
+          ephemeral: false,
+          ping: res.data.opponentUserId,
+          buttons: [
+            {
+              customId: `ch:accept:${res.data.id}:${res.data.opponentUserId}`,
+              label: t.challengeButtons.accept,
+              style: 'success',
+            },
+            {
+              customId: `ch:decline:${res.data.id}:${res.data.opponentUserId}`,
+              label: t.challengeButtons.decline,
+              style: 'secondary',
+            },
+          ],
+        };
       }
     }
   }

@@ -1,6 +1,7 @@
 import { Body, Controller, Get, HttpCode, Inject, Post, Query, UseGuards } from '@nestjs/common';
 import {
   discordActivitySchema,
+  discordChallengeAnswerSchema,
   discordChallengeSchema,
   discordChannelXpSchema,
   discordDungeonSchema,
@@ -72,6 +73,14 @@ export class DiscordController {
       throw new ApiError(400, 'invalid_request', 'userId fehlt');
     }
     return this.discord.profile(userId);
+  }
+
+  /** Annehmen oder Ablehnen einer Herausforderung durch den Gegner. */
+  @Post('challenge-answer')
+  @HttpCode(200)
+  challengeAnswer(@Body() body: unknown) {
+    const { userId, requestId, accept } = parseBody(discordChallengeAnswerSchema, body);
+    return this.discord.answerChallenge({ userId, requestId, accept });
   }
 
   @Post('challenge')

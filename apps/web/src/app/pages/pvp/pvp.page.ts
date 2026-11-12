@@ -13,7 +13,11 @@ import { ClassBadge } from '../../shared/ui/class-badge';
 import { Segments } from '../../shared/ui/segments';
 import { FightRow } from './fight-row';
 
-/** Arena: Gegner suchen, gewertet oder freundschaftlich herausfordern; Tagesstand und letzte Kämpfe. */
+/**
+ * Arena: die Tagesgegner gewertet oder freundschaftlich herausfordern; Tagesstand und letzte
+ * Kämpfe. Eine freie Gegnersuche gibt es bewusst nicht – direkte Herausforderungen laufen über
+ * Discord und brauchen die Zustimmung des Gegners.
+ */
 @Component({
   selector: 'tbca-pvp-page',
   imports: [TranslocoDirective, RouterLink, ClassBadge, Segments, FightRow],
@@ -31,10 +35,8 @@ export class PvpPage {
   protected readonly status = signal<PvpStatus | null>(null);
   protected readonly opponents = signal<OpponentView[] | null>(null);
   protected readonly recent = signal<FightSummary[]>([]);
-  protected readonly query = signal('');
   protected readonly busy = signal<string | null>(null);
   protected readonly error = signal<string | null>(null);
-  private searchTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor() {
     void this.load();
@@ -49,7 +51,7 @@ export class PvpPage {
       if (!this.characters.state()) return;
       const [status, opponents, recent] = await Promise.all([
         this.pvp.status(),
-        this.pvp.opponents(this.query()),
+        this.pvp.opponents(),
         this.pvp.recent(),
       ]);
       this.status.set(status);
@@ -58,18 +60,6 @@ export class PvpPage {
     } catch (error) {
       this.error.set(error instanceof ApiFailure ? error.code : 'unknown');
     }
-  }
-
-  protected search(value: string): void {
-    this.query.set(value);
-    clearTimeout(this.searchTimer);
-    this.searchTimer = setTimeout(async () => {
-      try {
-        this.opponents.set(await this.pvp.opponents(value));
-      } catch (error) {
-        this.error.set(error instanceof ApiFailure ? error.code : 'unknown');
-      }
-    }, 250);
   }
 
   protected async challenge(opponent: OpponentView, mode: 'rated' | 'friendly'): Promise<void> {

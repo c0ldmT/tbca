@@ -24,8 +24,9 @@ export class PvpService {
     return this.read(this.http.get<PvpStatus>('/api/pvp/status'));
   }
 
-  opponents(q: string): Promise<OpponentView[]> {
-    return this.read(this.http.get<OpponentView[]>('/api/pvp/opponents', { params: { q } }));
+  /** Die Tagesgegner – eine kleine, täglich neue Auswahl. */
+  opponents(): Promise<OpponentView[]> {
+    return this.read(this.http.get<OpponentView[]>('/api/pvp/opponents'));
   }
 
   challenge(req: ChallengeRequest): Promise<ChallengeResponse> {

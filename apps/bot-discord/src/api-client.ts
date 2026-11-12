@@ -1,7 +1,8 @@
 import type {
   DiscordActivityResult,
+  DiscordChallengeAnswer,
+  DiscordChallengeRequestView,
   DiscordDungeonView,
-  DiscordFightSummary,
   DiscordLeagueNews,
   DiscordLeagueView,
   DiscordProfileView,
@@ -58,7 +59,16 @@ export class ApiClient {
     opponentUserId: string;
     mode: 'rated' | 'friendly';
   }) {
-    return this.call<DiscordFightSummary>('POST', 'challenge', input);
+    return this.call<DiscordChallengeRequestView>('POST', 'challenge', input);
+  }
+
+  challengeAnswer(input: {
+    userId: string;
+    displayName: string;
+    requestId: string;
+    accept: boolean;
+  }) {
+    return this.call<DiscordChallengeAnswer>('POST', 'challenge-answer', input);
   }
 
   dungeon(input: {

@@ -94,6 +94,17 @@ export function validateGameConfig(config: GameConfig): string[] {
   if (!isInt(healing, 0) || healing > 2000)
     add('Dungeon: Wirksamkeit der Heilung muss zwischen 0 und 2000 Promille liegen');
 
+  // Tagesgegner: das Tageslimit muss mit ihnen erreichbar sein
+  const pvp = config.pvp;
+  if (!isInt(pvp?.dailyOpponents, 1) || pvp.dailyOpponents > 20)
+    add('PvP: Tagesgegner müssen zwischen 1 und 20 liegen');
+  else if (
+    Array.isArray(pvp.sameOpponentPermille) &&
+    pvp.dailyOpponents * pvp.sameOpponentPermille.filter((x) => x > 0).length <
+      pvp.dailyRewardedFights
+  )
+    add('PvP: Mit den Tagesgegnern ist das Tageslimit belohnter Kämpfe nicht erreichbar');
+
   // Bot-Ausrüstung
   const botGear = config.pvp?.botGear;
   if (!Array.isArray(botGear)) add('PvP: Bot-Ausrüstung muss eine Liste sein');

@@ -41,10 +41,35 @@ export const discordActivitySchema = discordUserSchema.extend({
   hash: z.string().regex(/^[0-9a-f]{16,64}$/),
 });
 
+/** Herausforderung über Discord: wird zur Anfrage, die der Gegner annehmen muss. */
 export const discordChallengeSchema = discordUserSchema.extend({
   opponentUserId: snowflake,
   mode: z.enum(['rated', 'friendly']),
 });
+
+/** Antwort des Herausgeforderten auf eine Anfrage. */
+export const discordChallengeAnswerSchema = discordUserSchema.extend({
+  requestId: z.uuid(),
+  accept: z.boolean(),
+});
+
+/** Offene Anfrage; die Nachricht trägt Buttons für den Gegner. */
+export interface DiscordChallengeRequestView {
+  id: string;
+  challenger: string;
+  opponent: string;
+  opponentUserId: string;
+  mode: 'rated' | 'friendly';
+  expiresAt: string;
+}
+
+export interface DiscordChallengeAnswer {
+  status: 'accepted' | 'declined';
+  challenger: string;
+  opponent: string;
+  /** Nur bei `accepted`: der gespielte Kampf. */
+  fight: DiscordFightSummary | null;
+}
 
 /** Dungeon über den Bot: Status, Start oder eine Entscheidung (Abschnitt 8). */
 export const discordDungeonSchema = discordUserSchema.extend({

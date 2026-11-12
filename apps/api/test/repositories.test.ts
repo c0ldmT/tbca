@@ -30,6 +30,7 @@ import { DrizzleAccountRepository, DrizzleSessionStore } from '../src/auth/drizz
 import { DrizzleCharacterRepository } from '../src/character/drizzle-character.repository.js';
 import { CharacterExistsError, NameTakenError } from '../src/character/types.js';
 import { DrizzleFightRepository } from '../src/fight/drizzle-fight.repository.js';
+import { DrizzlePvpRepository } from '../src/fight/drizzle-pvp.repository.js';
 import { DrizzleInventoryRepository } from '../src/inventory/drizzle-inventory.repository.js';
 import { DrizzleEconomyRepository } from '../src/economy/drizzle-economy.repository.js';
 import { AlreadyPurchasedError, ItemEquippedError } from '../src/economy/types.js';
@@ -949,6 +950,46 @@ describe.skipIf(!url)('Drizzle-Repositories (Integration)', () => {
     await teams.remove(a.id);
     await teams.remove(b.id);
     expect((await repo.ratings(seasonId, 2, [a.id, b.id])).size).toBe(0);
+  });
+
+  it('speichert Tagesgegner einmal je Tag und Anfragen mit Annahme', async () => {
+    const season = (await new DrizzleSeasonRepository(conn.db).findCurrent())!;
+    const chars = new DrizzleCharacterRepository(conn.db);
+    const make = async (name: string) => {
+      const [acc] = await conn.db.insert(account).values({}).returning();
+      return chars.create({
+        accountId: acc!.id,
+        seasonId: season.id,
+        name: `${name}${Date.now() % 100000}`,
+        classId: 'gunner',
+        level: 1,
+        xp: 0,
+        allocated: { str: 0, dex: 0, int: 0, con: 0 },
+        loadouts: {},
+      });
+    };
+    const [me, a, b] = [await make('Dm'), await make('Da'), await make('Db')];
+    const repo = new DrizzlePvpRepository(conn.db);
+    expect(await repo.dailyOpponents(me.id, '2026-11-12')).toEqual([]);
+    expect(await repo.saveDailyOpponents(me.id, '2026-11-12', [b.id, a.id])).toEqual([b.id, a.id]);
+    // Ein zweiter, gleichzeitiger Erstabruf überschreibt nicht
+    expect(await repo.saveDailyOpponents(me.id, '2026-11-12', [a.id])).toEqual([b.id, a.id]);
+    expect(await repo.dailyOpponents(me.id, '2026-11-13')).toEqual([]);
+
+    const request = await repo.createRequest({
+      seasonId: season.id,
+      challengerId: me.id,
+      opponentId: a.id,
+      mode: 'rated',
+      expiresAt: new Date('2026-11-12T12:15:00Z'),
+    });
+    expect(request).toMatchObject({ status: 'pending', fightId: null });
+    expect((await repo.pendingRequest(me.id, a.id))!.id).toBe(request.id);
+    expect(await repo.pendingRequest(a.id, me.id)).toBeNull();
+    expect(await repo.resolveRequest(request.id, 'accepted')).toBe(true);
+    expect(await repo.resolveRequest(request.id, 'declined')).toBe(false);
+    expect(await repo.findRequest(request.id)).toMatchObject({ status: 'accepted' });
+    expect(await repo.pendingRequest(me.id, a.id)).toBeNull();
   });
 
   it('liefert die Rohdaten für den Balancing-Export', async () => {

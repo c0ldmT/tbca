@@ -203,7 +203,12 @@ export class LeagueService {
       (a, b) => Math.abs(a.level - me.level) - Math.abs(b.level - me.level),
     );
     const pick = sorted[(rating?.games ?? 0) % Math.min(3, sorted.length)]!;
-    return this.fightService.challenge(accountId, { opponentId: pick.id, mode: 'rated' });
+    // Vom Server gewählt, deshalb auch außerhalb der Tagesgegner erlaubt
+    return this.fightService.challenge(
+      accountId,
+      { opponentId: pick.id, mode: 'rated' },
+      { direct: true },
+    );
   }
 
   async leaderboard(

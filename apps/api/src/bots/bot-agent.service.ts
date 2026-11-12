@@ -111,11 +111,11 @@ export class BotAgentService {
     }
   }
 
-  /** Gewertete Kämpfe; bevorzugt Gegner, die noch eine Belohnung bringen. */
+  /** Gewertete Kämpfe gegen die Tagesgegner; bevorzugt die, die noch eine Belohnung bringen. */
   private async pvp(bot: BotInfo, count: number, rng: Xoshiro128ss): Promise<number> {
     let done = 0;
     for (let i = 0; i < count; i++) {
-      const list = await this.fights.opponents(bot.accountId, '');
+      const list = await this.fights.opponents(bot.accountId);
       const rewarding = list.filter((o) => o.winXp > 0);
       const pool = rewarding.length > 0 ? rewarding : list;
       if (pool.length === 0) break;

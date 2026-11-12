@@ -141,6 +141,11 @@ export async function startBot(env: BotEnv = loadBotEnv()): Promise<Client | nul
         },
       });
       await i.editReply({ content: reply.content, components: components(reply.buttons) });
+      // Bearbeitete Antworten pingen nicht; der Herausgeforderte bekommt eine eigene Erwähnung
+      if (reply.ping)
+        await i
+          .followUp({ content: `<@${reply.ping}>`, allowedMentions: { users: [reply.ping] } })
+          .catch(() => undefined);
     } catch {
       await i.editReply(errorText(textsFor(i.locale), 'unavailable')).catch(() => undefined);
     }

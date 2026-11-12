@@ -21,15 +21,20 @@ Fehlt `BOT_SERVICE_TOKEN` in einer älteren `.env.development`, einen zufällige
 
 ## Commands
 
-| Command                  | Wer          | Zweck                                          |
-| ------------------------ | ------------ | ---------------------------------------------- |
-| `/tbca-admin einrichten` | Server-Admin | Server als Community anlegen                   |
-| `/tbca-admin xp-kanal`   | Server-Admin | XP für Nachrichten in einem Kanal an/aus       |
-| `/tbca-admin liga-kanal` | Server-Admin | Liga-Ankündigungen in einem Kanal an/aus       |
-| `/tbca registrieren`     | alle         | Charakter anlegen (Schatten-Account)           |
-| `/tbca profil`           | alle         | Level, XP und Credits                          |
-| `/tbca kampf`            | alle         | Gegner herausfordern, Zusammenfassung + Replay |
-| `/tbca liga`             | alle         | Rating, Platzierung, Anmelden (mit Buttons)    |
+| Command                  | Wer          | Zweck                                         |
+| ------------------------ | ------------ | --------------------------------------------- |
+| `/tbca-admin einrichten` | Server-Admin | Server als Community anlegen                  |
+| `/tbca-admin xp-kanal`   | Server-Admin | XP für Nachrichten in einem Kanal an/aus      |
+| `/tbca-admin liga-kanal` | Server-Admin | Liga-Ankündigungen in einem Kanal an/aus      |
+| `/tbca registrieren`     | alle         | Charakter anlegen (Schatten-Account)          |
+| `/tbca profil`           | alle         | Level, XP und Credits                         |
+| `/tbca kampf`            | alle         | Herausforderung, die der Gegner annehmen muss |
+| `/tbca liga`             | alle         | Rating, Platzierung, Anmelden (mit Buttons)   |
+
+`/tbca kampf @person` stellt eine Anfrage mit Buttons „Annehmen“ und „Ablehnen“, die nur die
+herausgeforderte Person drücken kann; nach 15 Minuten läuft sie ab. Erst beim Annehmen wird
+gekämpft (Belohnung wie bisher für den Herausforderer). Auf der Website gibt es dafür keine freie
+Suche mehr, nur die Tagesgegner.
 
 Nach einem Spieltag schickt der Bot innerhalb einer Minute die Ergebnisse der Spieler mit
 Heimat in dieser Community in den Liga-Kanal, am Zyklusende auch Platz und Auf- oder Abstieg.

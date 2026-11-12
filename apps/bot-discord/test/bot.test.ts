@@ -84,19 +84,17 @@ describe('Discord-Bot', () => {
     expect(calls).toHaveLength(0);
   });
 
-  it('fasst Kämpfe für den Chat zusammen', async () => {
+  it('stellt eine Herausforderung als Anfrage mit Buttons für den Gegner', async () => {
     const { fn } = fakeFetch({
       challenge: {
         status: 200,
         body: {
-          winner: 'Neo',
-          rounds: 9,
-          bestHit: { name: 'Neo', value: 84 },
-          xp: 60,
-          credits: 12,
-          limit: 'none',
-          levelUp: 2,
-          url: 'https://tbca/replay/x',
+          id: '01933b5e-0000-7000-8000-000000000777',
+          challenger: 'Neo',
+          opponent: 'Trinity',
+          opponentUserId: '444444444444444444',
+          mode: 'rated',
+          expiresAt: '2026-11-12T11:15:00.000Z',
         },
       },
     });
@@ -105,10 +103,57 @@ describe('Discord-Bot', () => {
       input({ subcommand: 'kampf', opts: { gegner: { id: '444444444444444444', bot: false } } }),
     );
     expect(reply.ephemeral).toBe(false);
+    expect(reply.content).toContain('**Neo** fordert **Trinity** heraus (gewertet)');
+    expect(reply.content).toContain('<t:1794482100:R>');
+    expect(reply.ping).toBe('444444444444444444');
+    expect(reply.buttons?.map((b) => b.customId)).toEqual([
+      'ch:accept:01933b5e-0000-7000-8000-000000000777:444444444444444444',
+      'ch:decline:01933b5e-0000-7000-8000-000000000777:444444444444444444',
+    ]);
+  });
+
+  it('lässt nur den Herausgeforderten annehmen und zeigt dann den Kampf', async () => {
+    const { fn, calls } = fakeFetch({
+      'challenge-answer': {
+        status: 200,
+        body: {
+          status: 'accepted',
+          challenger: 'Neo',
+          opponent: 'Trinity',
+          fight: {
+            winner: 'Neo',
+            rounds: 9,
+            bestHit: { name: 'Neo', value: 84 },
+            xp: 60,
+            credits: 12,
+            limit: 'none',
+            levelUp: 2,
+            url: 'https://tbca/replay/x',
+          },
+        },
+      },
+    });
+    const api = new ApiClient('http://api', 's'.repeat(40), fn);
+    const id = 'ch:accept:01933b5e-0000-7000-8000-000000000777:444444444444444444';
+    const other = await handleButton(api, {
+      customId: id,
+      userId: '333333333333333333',
+      displayName: 'Neo',
+      locale: 'de',
+    });
+    expect(other).toMatchObject({ ephemeral: true });
+    expect(calls).toHaveLength(0);
+    const reply = await handleButton(api, {
+      customId: id,
+      userId: '444444444444444444',
+      displayName: 'Trin',
+      locale: 'de',
+    });
+    expect(JSON.parse(String(calls[0]!.init.body))).toMatchObject({ accept: true });
+    expect(reply.content).toContain('**Trinity** nimmt an!');
     expect(reply.content).toContain('**Neo** gewinnt nach 9 Runden');
-    expect(reply.content).toContain('+60 XP');
-    expect(reply.content).toContain('Level 2');
     expect(reply.content).toContain('https://tbca/replay/x');
+    expect(reply.buttons).toEqual([]);
   });
 
   it('übersetzt Fehlercodes der API in die Sprache des Nutzers', async () => {
