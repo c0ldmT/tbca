@@ -62,6 +62,7 @@ export {
   type RollItemInput,
   type TemplatePreview,
 } from './items/items.js';
+export { itemNames, readableId } from './items/names.js';
 export { rollLoot, rollRarity } from './items/loot.js';
 export {
   CURVE_POINTS,

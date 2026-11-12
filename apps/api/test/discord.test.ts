@@ -182,6 +182,11 @@ describe('Interne Discord-API', () => {
     const left = (await dungeon('leave')).json();
     expect(left.status).toBe('left');
     expect(left.items).toHaveLength(started.finds);
+    // Namen je Sprache aus der Konfiguration, nicht die ID
+    for (const item of left.items) {
+      expect(item.names.de.length).toBeGreaterThan(0);
+      expect(item.names.de).not.toContain('_');
+    }
     expect(left.url).toBe(`${WEB_ORIGIN}/fight/dungeon`);
   });
 

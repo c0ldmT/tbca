@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import {
   applyPassiveCap,
+  itemNames,
   levelFromXp,
   messageXp,
   passiveHardCap,
@@ -104,6 +105,7 @@ export class DiscordService {
         break;
     }
     const run = after.run;
+    const season = await this.seasons.current();
     const fought =
       (input.action === 'continue' || input.action === 'start') && run
         ? {
@@ -121,7 +123,11 @@ export class DiscordService {
       credits: run && !run.loot.sealed ? run.loot.credits : 0,
       items:
         run && !run.loot.sealed
-          ? run.loot.items.map((i) => ({ templateId: i.templateId, rarity: i.rarity }))
+          ? run.loot.items.map((i) => ({
+              templateId: i.templateId,
+              rarity: i.rarity,
+              names: itemNames(season.game, i.templateId),
+            }))
           : [],
       xpGained: run?.xpGained ?? 0,
       next: run?.next

@@ -176,6 +176,34 @@ describe('Discord-Bot', () => {
     ]);
   });
 
+  it('nennt Loot-Items beim Namen in der Sprache des Nutzers', async () => {
+    const left = dungeonView({
+      status: 'left',
+      next: null,
+      credits: 40,
+      items: [
+        {
+          templateId: 'core_implant',
+          rarity: 5,
+          names: { de: 'Kern-Implantat', en: 'Core implant' },
+        },
+      ],
+    });
+    const { fn } = fakeFetch({ dungeon: { status: 200, body: left } });
+    const api = new ApiClient('http://api', 't'.repeat(40), fn);
+    const user = {
+      customId: 'dg:leave:333333333333333333',
+      userId: '333333333333333333',
+      displayName: 'Neo',
+    };
+    expect((await handleButton(api, { ...user, locale: 'de' })).content).toContain(
+      'Kern-Implantat ★5',
+    );
+    expect((await handleButton(api, { ...user, locale: 'en-US' })).content).toContain(
+      'Core implant ★5',
+    );
+  });
+
   it('lässt nur den Besitzer eines Runs entscheiden', async () => {
     const { fn, calls } = fakeFetch({});
     const api = new ApiClient('http://api', 't'.repeat(40), fn);

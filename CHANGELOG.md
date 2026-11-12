@@ -144,6 +144,10 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ### Behoben
 
+- Discord-Bot: Loot-Items nach dem Dungeon heißen wie auf der Website (Name der Vorlage in der
+  Sprache des Nutzers) statt nach ihrer ID. Die Startwerte der Item-Vorlagen tragen dafür ihre
+  Namen DE/EN selbst; ältere Konfigurationsversionen ohne Namen nutzen sie als Rückfall
+  (`itemNames` in game-core).
 - Dungeon: Auch der Kampf um Etage 1, der beim Start des Runs sofort ausgetragen wird, läuft jetzt
   im Kampf-HUD ab, bevor das Ergebnis erscheint (vorher nur ab Etage 2 über „Weiter“).
 - Website: Die Season-Steuerung (und die Team-Seite) luden Konstanten aus dem Haupteinstieg von

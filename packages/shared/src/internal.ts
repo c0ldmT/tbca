@@ -70,9 +70,9 @@ export interface DiscordDungeonView {
   injectors: number;
   /** Versiegelte Funde (Inhalt erst beim Ausstieg). */
   finds: number;
-  /** Nach dem Ausstieg: gutgeschriebene Credits und Items mit Stern. */
+  /** Nach dem Ausstieg: gutgeschriebene Credits und Items mit Stern und Namen je Sprache. */
   credits: number;
-  items: { templateId: string; rarity: number }[];
+  items: { templateId: string; rarity: number; names: { de: string; en: string } }[];
   xpGained: number;
   next: { floor: number; monsterLevel: number; boss: boolean } | null;
   /** Ergebnis der eben gespielten Etage, falls „Weiter“ gedrückt wurde. */

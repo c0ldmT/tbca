@@ -65,7 +65,7 @@ const de = {
           `${d.status === 'saved' ? 'Der Backup-Chip hat deinen Loot gerettet!' : 'Mit dem Loot raus!'} ` +
             `Etage ${d.floor}, +${d.credits} Credits, ${d.xpGained} XP.`,
           d.items.length
-            ? `Items: ${d.items.map((i) => `${itemName(i.templateId)} ★${i.rarity}`).join(', ')}`
+            ? `Items: ${d.items.map((i) => `${i.names.de} ★${i.rarity}`).join(', ')}`
             : '',
         );
     }
@@ -172,7 +172,7 @@ const en: typeof de = {
           `${d.status === 'saved' ? 'Your backup chip saved the loot!' : 'Out with the loot!'} ` +
             `Floor ${d.floor}, +${d.credits} credits, ${d.xpGained} XP.`,
           d.items.length
-            ? `Items: ${d.items.map((i) => `${itemName(i.templateId)} ★${i.rarity}`).join(', ')}`
+            ? `Items: ${d.items.map((i) => `${i.names.en} ★${i.rarity}`).join(', ')}`
             : '',
         );
     }
@@ -238,12 +238,6 @@ export function textsFor(locale: string | null | undefined): Texts {
 export function errorText(texts: Texts, code: string): string {
   if (code.startsWith('invalid_name')) return texts.errors.invalid_name;
   return (texts.errors as Record<string, string>)[code] ?? texts.errors.fallback;
-}
-
-/** Item-Vorlagen tragen sprechende IDs; für Discord reicht eine lesbare Form. */
-function itemName(templateId: string): string {
-  const base = templateId.replace(/[_-]+/g, ' ');
-  return base.charAt(0).toUpperCase() + base.slice(1);
 }
 
 function className(id: string): string {

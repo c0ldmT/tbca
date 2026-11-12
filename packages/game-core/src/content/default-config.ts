@@ -342,6 +342,7 @@ const items: ItemRules = {
   templates: [
     {
       id: 'blade',
+      names: { de: 'Klinge', en: 'Blade' },
       category: 'weapon_1h',
       weapon: { kind: 'physical', scalesWith: 'str', scaling: 9_000 },
       base: { weaponDamage: 1 },
@@ -349,6 +350,7 @@ const items: ItemRules = {
     },
     {
       id: 'club',
+      names: { de: 'Schlagwaffe', en: 'Club' },
       category: 'weapon_1h',
       weapon: { kind: 'physical', scalesWith: 'str', scaling: 10_000 },
       base: { weaponDamage: 1 },
@@ -356,6 +358,7 @@ const items: ItemRules = {
     },
     {
       id: 'pistol',
+      names: { de: 'Pistole', en: 'Pistol' },
       category: 'weapon_1h',
       weapon: { kind: 'physical', scalesWith: 'dex', scaling: 8_750 },
       base: { weaponDamage: 1 },
@@ -363,6 +366,7 @@ const items: ItemRules = {
     },
     {
       id: 'rifle',
+      names: { de: 'Gewehr', en: 'Rifle' },
       category: 'weapon_2h',
       weapon: { kind: 'physical', scalesWith: 'dex', scaling: 9_000 },
       base: { weaponDamage: 1 },
@@ -370,6 +374,7 @@ const items: ItemRules = {
     },
     {
       id: 'cyberdeck',
+      names: { de: 'Cyberdeck', en: 'Cyberdeck' },
       category: 'weapon_1h',
       weapon: { kind: 'tech', scalesWith: 'int', scaling: 9_000 },
       base: { weaponDamage: 1 },
@@ -377,24 +382,68 @@ const items: ItemRules = {
     },
     {
       id: 'injector',
+      names: { de: 'Injektor', en: 'Injector' },
       category: 'weapon_1h',
       weapon: { kind: 'tech', scalesWith: 'int', scaling: 8_000 },
       base: { weaponDamage: 1 },
       affixPool: [...WEAPON_AFFIXES, 'con'],
     },
-    { id: 'shield', category: 'shield', base: { armor: 2, firewall: 1 }, affixPool: ARMOR_AFFIXES },
+    {
+      id: 'shield',
+      names: { de: 'Schild', en: 'Shield' },
+      category: 'shield',
+      base: { armor: 2, firewall: 1 },
+      affixPool: ARMOR_AFFIXES,
+    },
     {
       id: 'neural_interface',
+      names: { de: 'Neural-Interface', en: 'Neural interface' },
       category: 'head',
       base: { firewall: 2, armor: 1 },
       affixPool: ARMOR_AFFIXES,
     },
-    { id: 'vest', category: 'torso', base: { armor: 2, firewall: 1 }, affixPool: ARMOR_AFFIXES },
-    { id: 'pants', category: 'legs', base: { armor: 1, firewall: 1 }, affixPool: ARMOR_AFFIXES },
-    { id: 'boots', category: 'feet', base: { armor: 1, evasion: 1 }, affixPool: ARMOR_AFFIXES },
-    { id: 'gloves', category: 'hands', base: { armor: 1, accuracy: 1 }, affixPool: ARMOR_AFFIXES },
-    { id: 'implant', category: 'implant', base: {}, affixPool: IMPLANT_AFFIXES },
-    { id: 'core_implant', category: 'core_implant', base: {}, affixPool: IMPLANT_AFFIXES },
+    {
+      id: 'vest',
+      names: { de: 'Panzerweste', en: 'Armor vest' },
+      category: 'torso',
+      base: { armor: 2, firewall: 1 },
+      affixPool: ARMOR_AFFIXES,
+    },
+    {
+      id: 'pants',
+      names: { de: 'Hose', en: 'Pants' },
+      category: 'legs',
+      base: { armor: 1, firewall: 1 },
+      affixPool: ARMOR_AFFIXES,
+    },
+    {
+      id: 'boots',
+      names: { de: 'Stiefel', en: 'Boots' },
+      category: 'feet',
+      base: { armor: 1, evasion: 1 },
+      affixPool: ARMOR_AFFIXES,
+    },
+    {
+      id: 'gloves',
+      names: { de: 'Handschuhe', en: 'Gloves' },
+      category: 'hands',
+      base: { armor: 1, accuracy: 1 },
+      affixPool: ARMOR_AFFIXES,
+    },
+    {
+      id: 'implant',
+      names: { de: 'Implantat', en: 'Implant' },
+      category: 'implant',
+      base: {},
+      affixPool: IMPLANT_AFFIXES,
+    },
+    {
+      id: 'core_implant',
+      names: { de: 'Kern-Implantat', en: 'Core implant' },
+      category: 'core_implant',
+      base: {},
+      affixPool: IMPLANT_AFFIXES,
+    },
   ],
 };
 
