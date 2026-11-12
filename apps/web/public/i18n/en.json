@@ -116,7 +116,8 @@
         "body": "For login and the bot we use Discord (Discord Inc., USA); Discord's privacy policy applies in addition. TBCA is hosted by the operator of this instance."
       },
       "private": "This is a private instance for a closed circle of players. The following sections still explain which data TBCA processes."
-    }
+    },
+    "kicker": "Legal"
   },
   "notFound": {
     "title": "Signal lost",

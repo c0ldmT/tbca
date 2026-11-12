@@ -24,11 +24,43 @@
   display: grid;
   gap: 18px;
   justify-items: start;
+  /* Holo-Platte: dunkles Glas hinter dem freien Text, nach rechts transparenter */
+  padding: clamp(22px, 3vw, 36px) clamp(20px, 3vw, 40px);
+  background:
+    repeating-linear-gradient(to bottom, rgb(255 255 255 / 0.018) 0 1px, transparent 1px 3px),
+    linear-gradient(110deg, rgb(6 7 13 / 0.86), rgb(9 11 22 / 0.7) 60%, rgb(9 11 22 / 0.45));
+  -webkit-backdrop-filter: blur(12px) saturate(130%);
+  backdrop-filter: blur(12px) saturate(130%);
+  border: 1px solid var(--tbca-edge);
+  --cut-tl: 20px;
+  --cut-br: 20px;
+  --cut-edge: rgb(0 240 255 / 0.3);
+  clip-path: polygon(
+    20px 0,
+    100% 0,
+    100% calc(100% - 20px),
+    calc(100% - 20px) 100%,
+    0 100%,
+    0 20px
+  );
+  box-shadow: inset 0 0 80px rgb(0 240 255 / 0.04);
+}
+
+/* Lichtkante oben wie bei den Panels */
+.hero__copy::before {
+  content: '';
+  position: absolute;
+  left: 20px;
+  right: 45%;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, var(--tbca-neon-cyan), transparent);
+  box-shadow: 0 0 10px var(--tbca-neon-cyan);
 }
 
 .hero__title {
   margin: 0;
-  font: 700 clamp(3rem, 8vw, 6.25rem) / 0.9 var(--tbca-font-display);
+  font: 700 clamp(2.75rem, 6.2vw, 5.5rem) / 0.92 var(--tbca-font-display);
   letter-spacing: -0.01em;
   max-width: 11ch;
   text-wrap: balance;
@@ -45,7 +77,6 @@
   font-size: 1.1875rem;
   line-height: 1.5;
   color: var(--tbca-text-primary);
-  text-shadow: 0 1px 12px rgb(5 6 10 / 0.9);
 }
 
 .hero__auth {
@@ -65,8 +96,8 @@
   max-width: 56ch;
   padding: 8px 14px;
   border-left: 2px solid var(--tbca-neon-magenta);
-  background: linear-gradient(90deg, rgb(255 42 109 / 0.12), transparent);
-  color: var(--tbca-text-secondary, #c7cad6);
+  background: linear-gradient(90deg, rgb(255 42 109 / 0.14), transparent);
+  color: var(--tbca-text-secondary);
   font-size: 0.9375rem;
 }
 
@@ -89,7 +120,10 @@
   text-decoration: none;
   background: linear-gradient(180deg, var(--tbca-glass-top), var(--tbca-glass-bottom));
   backdrop-filter: blur(var(--tbca-glass-blur));
-  border: 1px solid var(--tbca-edge-soft);
+  border: 1px solid var(--tbca-edge);
+  --cut-tr: 18px;
+  --cut-bl: 18px;
+  --cut-edge: rgb(0 240 255 / 0.26);
   clip-path: polygon(
     0 0,
     calc(100% - 18px) 0,
@@ -137,6 +171,7 @@
 
 .jump__tile:hover,
 .jump__tile:focus-visible {
+  --cut-edge: var(--tbca-neon-cyan);
   border-color: var(--tbca-neon-cyan);
   background: linear-gradient(180deg, rgb(0 240 255 / 0.14), var(--tbca-glass-bottom));
   transform: translateY(-2px);

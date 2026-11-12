@@ -42,6 +42,7 @@ export interface HubTab {
           @if (tab.badge) {
             <span class="tbca-badge">{{ tab.badge }}</span>
           }
+          <span class="tbca-tab__ink" aria-hidden="true"></span>
         </a>
       }
     </nav>

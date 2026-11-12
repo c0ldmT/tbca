@@ -125,12 +125,16 @@
   display: grid;
   place-items: center;
   border: 1px solid rgb(138 147 178 / 0.45);
+  --cut-tl: 4px;
+  --cut-br: 4px;
+  --cut-edge: rgb(138 147 178 / 0.6);
   font: 700 0.75rem / 1 var(--tbca-font-mono);
   color: var(--tbca-bg-void);
   clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
 }
 
 .mark--on {
+  --cut-edge: var(--tbca-neon-magenta);
   background: var(--tbca-neon-magenta);
   border-color: var(--tbca-neon-magenta);
 }
@@ -674,6 +678,25 @@
   padding: 8px;
   border: 1px solid rgb(0 240 255 / 0.3);
   color: var(--tbca-neon-cyan);
+  /* SVG hat kein ::after – Kantenlinien hier direkt als Hintergrund */
+  background:
+    linear-gradient(
+        to top left,
+        transparent calc(50% - 1.15px),
+        rgb(0 240 255 / 0.45) calc(50% - 1.15px),
+        rgb(0 240 255 / 0.45) 50%,
+        transparent 50%
+      )
+      top left / 7px 7px no-repeat,
+    linear-gradient(
+        to top left,
+        transparent 50%,
+        rgb(0 240 255 / 0.45) 50%,
+        rgb(0 240 255 / 0.45) calc(50% + 1.15px),
+        transparent calc(50% + 1.15px)
+      )
+      bottom right / 7px 7px no-repeat;
+  background-origin: border-box;
   clip-path: polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px);
 }
 

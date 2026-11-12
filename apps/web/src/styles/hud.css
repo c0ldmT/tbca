@@ -42,18 +42,21 @@
 .tbca-panel::after {
   content: '';
   position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 24px;
-  height: 24px;
-  background: linear-gradient(
-    135deg,
-    transparent calc(50% - 0.5px),
-    rgb(0 240 255 / 0.7) calc(50% - 0.5px),
-    rgb(0 240 255 / 0.7) calc(50% + 0.5px),
-    transparent calc(50% + 0.5px)
-  );
+  inset: -1px;
   pointer-events: none;
+  /* Kantenlinien an beiden Schrägen und eine leuchtende Zierdiagonale unten rechts */
+  background:
+    var(--tbca-cut-tl-line) top left / 16px 16px no-repeat,
+    var(--tbca-cut-br-line) bottom right / 16px 16px no-repeat,
+    linear-gradient(
+        135deg,
+        transparent calc(50% - 0.5px),
+        rgb(0 240 255 / 0.7) calc(50% - 0.5px),
+        rgb(0 240 255 / 0.7) calc(50% + 0.5px),
+        transparent calc(50% + 0.5px)
+      )
+      bottom 1px right 1px / 24px 24px no-repeat;
+  --cut-edge: var(--tbca-edge);
 }
 
 /* Panel ohne Innenabstand, wenn Kopfzeile und Inhalt eigene Abstände haben. */
@@ -97,6 +100,18 @@
   text-transform: uppercase;
 }
 
+/*
+ * Lesbarkeit über der Regenstadt: freistehende Schrift (Kicker, Seitentitel, Tabs) bekommt
+ * einen dunklen Halo. Er ist eng genug, um nicht als Schatten aufzufallen, und hebt Text
+ * auch über hellen Fenstern und Neon ab.
+ */
+.tbca-kicker,
+.tbca-title,
+.tbca-tab,
+.tbca-halo {
+  text-shadow: var(--tbca-halo);
+}
+
 .tbca-kicker {
   font: 500 0.6875rem / 1 var(--tbca-font-mono);
   letter-spacing: 0.2em;
@@ -119,6 +134,72 @@
   text-transform: uppercase;
 }
 
+/*
+ * Kantenlinie entlang abgeschrägter Ecken. clip-path schneidet den Rahmen an den Schrägen weg;
+ * diese Linien schließen den Umriss wieder. Jede Ecke hat ihre Größe (--cut-tl/-tr/-br/-bl,
+ * 0 = keine Schräge), die Farbe kommt aus --cut-edge (Standard: Rahmenfarbe des Elements).
+ * Die Linie liegt jeweils innen an der Schnittkante, damit clip-path sie nicht halbiert.
+ */
+
+.tbca-cut,
+.tbca-button,
+.tbca-icon-button,
+.tbca-ibox {
+  position: relative;
+}
+
+.tbca-cut::after,
+.tbca-button::after,
+.tbca-icon-button::after,
+.tbca-ibox::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  pointer-events: none;
+  background:
+    var(--tbca-cut-tl-line) top left / var(--cut-tl, 0) var(--cut-tl, 0) no-repeat,
+    var(--tbca-cut-tr-line) top right / var(--cut-tr, 0) var(--cut-tr, 0) no-repeat,
+    var(--tbca-cut-br-line) bottom right / var(--cut-br, 0) var(--cut-br, 0) no-repeat,
+    var(--tbca-cut-bl-line) bottom left / var(--cut-bl, 0) var(--cut-bl, 0) no-repeat;
+}
+
+/* Die Linien-Variablen stehen am Pseudo-Element, damit --cut-edge dort aufgelöst wird. */
+.tbca-cut::after,
+.tbca-button::after,
+.tbca-icon-button::after,
+.tbca-ibox::after,
+.tbca-panel::after {
+  --tbca-cut-w: 1.15px;
+  --tbca-cut-tl-line: linear-gradient(
+    to top left,
+    transparent calc(50% - var(--tbca-cut-w)),
+    var(--cut-edge) calc(50% - var(--tbca-cut-w)),
+    var(--cut-edge) 50%,
+    transparent 50%
+  );
+  --tbca-cut-br-line: linear-gradient(
+    to top left,
+    transparent 50%,
+    var(--cut-edge) 50%,
+    var(--cut-edge) calc(50% + var(--tbca-cut-w)),
+    transparent calc(50% + var(--tbca-cut-w))
+  );
+  --tbca-cut-tr-line: linear-gradient(
+    to top right,
+    transparent calc(50% - var(--tbca-cut-w)),
+    var(--cut-edge) calc(50% - var(--tbca-cut-w)),
+    var(--cut-edge) 50%,
+    transparent 50%
+  );
+  --tbca-cut-bl-line: linear-gradient(
+    to top right,
+    transparent 50%,
+    var(--cut-edge) 50%,
+    var(--cut-edge) calc(50% + var(--tbca-cut-w)),
+    transparent calc(50% + var(--tbca-cut-w))
+  );
+}
+
 /* Schaltflächen: zwei abgeschrägte Ecken, mindestens 44 px hoch. */
 .tbca-button {
   display: inline-flex;
@@ -128,6 +209,9 @@
   min-height: var(--tbca-touch-target);
   padding: 0 20px;
   border: 1px solid var(--tbca-neon-cyan);
+  --cut-tl: 10px;
+  --cut-br: 10px;
+  --cut-edge: var(--tbca-neon-cyan);
   font: 600 0.8125rem / 1 var(--tbca-font-display);
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -161,6 +245,7 @@
 }
 
 .tbca-button--ghost {
+  --cut-edge: rgb(0 240 255 / 0.55);
   color: var(--tbca-neon-cyan);
   background: rgb(0 240 255 / 0.06);
   border-color: rgb(0 240 255 / 0.45);
@@ -174,6 +259,7 @@
 }
 
 .tbca-button--warn {
+  --cut-edge: rgb(245 228 0 / 0.62);
   color: var(--tbca-neon-yellow);
   background: rgb(245 228 0 / 0.06);
   border-color: rgb(245 228 0 / 0.55);
@@ -187,6 +273,7 @@
 }
 
 .tbca-button--gold {
+  --cut-edge: var(--tbca-neon-yellow);
   color: var(--tbca-bg-void);
   background: var(--tbca-neon-yellow);
   border-color: var(--tbca-neon-yellow);
@@ -199,6 +286,7 @@
 }
 
 .tbca-button--danger {
+  --cut-edge: rgb(255 42 109 / 0.68);
   color: var(--tbca-danger-text);
   background: rgb(255 42 109 / 0.06);
   border-color: rgb(255 42 109 / 0.6);
@@ -230,6 +318,9 @@
   min-width: var(--tbca-touch-target);
   min-height: var(--tbca-touch-target);
   border: 1px solid rgb(0 240 255 / 0.45);
+  --cut-tl: 8px;
+  --cut-br: 8px;
+  --cut-edge: rgb(0 240 255 / 0.55);
   background: rgb(0 240 255 / 0.06);
   color: var(--tbca-neon-cyan);
   font: 600 var(--tbca-text-base) / 1 var(--tbca-font-mono);
@@ -254,6 +345,10 @@
   flex-wrap: wrap;
   gap: 2px;
   border-bottom: 1px solid rgb(0 240 255 / 0.16);
+  /* Leichtes Glasband, damit die Tabs über der Stadt lesbar bleiben */
+  background: linear-gradient(to top, rgb(7 8 13 / 0.62), rgb(7 8 13 / 0.18));
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
 }
 
 .tbca-tab {
@@ -268,7 +363,7 @@
   font: 600 0.875rem / 1 var(--tbca-font-display);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--tbca-text-muted);
+  color: #a9b0ca;
   text-decoration: none;
   cursor: pointer;
 }
@@ -287,8 +382,9 @@
   background: linear-gradient(to top, rgb(0 240 255 / 0.14), transparent);
 }
 
-.tbca-tab--on::after {
-  content: '';
+/* Leuchtlinie unter dem aktiven Tab; eigenes Element, damit sie beim Wechsel gleiten kann */
+.tbca-tab__ink {
+  display: none;
   position: absolute;
   left: 0;
   right: 0;
@@ -296,6 +392,14 @@
   height: 2px;
   background: var(--tbca-neon-cyan);
   box-shadow: 0 0 12px var(--tbca-neon-cyan);
+}
+
+.tbca-tab--on .tbca-tab__ink {
+  display: block;
+}
+
+:root[data-vt] .tbca-tab--on .tbca-tab__ink {
+  view-transition-name: tab-ink;
 }
 
 .tbca-badge {

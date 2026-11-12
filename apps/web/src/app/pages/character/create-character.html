@@ -54,7 +54,7 @@
       <fieldset class="classes">
         <legend class="tbca-label-mono">{{ t('character.create.class') }}</legend>
         @for (id of classIds; track id) {
-          <label class="class" [class.class--on]="classId() === id">
+          <label class="class tbca-cut" [class.class--on]="classId() === id">
             <input
               type="radio"
               name="class"

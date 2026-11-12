@@ -55,7 +55,7 @@
           @let before = previous().units[c.id]!;
           @let hit = frame().hit[c.id];
           <article
-            class="fighter"
+            class="fighter tbca-cut"
             [class.fighter--act]="frame().actor === c.id"
             [class.fighter--hit]="hit === 'hit'"
             [class.fighter--crit]="hit === 'crit'"
@@ -154,7 +154,10 @@
   </div>
 
   <div class="lower">
-    <section class="panel log-panel tbca-gl tbca-gl--b" [attr.aria-label]="t('home.demo.log')">
+    <section
+      class="panel tbca-cut log-panel tbca-gl tbca-gl--b"
+      [attr.aria-label]="t('home.demo.log')"
+    >
       <i class="tbca-gx" aria-hidden="true"></i>
       <div class="lp-head">
         <span class="tbca-label-mono">{{ t('home.demo.log') }}</span>
@@ -181,13 +184,16 @@
       }
     </section>
     @if (cooldowns().length > 0) {
-      <section class="panel ab-panel tbca-gl tbca-gl--f" [attr.aria-label]="t('replay.abilities')">
+      <section
+        class="panel tbca-cut ab-panel tbca-gl tbca-gl--f"
+        [attr.aria-label]="t('replay.abilities')"
+      >
         <i class="tbca-gx" aria-hidden="true"></i>
         <span class="tbca-label-mono">{{ t('replay.abilitiesOf', { name: ownName() }) }}</span>
         <div class="abs">
           @for (a of cooldowns(); track a.id) {
             <div class="ab">
-              <span class="abx" [attr.data-state]="a.state">
+              <span class="abx tbca-cut" [attr.data-state]="a.state">
                 {{
                   a.state === 'now'
                     ? t('replay.now')

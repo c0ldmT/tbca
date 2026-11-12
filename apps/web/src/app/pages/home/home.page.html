@@ -1,6 +1,7 @@
 <ng-container *transloco="let t">
   <section class="hero">
-    <div class="hero__copy">
+    <div class="hero__copy tbca-cut tbca-gl tbca-gl--f">
+      <i class="tbca-gx" aria-hidden="true"></i>
       <span class="tbca-kicker">{{ t('home.kicker') }}</span>
       <h1 class="hero__title" tbcaGlitch>{{ t('app.name') }}</h1>
       <p class="hero__tagline">{{ t('home.tagline') }}</p>
@@ -34,7 +35,7 @@
       <!-- Schnellzugriff auf die vier Hubs -->
       <nav class="jump" [attr.aria-label]="t('app.mainNav')">
         @for (hub of hubs; track hub.key; let i = $index) {
-          <a [class]="'jump__tile tbca-gl tbca-gl--' + glitch[i]" [routerLink]="hub.path">
+          <a [class]="'jump__tile tbca-cut tbca-gl tbca-gl--' + glitch[i]" [routerLink]="hub.path">
             <span class="tbca-idx">0{{ i + 1 }}</span>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="hub.icon" /></svg>
             <b>{{ t('hubs.' + hub.key) }}</b>

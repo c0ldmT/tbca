@@ -55,6 +55,9 @@
   min-height: 44px;
   padding: 0 14px;
   border: 1px solid rgb(0 240 255 / 0.4);
+  --cut-tl: 8px;
+  --cut-br: 8px;
+  --cut-edge: rgb(0 240 255 / 0.55);
   background: rgb(0 240 255 / 0.06);
   color: var(--tbca-neon-cyan);
   font: 600 0.8125rem / 1 var(--tbca-font-display);
@@ -105,6 +108,9 @@
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
   border: 1px solid var(--c);
+  --cut-tl: 16px;
+  --cut-br: 16px;
+  --cut-edge: var(--c);
   clip-path: polygon(
     16px 0,
     100% 0,
@@ -382,6 +388,9 @@
   position: relative;
   padding: 14px;
   border: 1px solid rgb(0 240 255 / 0.16);
+  --cut-tl: 12px;
+  --cut-br: 12px;
+  --cut-edge: rgb(0 240 255 / 0.3);
   background: rgb(7 8 13 / 0.72);
   clip-path: polygon(
     12px 0,
@@ -496,6 +505,7 @@
 }
 
 .abx[data-state='cd'] {
+  --cut-edge: rgb(138 147 178 / 0.4);
   color: var(--tbca-text-muted);
   border-color: rgb(138 147 178 / 0.3);
   background: repeating-linear-gradient(135deg, rgb(138 147 178 / 0.12) 0 4px, transparent 4px 8px);

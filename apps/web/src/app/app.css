@@ -94,6 +94,11 @@
   box-shadow: 0 0 24px rgb(0 240 255 / 0.5);
 }
 
+/* Beim Hub-Wechsel gleitet die Markierung zum neuen Hub */
+:host-context([data-vt]) .hub--on {
+  view-transition-name: hub-active;
+}
+
 .hub svg,
 .bottom svg {
   width: 18px;
@@ -193,7 +198,8 @@ main {
 }
 
 .footer a {
-  color: var(--tbca-text-muted);
+  color: #a9b0ca;
+  text-shadow: var(--tbca-halo);
 }
 
 /* Mobil: Hubs als Leiste unten */
@@ -236,6 +242,10 @@ main {
     font: 600 0.625rem / 1 var(--tbca-font-display);
     letter-spacing: 0.12em;
     text-transform: uppercase;
+  }
+
+  :host-context([data-vt]) .bottom a.on {
+    view-transition-name: hub-active-m;
   }
 
   .bottom a.on {

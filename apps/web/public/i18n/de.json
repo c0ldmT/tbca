@@ -116,7 +116,8 @@
         "body": "Für Login und Bot nutzen wir Discord (Discord Inc., USA). Dabei gelten zusätzlich die Datenschutzbestimmungen von Discord. Gehostet wird TBCA vom Betreiber dieser Instanz."
       },
       "private": "Dies ist eine private Instanz für einen geschlossenen Kreis von Mitspielern. Die folgenden Abschnitte erklären trotzdem, welche Daten TBCA verarbeitet."
-    }
+    },
+    "kicker": "Rechtliches"
   },
   "notFound": {
     "title": "Signal verloren",

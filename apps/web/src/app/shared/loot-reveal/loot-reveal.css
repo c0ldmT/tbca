@@ -118,6 +118,9 @@
   text-align: center;
   background: linear-gradient(180deg, rgb(23 27 46 / 0.92), rgb(15 18 32 / 0.9));
   border: 1px solid color-mix(in srgb, var(--tier) 70%, transparent);
+  --cut-tl: 16px;
+  --cut-br: 16px;
+  --cut-edge: color-mix(in srgb, var(--tier) 85%, transparent);
   clip-path: polygon(
     16px 0,
     100% 0,
@@ -176,9 +179,9 @@
   box-shadow: 0 0 36px color-mix(in srgb, var(--tier) 40%, transparent);
 }
 
-.fx3 .card::after,
-.fx4 .card::after,
-.fx5 .card::after {
+.fx3 .card::before,
+.fx4 .card::before,
+.fx5 .card::before {
   content: '';
   position: absolute;
   inset: 0;

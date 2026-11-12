@@ -13,7 +13,7 @@
 .empty p {
   margin: 0;
   max-width: 60ch;
-  color: var(--tbca-text-secondary, #c7cad6);
+  color: var(--tbca-text-secondary);
 }
 
 /* Zwei Spalten: Inhalt links, Formulare rechts */
@@ -274,6 +274,8 @@
   width: 22px;
   height: 22px;
   border: 1px solid rgb(0 240 255 / 0.45);
+  --cut-tr: 6px;
+  --cut-edge: rgb(0 240 255 / 0.6);
   clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%);
 }
 
@@ -336,15 +338,28 @@
 }
 
 .community__hex {
+  position: relative;
   display: grid;
   place-items: center;
   width: 40px;
   height: 40px;
+}
+
+/* Sechseck als SVG, damit der Umriss an allen sechs Kanten durchgeht */
+.community__hex svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: rgb(0 240 255 / 0.08);
+  stroke: rgb(0 240 255 / 0.5);
+  stroke-width: 1.2;
+}
+
+.community__hex b {
+  position: relative;
   font: 700 1.125rem / 1 var(--tbca-font-display);
   color: var(--tbca-neon-cyan);
-  background: rgb(0 240 255 / 0.08);
-  border: 1px solid rgb(0 240 255 / 0.3);
-  clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
 }
 
 .community__state {

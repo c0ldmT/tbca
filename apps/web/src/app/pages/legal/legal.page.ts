@@ -16,8 +16,9 @@ const PRIVACY_SECTIONS = ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8'] as con
   selector: 'tbca-legal-page',
   imports: [TranslocoDirective],
   template: `
-    <article *transloco="let t">
-      <h1>{{ t('legal.' + section() + '.title') }}</h1>
+    <article class="tbca-panel doc" *transloco="let t">
+      <span class="tbca-kicker">{{ t('legal.kicker') }}</span>
+      <h1 class="tbca-title">{{ t('legal.' + section() + '.title') }}</h1>
       @if (legal.missing()) {
         <p class="warning" role="note">{{ t('legal.missing') }}</p>
       }
@@ -51,15 +52,22 @@ const PRIVACY_SECTIONS = ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8'] as con
       display: block;
       width: min(100%, 48rem);
       margin-inline: auto;
-      padding: var(--tbca-space-12) var(--tbca-space-4);
+      padding: 32px clamp(16px, 3vw, 40px) 56px;
     }
-    h1 {
-      font-size: var(--tbca-text-2xl);
-      margin-bottom: var(--tbca-space-6);
+    .doc {
+      display: block;
+      padding: clamp(20px, 4vw, 40px);
+    }
+    .tbca-title {
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      margin: 6px 0 var(--tbca-space-6);
     }
     h2 {
-      font-size: var(--tbca-text-lg);
-      margin: var(--tbca-space-6) 0 var(--tbca-space-2);
+      font: 600 0.875rem / 1.2 var(--tbca-font-display);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--tbca-neon-cyan);
+      margin: var(--tbca-space-8) 0 var(--tbca-space-2);
     }
     p,
     address {
@@ -67,10 +75,14 @@ const PRIVACY_SECTIONS = ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8'] as con
       font-style: normal;
       line-height: 1.6;
     }
+    p {
+      color: var(--tbca-text-secondary);
+    }
     .warning {
-      border-left: 3px solid var(--tbca-neon-magenta);
+      border-left: 2px solid var(--tbca-neon-magenta);
       padding: var(--tbca-space-2) var(--tbca-space-4);
-      color: var(--tbca-text);
+      background: linear-gradient(90deg, rgb(255 42 109 / 0.12), transparent);
+      color: var(--tbca-text-primary);
     }
   `,
 })

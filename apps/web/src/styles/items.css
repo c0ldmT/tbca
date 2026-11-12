@@ -58,6 +58,9 @@
     rgb(15 18 32 / 0.85);
   border: 1px solid color-mix(in srgb, var(--tier, #8a93b2) 60%, transparent);
   --ibc: calc(var(--ib, 62px) * 0.14);
+  --cut-tl: var(--ibc);
+  --cut-br: var(--ibc);
+  --cut-edge: color-mix(in srgb, var(--tier, #8a93b2) 75%, transparent);
   clip-path: polygon(
     var(--ibc) 0,
     100% 0,
