@@ -790,7 +790,33 @@
       "saved": "Entwurf gespeichert und geprüft.",
       "published": "Veröffentlicht – gilt ab sofort für neue Kämpfe und Items."
     },
-    "kicker": "Superadmin · Werkzeuge"
+    "kicker": "Superadmin · Werkzeuge",
+    "shop": {
+      "title": "Shop-Editor",
+      "open": "Shop-Editor öffnen",
+      "loading": "Lade Konfiguration …",
+      "consumables": "Verbrauchsgüter",
+      "consumablesHint": "Preis in Credits. Leer lassen, um ein Verbrauchsgut nicht anzubieten.",
+      "notOffered": "nicht im Angebot",
+      "rules": "Tagesrotation und Verkauf",
+      "field": {
+        "rotationSize": "Angebote je Tag",
+        "rotationMaxRarity": "Höchste Rarität der Rotation",
+        "priceCreditsPerBudget": "Credits je Budgetpunkt",
+        "sellPermille": "Verkaufsanteil (‰)",
+        "renameCredits": "Umbenennen: Kosten",
+        "renameCooldownDays": "Umbenennen: Abstand (Tage)"
+      },
+      "hint": {
+        "rotationSize": "Ausrüstungsangebote je Spieler und Tag",
+        "rotationMaxRarity": "1–16 Sterne",
+        "priceCreditsPerBudget": "Item-Preis = Power-Budget × Wert",
+        "sellPermille": "Anteil des Werts beim Verkauf an den Shop",
+        "renameCredits": "Credits pro Umbenennung",
+        "renameCooldownDays": "Mindestabstand zwischen Umbenennungen"
+      },
+      "example": "Beispiel: Ein Item mit Budget 100 kostet {{ price }} Credits, der Verkauf bringt {{ sell }} Credits."
+    }
   },
   "account": {
     "title": "Konto",

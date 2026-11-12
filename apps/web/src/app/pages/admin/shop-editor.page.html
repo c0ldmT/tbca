@@ -1,0 +1,103 @@
+<ng-container *transloco="let t">
+  <header class="head">
+    <a routerLink="/admin" class="back">← {{ t('admin.title') }}</a>
+    <span class="tbca-kicker">{{ t('admin.kicker') }}</span>
+    <h1 class="tbca-title tbca-gl tbca-gl--f">{{ t('admin.shop.title') }}</h1>
+    @if (draft(); as d) {
+      <p class="tbca-hint">
+        {{ t('admin.items.version', { version: d.version }) }} ·
+        {{ t('admin.items.status.' + d.status) }}
+        @if (dirty()) {
+          · {{ t('admin.items.unsaved') }}
+        }
+      </p>
+    }
+  </header>
+
+  @if (error()) {
+    <p class="tbca-error" role="alert">{{ t('errors.' + error()) }}</p>
+  }
+  @if (problems().length) {
+    <ul class="problems" role="alert">
+      @for (p of problems(); track p) {
+        <li>{{ p }}</li>
+      }
+    </ul>
+  }
+  @if (notice()) {
+    <p class="notice" role="status">{{ t(notice()!) }}</p>
+  }
+
+  @if (draft(); as d) {
+    <div class="toolbar">
+      @if (!editable()) {
+        <button type="button" class="tbca-button" [disabled]="busy()" (click)="createDraft()">
+          {{ t('admin.items.newDraft') }}
+        </button>
+      } @else {
+        <button
+          type="button"
+          class="tbca-button tbca-button--ghost"
+          [disabled]="busy() || !dirty()"
+          (click)="save()"
+        >
+          {{ t('admin.items.save') }}
+        </button>
+        <button type="button" class="tbca-button" [disabled]="busy()" (click)="publish()">
+          {{ t('admin.items.publish') }}
+        </button>
+      }
+    </div>
+
+    @if (shop(); as s) {
+      <section class="tbca-panel editor" aria-labelledby="shop-consumables">
+        <h2 id="shop-consumables">{{ t('admin.shop.consumables') }}</h2>
+        <p class="tbca-hint">{{ t('admin.shop.consumablesHint') }}</p>
+        <fieldset class="shop-grid" [disabled]="!editable()">
+          @for (id of consumableIds; track id) {
+            <label class="tbca-label field">
+              {{ t('consumables.' + id) }}
+              <input
+                class="tbca-input"
+                type="number"
+                min="1"
+                step="1"
+                [value]="priceOf(id) ?? ''"
+                [placeholder]="t('admin.shop.notOffered')"
+                (change)="setPrice(id, $any($event.target).value)"
+              />
+            </label>
+          }
+        </fieldset>
+      </section>
+
+      <section class="tbca-panel editor" aria-labelledby="shop-rules">
+        <h2 id="shop-rules">{{ t('admin.shop.rules') }}</h2>
+        <fieldset class="shop-grid" [disabled]="!editable()">
+          @for (f of fields; track f.key) {
+            <label class="tbca-label field">
+              {{ t('admin.shop.field.' + f.key) }}
+              <input
+                class="tbca-input"
+                type="number"
+                [min]="f.min"
+                [max]="f.max"
+                [step]="f.step"
+                [value]="s[f.key]"
+                (change)="setNumber(f.key, $any($event.target).value)"
+              />
+              <small>{{ t('admin.shop.hint.' + f.key) }}</small>
+            </label>
+          }
+        </fieldset>
+        @if (example(); as e) {
+          <p class="tbca-hint example" role="status">
+            {{ t('admin.shop.example', { price: e.price, sell: e.sell }) }}
+          </p>
+        }
+      </section>
+    }
+  } @else if (!error()) {
+    <p class="tbca-hint">{{ t('admin.shop.loading') }}</p>
+  }
+</ng-container>

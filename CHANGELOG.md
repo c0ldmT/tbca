@@ -8,6 +8,9 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ### Hinzugefügt
 
+- Admin: Shop-Editor (`/admin/shop`) als Formular für Verbrauchsgüter mit Preisen,
+  Tagesrotation, Verkaufsanteil und Umbenennen; arbeitet auf dem Konfigurationsentwurf mit
+  Speichern und Veröffentlichen. Die Konfigurationsprüfung kennt jetzt auch die Shop-Werte.
 - Discord-Bot: `/tbca dungeon` zeigt den Run mit Buttons (Run starten, Weiter, Mit Loot raus,
   Heil-Injektor); nur der Besitzer kann entscheiden, Start-Optionen `injektoren` und
   `backup-chip`. Der Loot bleibt bis zum Ausstieg versiegelt. `/tbca team` listet die eigenen

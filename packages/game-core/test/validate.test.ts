@@ -55,3 +55,25 @@ describe('withDefaults', () => {
     expect(merged.items.statCost).toEqual(DEFAULT_GAME_CONFIG.items.statCost);
   });
 });
+
+describe('Shop-Prüfung', () => {
+  it('erkennt ungültige Shop-Werte', async () => {
+    const { DEFAULT_GAME_CONFIG: base, validateGameConfig: check } =
+      await import('../src/index.js');
+    const problems = check({
+      ...base,
+      shop: {
+        ...base.shop,
+        consumables: [
+          { id: 'heal_injector', price: 0 },
+          { id: 'heal_injector', price: 40 },
+        ],
+        sellPermille: 1200,
+      },
+    });
+    expect(problems).toContain('Shop: Preis für heal_injector muss eine ganze Zahl ≥ 1 sein');
+    expect(problems).toContain('Shop: heal_injector ist doppelt');
+    expect(problems).toContain('Shop: Verkaufsanteil muss zwischen 0 und 1000 Promille liegen');
+    expect(check(base)).toEqual([]);
+  });
+});

@@ -99,6 +99,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/account/account.page').then((m) => m.AccountPage),
   },
   {
+    path: 'admin/shop',
+    loadComponent: () => import('./pages/admin/shop-editor.page').then((m) => m.ShopEditorPage),
+  },
+  {
     path: 'admin/items',
     loadComponent: () => import('./pages/admin/item-editor.page').then((m) => m.ItemEditorPage),
   },

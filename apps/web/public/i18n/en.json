@@ -790,7 +790,33 @@
       "saved": "Draft saved and validated.",
       "published": "Published – applies to new fights and items right away."
     },
-    "kicker": "Superadmin · tools"
+    "kicker": "Superadmin · tools",
+    "shop": {
+      "title": "Shop editor",
+      "open": "Open shop editor",
+      "loading": "Loading configuration …",
+      "consumables": "Consumables",
+      "consumablesHint": "Price in credits. Leave empty to not offer a consumable.",
+      "notOffered": "not offered",
+      "rules": "Daily rotation and selling",
+      "field": {
+        "rotationSize": "Offers per day",
+        "rotationMaxRarity": "Highest rotation rarity",
+        "priceCreditsPerBudget": "Credits per budget point",
+        "sellPermille": "Sell share (‰)",
+        "renameCredits": "Rename: cost",
+        "renameCooldownDays": "Rename: cooldown (days)"
+      },
+      "hint": {
+        "rotationSize": "Gear offers per player and day",
+        "rotationMaxRarity": "1–16 stars",
+        "priceCreditsPerBudget": "Item price = power budget × value",
+        "sellPermille": "Share of the value when selling to the shop",
+        "renameCredits": "Credits per rename",
+        "renameCooldownDays": "Minimum time between renames"
+      },
+      "example": "Example: an item with budget 100 costs {{ price }} credits, selling it brings {{ sell }} credits."
+    }
   },
   "account": {
     "title": "Account",

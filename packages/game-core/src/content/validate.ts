@@ -1,5 +1,6 @@
 import { defaultLoadout, deriveSnapshot } from '../character/build.js';
 import { planFloor } from '../dungeon/dungeon.js';
+import { CONSUMABLES } from '../items/types.js';
 import { rollItem } from '../items/items.js';
 import { ITEM_STATS, type ItemCategory } from '../items/types.js';
 import { ATTRIBUTES, CLASS_IDS, type GameConfig } from './types.js';
@@ -65,6 +66,28 @@ export function validateGameConfig(config: GameConfig): string[] {
       if (rule.use !== 'basic_attack' && ability?.classId !== id)
         add(`Klasse ${id}: Standard-Taktik nutzt ${rule.use}`);
     }
+  }
+
+  // Shop
+  const shop = config.shop;
+  if (shop) {
+    const seen = new Set<string>();
+    for (const c of shop.consumables ?? []) {
+      if (!(CONSUMABLES as readonly string[]).includes(c.id))
+        add(`Shop: unbekanntes Verbrauchsgut ${c.id}`);
+      if (seen.has(c.id)) add(`Shop: ${c.id} ist doppelt`);
+      seen.add(c.id);
+      if (!isInt(c.price, 1)) add(`Shop: Preis für ${c.id} muss eine ganze Zahl ≥ 1 sein`);
+    }
+    if (!isInt(shop.rotationSize, 0))
+      add('Shop: Größe der Tagesrotation muss eine ganze Zahl ≥ 0 sein');
+    if (!isInt(shop.rotationMaxRarity, 1) || shop.rotationMaxRarity > 16)
+      add('Shop: höchste Rarität der Rotation muss zwischen 1 und 16 liegen');
+    if (!isInt(shop.priceCreditsPerBudget, 1)) add('Shop: Credits je Budgetpunkt müssen ≥ 1 sein');
+    if (!isInt(shop.sellPermille, 0) || shop.sellPermille > 1000)
+      add('Shop: Verkaufsanteil muss zwischen 0 und 1000 Promille liegen');
+    if (!isInt(shop.renameCredits, 0) || !isInt(shop.renameCooldownDays, 0))
+      add('Shop: Umbenennen braucht ganze Zahlen ≥ 0');
   }
 
   // Aufholbonus

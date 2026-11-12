@@ -1,0 +1,29 @@
+/* Shop-Editor: gleichmäßiges Raster, Hinweise in normaler Schrift unter dem Feld */
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+  gap: 16px 18px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+}
+
+.field small {
+  font: 400 0.75rem / 1.4 var(--tbca-font-body);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--tbca-text-muted);
+}
+
+.example {
+  margin: 4px 0 0;
+  padding: 8px 12px;
+  border-left: 2px solid var(--tbca-neon-cyan);
+  background: linear-gradient(90deg, rgb(0 240 255 / 0.08), transparent);
+}
