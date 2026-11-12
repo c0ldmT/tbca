@@ -1,3 +1,4 @@
+import type { DungeonSimResult, MatchupResult } from '@tbca/game-core';
 import { z } from 'zod';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -107,4 +108,28 @@ export interface BotRunResult {
   /** Fehlercodes mit Anzahl, z. B. no_runs_left. */
   errors: Record<string, number>;
   skipped: 'real_season' | null;
+}
+
+/** POST /api/admin/simulations – Balancing-Simulation gegen eine Konfigurationsversion. */
+export const adminSimulationSchema = z.object({
+  kind: z.enum(['matchups', 'dungeon']),
+  /** Konfigurationsversion; fehlt sie, gilt die veröffentlichte. */
+  version: z.number().int().min(1).optional(),
+  level: z.number().int().min(1).max(200),
+  gear: z.enum(['none', 'common', 'rare', 'epic']),
+  /** Kämpfe je Paarung (Matrix) bzw. Runs je Klasse (Dungeon). */
+  samples: z.number().int().min(2).max(400),
+  seed: z.string().min(1).max(40).optional(),
+});
+export type AdminSimulationRequest = z.infer<typeof adminSimulationSchema>;
+
+export interface AdminSimulationResponse {
+  version: number;
+  status: 'draft' | 'published' | 'archived';
+  seed: string;
+  ms: number;
+  /** Gesetzt bei kind = matchups. */
+  matchups: MatchupResult | null;
+  /** Gesetzt bei kind = dungeon. */
+  dungeon: DungeonSimResult | null;
 }

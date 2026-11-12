@@ -123,3 +123,16 @@ export type {
   BattleRules,
   CombatantSnapshot,
 } from './battle/types.js';
+export {
+  GEAR_PROFILES,
+  simCombatant,
+  simEquipment,
+  simulateDungeon,
+  simulateMatchups,
+  type DungeonSimInput,
+  type DungeonSimResult,
+  type GearProfile,
+  type MatchupCell,
+  type MatchupInput,
+  type MatchupResult,
+} from './sim/balance.js';

@@ -816,6 +816,54 @@
         "renameCooldownDays": "Minimum time between renames"
       },
       "example": "Example: an item with budget 100 costs {{ price }} credits, selling it brings {{ sell }} credits."
+    },
+    "sim": {
+      "title": "Balancing simulation",
+      "open": "Open simulation",
+      "intro": "Simulates typical characters of each class against a configuration version – before publishing a draft, compared with the active version.",
+      "setup": "Settings",
+      "kind": "Analysis",
+      "kinds": {
+        "matchups": "Class × class",
+        "dungeon": "Dungeon depth"
+      },
+      "version": "Version",
+      "level": "Level",
+      "gear": "Gear",
+      "gears": {
+        "none": "None",
+        "common": "Common (★3)",
+        "rare": "Rare (★7)",
+        "epic": "Epic (★11)"
+      },
+      "samplesFights": "Fights per pairing",
+      "samplesRuns": "Runs per class",
+      "compare": "Compare with published version v{{ version }}",
+      "run": "Simulate",
+      "running": "Simulating …",
+      "meta": "Version {{ version }} · {{ ms }} ms · seed {{ seed }} – same seed, same result.",
+      "matrix": "Win rate class × class ({{ fights }} fights)",
+      "matrixHint": "Row against column; draws count half. Each class fights half the time as first and second team.",
+      "matrixCaption": "Win rate of the row class against the column class",
+      "attacker": "Class",
+      "overall": "Overall",
+      "pp": "pp",
+      "cellTip": "{{ a }} vs {{ b }}: {{ win }} ({{ wins }} W / {{ losses }} L / {{ draws }} D), avg {{ rounds }} rounds",
+      "legendLoss": "loses",
+      "legendWin": "wins",
+      "outliers": "Outliers (more than 60 %)",
+      "outlier": "{{ a }} beats {{ b }} in {{ win }} of fights",
+      "noOutliers": "No pairing deviates more than 10 percentage points from 50 %.",
+      "depth": "Dungeon depth reached ({{ runs }} runs)",
+      "average": "Average",
+      "median": "Median",
+      "capped": "Stopped at the limit",
+      "histLabel": "Histogram of floors cleared, average {{ average }}, median {{ median }}",
+      "histTip": "Floor {{ floor }}: {{ runs }} runs",
+      "histAxis": "Horizontal: floors cleared without consumables, vertical: number of runs.",
+      "perClass": "Depth per class",
+      "class": "Class",
+      "best": "Best run"
     }
   },
   "account": {

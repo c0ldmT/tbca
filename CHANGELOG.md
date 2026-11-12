@@ -8,6 +8,12 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ### Hinzugefügt
 
+- Balancing-Simulation (Phase 2, Spezifikation Abschnitt 14): `simulateMatchups` (Gewinnraten-
+  Matrix Klasse × Klasse mit Ausreißern, beide Startpositionen) und `simulateDungeon`
+  (Verteilung der erreichten Tiefe) in game-core, rein und deterministisch. Admin-Endpunkt
+  `POST /api/admin/simulations` gegen eine Konfigurationsversion und Admin-Seite
+  `/admin/simulation` mit Heatmap, Histogramm und Vergleich Entwurf ↔ veröffentlichte Version.
+  Simuliert werden typische Bot-Builds mit Ausrüstung nach Profil (keine, ★3, ★7, ★11).
 - Admin: Shop-Editor (`/admin/shop`) als Formular für Verbrauchsgüter mit Preisen,
   Tagesrotation, Verkaufsanteil und Umbenennen; arbeitet auf dem Konfigurationsentwurf mit
   Speichern und Veröffentlichen. Die Konfigurationsprüfung kennt jetzt auch die Shop-Werte.

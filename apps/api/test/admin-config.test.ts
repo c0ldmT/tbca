@@ -84,6 +84,55 @@ describe('Season-Konfiguration', () => {
   });
 });
 
+describe('Balancing-Simulation', () => {
+  it('simuliert die Matrix gegen die veröffentlichte Version und einen Entwurf', async () => {
+    const res = (
+      await call('POST', '/api/admin/simulations', {
+        kind: 'matchups',
+        level: 10,
+        gear: 'common',
+        samples: 2,
+      })
+    ).json();
+    expect(res.status).toBe('published');
+    expect(res.matchups.cells).toHaveLength(16);
+    expect(res.dungeon).toBeNull();
+
+    const draft = (
+      await call('POST', '/api/admin/config/drafts', { from: null, notes: null })
+    ).json();
+    const dungeon = (
+      await call('POST', '/api/admin/simulations', {
+        kind: 'dungeon',
+        version: draft.version,
+        level: 10,
+        gear: 'none',
+        samples: 2,
+      })
+    ).json();
+    expect(dungeon).toMatchObject({ version: draft.version, status: 'draft' });
+    expect(dungeon.dungeon.runs).toBe(8);
+  });
+
+  it('begrenzt die Stichprobe und ist nur für Superadmins', async () => {
+    const tooMany = await call('POST', '/api/admin/simulations', {
+      kind: 'matchups',
+      level: 10,
+      gear: 'none',
+      samples: 5000,
+    });
+    expect(tooMany.statusCode).toBe(400);
+    t.accounts.roles.clear();
+    const denied = await call('POST', '/api/admin/simulations', {
+      kind: 'matchups',
+      level: 10,
+      gear: 'none',
+      samples: 2,
+    });
+    expect(denied.statusCode).toBe(403);
+  });
+});
+
 describe('Bot-Spieler', () => {
   it('handeln mit Agententyp nur in Test-Seasons', async () => {
     const seasonId = t.seasons.current!.id;

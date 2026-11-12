@@ -1,0 +1,215 @@
+.sim-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 14px 18px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field .tbca-input {
+  width: 7rem;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-size: 0.875rem;
+  color: var(--tbca-text-secondary);
+}
+
+.check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--tbca-neon-cyan);
+}
+
+.meta {
+  margin: 0;
+}
+
+/* ----- Gewinnraten-Matrix ----- */
+
+.matrix-wrap {
+  overflow-x: auto;
+}
+
+.matrix {
+  border-collapse: separate;
+  border-spacing: 2px;
+  font: 500 0.875rem / 1 var(--tbca-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.matrix th {
+  padding: 8px 10px;
+  font: 500 0.6875rem / 1.2 var(--tbca-font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--tbca-text-muted);
+  text-align: left;
+}
+
+.matrix td {
+  min-width: 84px;
+  height: 52px;
+  text-align: center;
+  color: var(--tbca-text-primary);
+  border-radius: 4px;
+}
+
+/* Spiegelkampf: gleiche Klasse, schraffiert statt farbig gewertet */
+.matrix td.mirror {
+  background: repeating-linear-gradient(
+    45deg,
+    rgb(59 64 84 / 0.9) 0 4px,
+    rgb(59 64 84 / 0.55) 4px 8px
+  ) !important;
+  color: var(--tbca-text-muted);
+}
+
+.matrix td.overall {
+  min-width: 96px;
+  background: none;
+  text-align: left;
+  padding-left: 12px;
+}
+
+.overall b {
+  display: block;
+  font-size: 1rem;
+}
+
+small.up,
+small.down {
+  font: 500 0.6875rem / 1.4 var(--tbca-font-mono);
+}
+
+small.up {
+  color: var(--tbca-success);
+}
+
+small.down {
+  color: var(--tbca-danger-text);
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 500 0.6875rem / 1 var(--tbca-font-mono);
+  color: var(--tbca-text-muted);
+}
+
+.legend__bar {
+  width: 180px;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #e8336f, #3b4054 50%, #1a9fb0);
+}
+
+.outliers {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--tbca-text-secondary);
+  line-height: 1.6;
+}
+
+h3 {
+  margin: 10px 0 0;
+  font: 600 0.8125rem / 1.2 var(--tbca-font-display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tbca-neon-yellow);
+}
+
+/* ----- Dungeon-Tiefe ----- */
+
+.tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tile {
+  display: grid;
+  gap: 6px;
+  min-width: 120px;
+  padding: 12px 16px;
+  background: var(--tbca-well);
+  border-left: 2px solid #1a9fb0;
+}
+
+.tile b {
+  font: 600 1.75rem / 1 var(--tbca-font-mono);
+  color: var(--tbca-text-primary);
+}
+
+.hist {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 180px;
+  padding-top: 8px;
+  border-bottom: 1px solid rgb(255 255 255 / 0.12);
+}
+
+.hist__col {
+  flex: 1 1 0;
+  min-width: 6px;
+  max-width: 44px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  position: relative;
+}
+
+.hist__col i {
+  display: block;
+  width: 100%;
+  min-height: 1px;
+  background: #1a9fb0;
+  border-radius: 4px 4px 0 0;
+}
+
+.hist__col:hover i {
+  background: #2bb8ca;
+}
+
+.hist__col small {
+  position: absolute;
+  bottom: -18px;
+  font: 500 0.625rem / 1 var(--tbca-font-mono);
+  color: var(--tbca-text-muted);
+}
+
+.hist + .tbca-hint {
+  margin-top: 22px;
+}
+
+.perclass {
+  width: auto;
+  margin-top: 14px;
+  border-collapse: collapse;
+  font: 500 0.875rem / 1.4 var(--tbca-font-mono);
+}
+
+.perclass th,
+.perclass td {
+  padding: 6px 32px 6px 0;
+  text-align: left;
+}
+
+.perclass thead th {
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--tbca-text-muted);
+}

@@ -816,6 +816,54 @@
         "renameCooldownDays": "Mindestabstand zwischen Umbenennungen"
       },
       "example": "Beispiel: Ein Item mit Budget 100 kostet {{ price }} Credits, der Verkauf bringt {{ sell }} Credits."
+    },
+    "sim": {
+      "title": "Balancing-Simulation",
+      "open": "Simulation öffnen",
+      "intro": "Simuliert typische Charaktere jeder Klasse gegen eine Konfigurationsversion – vor dem Veröffentlichen eines Entwurfs, im Vergleich zur aktiven Version.",
+      "setup": "Einstellungen",
+      "kind": "Auswertung",
+      "kinds": {
+        "matchups": "Klasse × Klasse",
+        "dungeon": "Dungeon-Tiefe"
+      },
+      "version": "Version",
+      "level": "Level",
+      "gear": "Ausrüstung",
+      "gears": {
+        "none": "Keine",
+        "common": "Gewöhnlich (★3)",
+        "rare": "Selten (★7)",
+        "epic": "Episch (★11)"
+      },
+      "samplesFights": "Kämpfe je Paarung",
+      "samplesRuns": "Runs je Klasse",
+      "compare": "Mit veröffentlichter Version v{{ version }} vergleichen",
+      "run": "Simulieren",
+      "running": "Simuliere …",
+      "meta": "Version {{ version }} · {{ ms }} ms · Seed {{ seed }} – gleicher Seed, gleiches Ergebnis.",
+      "matrix": "Gewinnquote Klasse × Klasse ({{ fights }} Kämpfe)",
+      "matrixHint": "Zeile gegen Spalte; Unentschieden zählen halb. Jede Klasse kämpft je zur Hälfte als erstes und zweites Team.",
+      "matrixCaption": "Gewinnquote der Zeilenklasse gegen die Spaltenklasse",
+      "attacker": "Klasse",
+      "overall": "Gesamt",
+      "pp": "Pp.",
+      "cellTip": "{{ a }} gegen {{ b }}: {{ win }} ({{ wins }} S / {{ losses }} N / {{ draws }} U), Ø {{ rounds }} Runden",
+      "legendLoss": "verliert",
+      "legendWin": "gewinnt",
+      "outliers": "Ausreißer (mehr als 60 %)",
+      "outlier": "{{ a }} schlägt {{ b }} in {{ win }} der Kämpfe",
+      "noOutliers": "Keine Paarung weicht mehr als 10 Prozentpunkte von 50 % ab.",
+      "depth": "Erreichte Dungeon-Tiefe ({{ runs }} Runs)",
+      "average": "Durchschnitt",
+      "median": "Median",
+      "capped": "An der Grenze abgebrochen",
+      "histLabel": "Histogramm der geschafften Etagen, Durchschnitt {{ average }}, Median {{ median }}",
+      "histTip": "Etage {{ floor }}: {{ runs }} Runs",
+      "histAxis": "Waagerecht: geschaffte Etagen ohne Verbrauchsgüter, senkrecht: Anzahl Runs.",
+      "perClass": "Tiefe je Klasse",
+      "class": "Klasse",
+      "best": "Bester Run"
     }
   },
   "account": {

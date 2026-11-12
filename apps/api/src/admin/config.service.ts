@@ -4,9 +4,18 @@ import {
   DEFAULT_BATTLE_RULES,
   DEFAULT_GAME_CONFIG,
   validateGameConfig,
+  simulateDungeon,
+  simulateMatchups,
   withDefaults,
+  type BattleRules,
+  type GameConfig,
 } from '@tbca/game-core';
-import type { AdminConfigList, AdminConfigVersion } from '@tbca/shared';
+import type {
+  AdminConfigList,
+  AdminConfigVersion,
+  AdminSimulationRequest,
+  AdminSimulationResponse,
+} from '@tbca/shared';
 
 import { ApiError } from '../common/api-error.js';
 import { SeasonService } from '../game/season.js';
@@ -142,5 +151,43 @@ export class ConfigService {
         { problems },
       );
     }
+  }
+
+  /**
+   * Balancing-Simulation gegen eine Version (Entwurf → Simulation → Veröffentlichen). Läuft
+   * direkt in der API: 16 Paarungen × 400 Kämpfe dauern auf einem kleinen Server wenige
+   * Sekunden; größere Läufe gehören in ein Skript.
+   */
+  async simulate(req: AdminSimulationRequest): Promise<AdminSimulationResponse> {
+    const list = await this.list();
+    const version =
+      req.version ?? list.versions.find((v) => v.status === 'published')?.version ?? 1;
+    const v = await this.get(version);
+    const game = v.data.game as unknown as GameConfig;
+    const battle = v.data.battle as unknown as BattleRules;
+    const level = Math.min(req.level, game.maxLevel);
+    const seed = req.seed ?? 'tbca-sim';
+    const started = Date.now();
+    const matchups =
+      req.kind === 'matchups'
+        ? simulateMatchups(game, battle, {
+            level,
+            fightsPerPair: req.samples,
+            gear: req.gear,
+            seed,
+            configVersion: version,
+          })
+        : null;
+    const dungeon =
+      req.kind === 'dungeon'
+        ? simulateDungeon(game, battle, {
+            level,
+            runsPerClass: req.samples,
+            gear: req.gear,
+            seed,
+            configVersion: version,
+          })
+        : null;
+    return { version, status: v.status, seed, ms: Date.now() - started, matchups, dungeon };
   }
 }

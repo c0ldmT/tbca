@@ -19,6 +19,7 @@ import {
   adminConfigDraftSchema,
   adminConfigUpdateSchema,
   adminTimeSchema,
+  adminSimulationSchema,
 } from '@tbca/shared';
 import type { SeasonConfigData } from '@tbca/db';
 import type { FastifyRequest } from 'fastify';
@@ -118,6 +119,13 @@ export class AdminController {
       data as unknown as SeasonConfigData,
       notes,
     );
+  }
+
+  /** Balancing-Simulation gegen eine Konfigurationsversion (Abschnitt 14). */
+  @Post('simulations')
+  @HttpCode(200)
+  simulate(@Body() body: unknown) {
+    return this.configs.simulate(parseBody(adminSimulationSchema, body));
   }
 
   @Post('config/:version/publish')

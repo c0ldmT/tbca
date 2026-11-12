@@ -1,0 +1,249 @@
+<ng-container *transloco="let t">
+  <header class="head">
+    <a routerLink="/admin" class="back">← {{ t('admin.title') }}</a>
+    <span class="tbca-kicker">{{ t('admin.kicker') }}</span>
+    <h1 class="tbca-title tbca-gl tbca-gl--f">{{ t('admin.sim.title') }}</h1>
+    <p class="tbca-hint">{{ t('admin.sim.intro') }}</p>
+  </header>
+
+  @if (error()) {
+    <p class="tbca-error" role="alert">{{ t('errors.' + error()) }}</p>
+  }
+
+  <section class="tbca-panel editor" aria-labelledby="sim-setup">
+    <h2 id="sim-setup">{{ t('admin.sim.setup') }}</h2>
+    <div class="sim-form">
+      <div class="field">
+        <span class="tbca-label-mono" id="sim-kind">{{ t('admin.sim.kind') }}</span>
+        <span class="tbca-seg" role="group" aria-labelledby="sim-kind">
+          <button
+            type="button"
+            [attr.aria-pressed]="kind() === 'matchups'"
+            (click)="kind.set('matchups')"
+          >
+            {{ t('admin.sim.kinds.matchups') }}
+          </button>
+          <button
+            type="button"
+            [attr.aria-pressed]="kind() === 'dungeon'"
+            (click)="kind.set('dungeon')"
+          >
+            {{ t('admin.sim.kinds.dungeon') }}
+          </button>
+        </span>
+      </div>
+      <label class="field">
+        <span class="tbca-label-mono">{{ t('admin.sim.version') }}</span>
+        <select class="tbca-select" (change)="version.set(+$any($event.target).value)">
+          @for (v of list()?.versions ?? []; track v.version) {
+            <option [value]="v.version" [selected]="v.version === version()">
+              v{{ v.version }} · {{ t('admin.items.status.' + v.status) }}
+            </option>
+          }
+        </select>
+      </label>
+      <label class="field">
+        <span class="tbca-label-mono">{{ t('admin.sim.level') }}</span>
+        <input
+          class="tbca-input"
+          type="number"
+          min="1"
+          max="200"
+          [value]="level()"
+          (change)="level.set(numberInput($event.target, 1, 200))"
+        />
+      </label>
+      <label class="field">
+        <span class="tbca-label-mono">{{ t('admin.sim.gear') }}</span>
+        <select class="tbca-select" (change)="gear.set($any($event.target).value)">
+          @for (g of gears; track g) {
+            <option [value]="g" [selected]="g === gear()">{{ t('admin.sim.gears.' + g) }}</option>
+          }
+        </select>
+      </label>
+      <label class="field">
+        <span class="tbca-label-mono">{{
+          t(kind() === 'matchups' ? 'admin.sim.samplesFights' : 'admin.sim.samplesRuns')
+        }}</span>
+        <input
+          class="tbca-input"
+          type="number"
+          min="2"
+          max="400"
+          [value]="samples()"
+          (change)="samples.set(numberInput($event.target, 2, 400))"
+        />
+      </label>
+      @if (canCompare()) {
+        <label class="check">
+          <input type="checkbox" [checked]="compare()" (change)="compare.set(!compare())" />
+          {{ t('admin.sim.compare', { version: published() }) }}
+        </label>
+      }
+      <button type="button" class="tbca-button" [disabled]="busy()" (click)="run()">
+        {{ busy() ? t('admin.sim.running') : t('admin.sim.run') }}
+      </button>
+    </div>
+  </section>
+
+  @if (result(); as r) {
+    <p class="tbca-hint meta" role="status">
+      {{
+        t('admin.sim.meta', {
+          version: r.version,
+          ms: r.ms,
+          seed: r.seed,
+        })
+      }}
+    </p>
+
+    @if (r.matchups; as m) {
+      <section class="tbca-panel editor" aria-labelledby="sim-matrix">
+        <h2 id="sim-matrix">{{ t('admin.sim.matrix', { fights: m.fights }) }}</h2>
+        <p class="tbca-hint">{{ t('admin.sim.matrixHint') }}</p>
+        <div class="matrix-wrap">
+          <table class="matrix">
+            <caption class="visually-hidden">
+              {{
+                t('admin.sim.matrixCaption')
+              }}
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">{{ t('admin.sim.attacker') }}</th>
+                @for (b of classes; track b) {
+                  <th scope="col">{{ t('classes.' + b) }}</th>
+                }
+                <th scope="col">{{ t('admin.sim.overall') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (a of classes; track a) {
+                <tr>
+                  <th scope="row">{{ t('classes.' + a) }}</th>
+                  @for (b of classes; track b) {
+                    @if (cell(a, b); as c) {
+                      <td
+                        [style.background]="fill(c.winPermille)"
+                        [class.mirror]="a === b"
+                        [title]="
+                          t('admin.sim.cellTip', {
+                            a: t('classes.' + a),
+                            b: t('classes.' + b),
+                            win: percent(c.winPermille),
+                            wins: c.wins,
+                            losses: c.losses,
+                            draws: c.draws,
+                            rounds: c.avgRounds,
+                          })
+                        "
+                      >
+                        {{ percent(c.winPermille) }}
+                      </td>
+                    }
+                  }
+                  <td class="overall">
+                    <b>{{ percent(m.overall[a]) }}</b>
+                    @if (delta(a); as d) {
+                      <small [class.up]="d > 0" [class.down]="d < 0"
+                        >{{ signed(d) }} {{ t('admin.sim.pp') }}</small
+                      >
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="legend" aria-hidden="true">
+          <span>{{ t('admin.sim.legendLoss') }}</span>
+          <i class="legend__bar"></i>
+          <span>{{ t('admin.sim.legendWin') }}</span>
+        </div>
+        @if (m.outliers.length) {
+          <h3>{{ t('admin.sim.outliers') }}</h3>
+          <ul class="outliers">
+            @for (c of m.outliers; track c.a + c.b) {
+              @if (c.winPermille > 500) {
+                <li>
+                  {{
+                    t('admin.sim.outlier', {
+                      a: t('classes.' + c.a),
+                      b: t('classes.' + c.b),
+                      win: percent(c.winPermille),
+                    })
+                  }}
+                </li>
+              }
+            }
+          </ul>
+        } @else {
+          <p class="tbca-hint">{{ t('admin.sim.noOutliers') }}</p>
+        }
+      </section>
+    }
+
+    @if (r.dungeon; as d) {
+      <section class="tbca-panel editor" aria-labelledby="sim-dungeon">
+        <h2 id="sim-dungeon">{{ t('admin.sim.depth', { runs: d.runs }) }}</h2>
+        <div class="tiles">
+          <div class="tile">
+            <span class="tbca-label-mono">{{ t('admin.sim.average') }}</span>
+            <b>{{ d.average }}</b>
+          </div>
+          <div class="tile">
+            <span class="tbca-label-mono">{{ t('admin.sim.median') }}</span>
+            <b>{{ d.median }}</b>
+          </div>
+          @if (d.capped) {
+            <div class="tile">
+              <span class="tbca-label-mono">{{ t('admin.sim.capped') }}</span>
+              <b>{{ d.capped }}</b>
+            </div>
+          }
+        </div>
+        <div
+          class="hist"
+          role="img"
+          [attr.aria-label]="t('admin.sim.histLabel', { average: d.average, median: d.median })"
+        >
+          @for (n of d.histogram; track $index; let floor = $index) {
+            <div class="hist__col" [title]="t('admin.sim.histTip', { floor: floor, runs: n })">
+              <i [style.height.%]="(n / histMax()) * 100"></i>
+              <small>{{ floor % 5 === 0 ? floor : '' }}</small>
+            </div>
+          }
+        </div>
+        <p class="tbca-hint">{{ t('admin.sim.histAxis') }}</p>
+        <table class="perclass">
+          <caption class="visually-hidden">
+            {{
+              t('admin.sim.perClass')
+            }}
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">{{ t('admin.sim.class') }}</th>
+              <th scope="col">{{ t('admin.sim.average') }}</th>
+              <th scope="col">{{ t('admin.sim.best') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of classes; track c) {
+              <tr>
+                <th scope="row">{{ t('classes.' + c) }}</th>
+                <td>
+                  {{ d.perClass[c].average }}
+                  @if (dungeonDelta(c); as dd) {
+                    <small [class.up]="dd > 0" [class.down]="dd < 0">{{ signed(dd) }}</small>
+                  }
+                </td>
+                <td>{{ d.perClass[c].best }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+    }
+  }
+</ng-container>

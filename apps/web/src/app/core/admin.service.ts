@@ -1,6 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import type {
+  AdminSimulationRequest,
+  AdminSimulationResponse,
   AdminAccountView,
   AdminAuditView,
   AdminBotView,
@@ -64,6 +66,9 @@ export class AdminService {
   }
   publishConfig(version: number) {
     return this.write<AdminConfigList>('POST', `/api/admin/config/${version}/publish`, null);
+  }
+  simulate(req: AdminSimulationRequest) {
+    return this.write<AdminSimulationResponse>('POST', '/api/admin/simulations', req);
   }
   audit() {
     return this.read(this.http.get<AdminAuditView[]>('/api/admin/audit'));
