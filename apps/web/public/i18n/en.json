@@ -904,7 +904,8 @@
       },
       "removeWeight": "Remove {{ stat }}",
       "noWeights": "No base values – the item lives on affixes only.",
-      "addWeight": "Add base value"
+      "addWeight": "Add base value",
+      "nameFallback": "from the translation – editing stores a custom name"
     },
     "kicker": "Superadmin · tools",
     "shop": {

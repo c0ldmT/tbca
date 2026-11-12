@@ -1,6 +1,8 @@
 import type { DungeonSimResult, MatchupResult } from '@tbca/game-core';
 import { z } from 'zod';
 
+import { DAILY_LIMIT_KINDS, type SeasonJobId } from './constants.js';
+
 const DAY = 24 * 60 * 60 * 1000;
 
 /** PUT /api/admin/time – Zeitfaktor (1–1000) und/oder Vorspulen (bis 30 Tage am Stück). */
@@ -174,9 +176,6 @@ export interface AdminSimulationResponse {
 
 // --- Season-Steuerung -----------------------------------------------------------
 
-export const DAILY_LIMIT_KINDS = ['dungeon', 'fights', 'passive'] as const;
-export type DailyLimitKind = (typeof DAILY_LIMIT_KINDS)[number];
-
 /** POST /api/admin/season/daily-reset – Tageslimits für alle oder einen Account zurücksetzen. */
 export const adminDailyResetSchema = z.object({
   kinds: z.array(z.enum(DAILY_LIMIT_KINDS)).min(1).max(3),
@@ -184,15 +183,6 @@ export const adminDailyResetSchema = z.object({
   accountId: z.uuid().nullable().default(null),
   reason: z.string().trim().min(3).max(200),
 });
-
-export const SEASON_JOB_IDS = [
-  'season-stats',
-  'flush-passive-xp',
-  'expire-dungeon-runs',
-  'end-dungeon-runs',
-  'bot-agents',
-] as const;
-export type SeasonJobId = (typeof SEASON_JOB_IDS)[number];
 
 /** POST /api/admin/season/reset – Fortschritt oder alle Spielerdaten der Season löschen. */
 export const adminSeasonResetSchema = z.object({

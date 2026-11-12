@@ -1,15 +1,14 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
-import {
-  SEASON_JOB_IDS,
-  type AdminAccountView,
-  type AdminJobResult,
-  type AdminSeasonResetResult,
-  type AdminSeasonView,
-  type DailyLimitKind,
-  type SeasonJobId,
+import type {
+  AdminAccountView,
+  AdminJobResult,
+  AdminSeasonResetResult,
+  AdminSeasonView,
 } from '@tbca/shared';
+// Laufzeitwerte nur aus dem zod-freien Einstieg, damit die Website zod nicht laden muss
+import { SEASON_JOB_IDS, type DailyLimitKind, type SeasonJobId } from '@tbca/shared/constants';
 
 import { AdminService } from '../../core/admin.service';
 import { ApiFailure } from '../../core/api-failure';

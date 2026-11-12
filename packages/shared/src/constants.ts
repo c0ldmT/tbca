@@ -33,3 +33,17 @@ export const TEAM_LOGOS = [
 ] as const;
 export const TEAM_FOCUS = ['threat', 'lowest_hp', 'highest_hp', 'healer', 'random'] as const;
 export const TEAM_MAX_MEMBERS = 6;
+
+/** Tageslimits, die der Admin zurücksetzen kann. */
+export const DAILY_LIMIT_KINDS = ['dungeon', 'fights', 'passive'] as const;
+export type DailyLimitKind = (typeof DAILY_LIMIT_KINDS)[number];
+
+/** Hintergrund-Jobs, die der Admin sofort auslösen kann. */
+export const SEASON_JOB_IDS = [
+  'season-stats',
+  'flush-passive-xp',
+  'expire-dungeon-runs',
+  'end-dungeon-runs',
+  'bot-agents',
+] as const;
+export type SeasonJobId = (typeof SEASON_JOB_IDS)[number];

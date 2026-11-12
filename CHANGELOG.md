@@ -131,6 +131,16 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 - Website: Bessere Lesbarkeit über dem Hintergrund – dunkler Halo für freistehende Titel und
   Tabs, Glasband unter den Tabs, Holo-Platte für den Startseiten-Hero, Rechtsseiten als Karte.
 
+### Behoben
+
+- Website: Die Season-Steuerung (und die Team-Seite) luden Konstanten aus dem Haupteinstieg von
+  `@tbca/shared`, der zod mitbringt; im Dev-Server schlug das Nachladen der Seite mit „zod nicht
+  gefunden“ fehl. Laufzeitwerte kommen jetzt aus `@tbca/shared/constants`, eine ESLint-Regel
+  verhindert Laufzeit-Importe aus dem Haupteinstieg in der Website.
+- Item-Editor: Das Feld „Name (Englisch)“ zeigte bei Vorlagen ohne eigenen Namen den deutschen
+  Namen. Beide Felder zeigen jetzt den Namen ihrer Sprache (Übersetzung, sonst lesbare ID) mit
+  dem Hinweis, dass er aus der Übersetzung stammt.
+
 ### Hinweise
 
 - Nicht mit echter API und echten Geräten geprüft: Die Oberfläche wurde gegen einen Mock der API in

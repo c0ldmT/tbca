@@ -37,6 +37,21 @@ export default defineConfig(
     // Website läuft im Browser; Tests nutzen Vitest-Globals.
     files: ['apps/web/src/**/*.ts'],
     languageOptions: { globals: { ...globals.browser, ...globals.vitest } },
+    rules: {
+      // Der Haupteinstieg von @tbca/shared bringt zod mit; die Website braucht nur Typen daraus.
+      '@typescript-eslint/no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@tbca/shared',
+              allowTypeImports: true,
+              message: 'Laufzeitwerte aus @tbca/shared/constants importieren (ohne zod).',
+            },
+          ],
+        },
+      ],
+    },
   },
   {
     // Kommandozeilen-Programme dürfen auf die Konsole schreiben.

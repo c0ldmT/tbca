@@ -904,7 +904,8 @@
       },
       "removeWeight": "{{ stat }} entfernen",
       "noWeights": "Keine Basiswerte – das Item lebt nur von Affixen.",
-      "addWeight": "Basiswert hinzufügen"
+      "addWeight": "Basiswert hinzufügen",
+      "nameFallback": "aus der Übersetzung – Ändern speichert einen eigenen Namen"
     },
     "kicker": "Superadmin · Werkzeuge",
     "shop": {

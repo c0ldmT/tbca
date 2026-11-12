@@ -2,14 +2,8 @@ import { Component, input, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 import type { TargetSelector } from '@tbca/game-core';
-import {
-  TEAM_FOCUS,
-  TEAM_MAX_MEMBERS,
-  TEAM_LOGOS,
-  type CommunityView,
-  type TeamSummary,
-  type TeamView,
-} from '@tbca/shared';
+import type { CommunityView, TeamSummary, TeamView } from '@tbca/shared';
+import { TEAM_FOCUS, TEAM_LOGOS, TEAM_MAX_MEMBERS } from '@tbca/shared/constants';
 
 import { ApiFailure } from '../../core/api-failure';
 import { AuthService } from '../../core/auth.service';

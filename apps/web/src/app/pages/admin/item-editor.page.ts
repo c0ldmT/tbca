@@ -25,13 +25,14 @@ import {
   type ItemTemplate,
 } from '@tbca/game-core';
 import type { AdminConfigList, AdminConfigVersion } from '@tbca/shared';
+import { firstValueFrom } from 'rxjs';
 
 import { AdminService } from '../../core/admin.service';
 import { ApiFailure } from '../../core/api-failure';
 import { downloadJson } from '../../core/download';
 import { LanguageService } from '../../core/language.service';
 import { statLabel, statValue } from '../../shared/item-format';
-import { itemDisplayName } from '../../shared/item-name';
+import { humanizeId, itemDisplayName } from '../../shared/item-name';
 import { ItemIcon } from '../../shared/ui/item-icon';
 
 const CATEGORIES: ItemCategory[] = [
@@ -190,8 +191,16 @@ export class ItemEditorPage {
     );
   });
 
+  /** Beide Sprachdateien geladen: Namensfelder zeigen je Sprache den passenden Namen. */
+  private readonly langs = signal(0);
+
   constructor() {
     void this.load();
+    for (const lang of this.locales)
+      void firstValueFrom(this.transloco.load(lang)).then(
+        () => this.langs.update((n) => n + 1),
+        () => undefined,
+      );
   }
 
   protected async load(): Promise<void> {
@@ -231,6 +240,19 @@ export class ItemEditorPage {
       await this.open(v.version);
       if (from === 'defaults') this.notice.set('admin.items.defaultsCreated');
     });
+  }
+
+  /**
+   * Name in genau einer Sprache für das Eingabefeld: gepflegter Name, sonst die Übersetzung
+   * dieser Sprache, sonst die lesbare ID – nie der Name der anderen Sprache.
+   */
+  protected nameIn(tpl: ItemTemplate, locale: ItemNameLocale): string {
+    this.langs();
+    const own = tpl.names?.[locale];
+    if (own) return own;
+    const key = `items.${tpl.id}`;
+    const translated = this.transloco.translate(key, {}, locale);
+    return translated && translated !== key ? translated : humanizeId(tpl.id);
   }
 
   protected nameOf(tpl: ItemTemplate): string {

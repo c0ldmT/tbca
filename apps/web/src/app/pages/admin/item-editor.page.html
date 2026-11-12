@@ -319,10 +319,12 @@
                       <input
                         class="tbca-input"
                         maxlength="40"
-                        [value]="tpl.names?.[l] ?? ''"
-                        [placeholder]="nameOf(tpl)"
+                        [value]="nameIn(tpl, l)"
                         (change)="setName(l, valueOf($event))"
                       />
+                      @if (!tpl.names?.[l]) {
+                        <small class="name-source">{{ t('admin.items.nameFallback') }}</small>
+                      }
                     </label>
                   }
                 </div>
