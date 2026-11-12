@@ -18,6 +18,8 @@ coverage/
 infra/data/
 backups/
 *.log
+dump.rdb
+*.aof
 
 # Editor / OS
 .idea/
