@@ -8,6 +8,13 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ### Hinzugefügt
 
+- Discord-Bot: `/tbca dungeon` zeigt den Run mit Buttons (Run starten, Weiter, Mit Loot raus,
+  Heil-Injektor); nur der Besitzer kann entscheiden, Start-Optionen `injektoren` und
+  `backup-chip`. Der Loot bleibt bis zum Ausstieg versiegelt. `/tbca team` listet die eigenen
+  Teams, `/tbca team-kampf gegner:<Kürzel> groesse:2|3` fordert mit der gespeicherten
+  Standard-Aufstellung heraus. Interne Endpunkte `POST /api/internal/discord/dungeon`,
+  `GET /api/internal/discord/teams`, `POST /api/internal/discord/team-challenge`. Neue Commands
+  einmal mit `scripts/bot.sh register-commands` registrieren.
 - XP-Bündelung (Spezifikation, Abschnitt 15): Aktivitäts-XP aus dem Chat werden nach allen
   Prüfungen in Valkey vorgemerkt und vom Worker alle 30 Sekunden gebündelt gebucht – eine
   Transaktion je Account und Tag statt je Nachricht (`POST /api/internal/jobs/flush-passive-xp`).

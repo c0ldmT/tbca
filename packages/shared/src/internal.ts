@@ -46,6 +46,65 @@ export const discordChallengeSchema = discordUserSchema.extend({
   mode: z.enum(['rated', 'friendly']),
 });
 
+/** Dungeon über den Bot: Status, Start oder eine Entscheidung (Abschnitt 8). */
+export const discordDungeonSchema = discordUserSchema.extend({
+  action: z.enum(['status', 'start', 'continue', 'heal', 'leave']),
+  /** Nur beim Start: mitgenommene Heil-Injektoren und Backup-Chip. */
+  injectors: z.number().int().min(0).max(10).optional(),
+  backupChip: z.boolean().optional(),
+});
+
+/** Team-Herausforderung über den Bot; Gegner per Kürzel, Aufstellung automatisch. */
+export const discordTeamChallengeSchema = discordUserSchema.extend({
+  opponentTag: z.string().min(2).max(5),
+  size: z.union([z.literal(2), z.literal(3)]),
+  mode: z.enum(['rated', 'friendly']),
+});
+
+/** Kompakte Dungeon-Sicht für Discord-Nachrichten mit Buttons. */
+export interface DiscordDungeonView {
+  status: 'none' | 'active' | 'left' | 'timed_out' | 'defeated' | 'saved';
+  floor: number;
+  hp: number;
+  maxHp: number;
+  injectors: number;
+  /** Versiegelte Funde (Inhalt erst beim Ausstieg). */
+  finds: number;
+  /** Nach dem Ausstieg: gutgeschriebene Credits und Items mit Stern. */
+  credits: number;
+  items: { templateId: string; rarity: number }[];
+  xpGained: number;
+  next: { floor: number; monsterLevel: number; boss: boolean } | null;
+  /** Ergebnis der eben gespielten Etage, falls „Weiter“ gedrückt wurde. */
+  lastFloor: { floor: number; won: boolean } | null;
+  runsLeft: number;
+  fee: number;
+  canHeal: boolean;
+  url: string;
+}
+
+export interface DiscordTeamView {
+  teams: {
+    name: string;
+    tag: string;
+    community: string;
+    joinCode: string;
+    captain: boolean;
+    members: { name: string; level: number; classId: string | null }[];
+  }[];
+  url: string;
+}
+
+export interface DiscordTeamFightSummary {
+  ownTag: string;
+  opponentTag: string;
+  size: 2 | 3;
+  won: boolean;
+  draw: boolean;
+  rewards: { name: string; xp: number; credits: number }[];
+  replayUrl: string;
+}
+
 export interface DiscordProfileView {
   name: string;
   classId: string;

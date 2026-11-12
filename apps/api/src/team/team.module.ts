@@ -42,5 +42,6 @@ import { TeamService } from './team.service.js';
       useFactory: (c: DbConnection) => new DrizzleCharacterRepository(c.db),
     },
   ],
+  exports: [TeamService],
 })
 export class TeamModule {}

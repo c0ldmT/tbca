@@ -166,6 +166,38 @@ describe('Interne Discord-API', () => {
     expect((await message({ hash: 'f'.repeat(16) })).json().reason).toBe('daily_cap');
   });
 
+  it('spielt den Dungeon über den Bot mit versiegeltem Loot', async () => {
+    await setup();
+    const me = t.characters.records.find((c) => c.name === 'Neo')!;
+    t.characters.credit(me.seasonId, me.accountId, 500);
+    const dungeon = (action: string) =>
+      bot('POST', 'dungeon', { userId: USER, displayName: 'Neo', action });
+    const none = (await dungeon('status')).json();
+    expect(none).toMatchObject({ status: 'none', runsLeft: 3 });
+    const started = (await dungeon('start')).json();
+    expect(started.lastFloor).toMatchObject({ floor: 1 });
+    if (started.status !== 'active') return; // Etage 1 verloren – selten, aber möglich
+    expect(started.finds).toBeGreaterThan(0);
+    expect(started.items).toEqual([]);
+    const left = (await dungeon('leave')).json();
+    expect(left.status).toBe('left');
+    expect(left.items).toHaveLength(started.finds);
+    expect(left.url).toBe(`${WEB_ORIGIN}/fight/dungeon`);
+  });
+
+  it('zeigt Teams und verlangt für Team-Kämpfe ein eigenes Team', async () => {
+    await setup();
+    expect((await bot('GET', `teams?userId=${USER}`)).json()).toMatchObject({ teams: [] });
+    const res = await bot('POST', 'team-challenge', {
+      userId: USER,
+      displayName: 'Neo',
+      opponentTag: 'CHW',
+      size: 2,
+      mode: 'friendly',
+    });
+    expect(res.json().code).toBe('no_team');
+  });
+
   it('fordert registrierte Spieler heraus und fasst den Kampf zusammen', async () => {
     await setup();
     await bot('POST', 'register', {

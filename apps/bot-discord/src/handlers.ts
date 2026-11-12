@@ -1,6 +1,8 @@
-import type { ApiClient } from './api-client.js';
+import type { DiscordDungeonView } from '@tbca/shared';
+
+import type { ApiClient, DungeonAction } from './api-client.js';
 import { fingerprint } from './activity.js';
-import { errorText, textsFor } from './texts.js';
+import { errorText, textsFor, type Texts } from './texts.js';
 
 /**
  * Was die Handler von einer Discord-Interaktion brauchen. Absichtlich schmal, damit sie sich ohne
@@ -20,13 +22,99 @@ export interface CommandInput {
     user(name: string): { id: string; bot: boolean } | null;
     channel(name: string): { id: string } | null;
     boolean(name: string): boolean | null;
+    integer(name: string): number | null;
   };
+}
+
+/** Button unter einer Bot-Nachricht; die ID trägt Aktion und Besitzer. */
+export interface ButtonSpec {
+  customId: string;
+  label: string;
+  style: 'primary' | 'secondary' | 'success' | 'danger';
+  disabled?: boolean;
 }
 
 export interface CommandReply {
   content: string;
   /** Nur für den Aufrufer sichtbar (Fehler, Admin-Antworten). */
   ephemeral: boolean;
+  buttons?: ButtonSpec[];
+}
+
+export interface ButtonInput {
+  customId: string;
+  userId: string;
+  displayName: string;
+  locale: string;
+}
+
+/**
+ * Button-ID für den Dungeon: `dg:<aktion>:<besitzer>[:<injektoren>:<chip>]`. Nur der Besitzer
+ * darf drücken; Start-Optionen reisen in der ID mit, weil Buttons keine Eingaben haben.
+ */
+export function dungeonButtonId(
+  action: DungeonAction,
+  ownerId: string,
+  start?: { injectors: number; backupChip: boolean },
+): string {
+  const base = `dg:${action}:${ownerId}`;
+  return start ? `${base}:${start.injectors}:${start.backupChip ? 1 : 0}` : base;
+}
+
+/** Nachricht mit passenden Buttons zu einem Dungeon-Stand. */
+export function dungeonReply(
+  t: Texts,
+  d: DiscordDungeonView,
+  ownerId: string,
+  start: { injectors: number; backupChip: boolean } = { injectors: 0, backupChip: false },
+): CommandReply {
+  const buttons: ButtonSpec[] = [];
+  if (d.status === 'active') {
+    buttons.push(
+      {
+        customId: dungeonButtonId('continue', ownerId),
+        label: t.dungeonButtons.continue(d.next?.floor ?? d.floor + 1),
+        style: d.next?.boss ? 'danger' : 'primary',
+      },
+      {
+        customId: dungeonButtonId('leave', ownerId),
+        label: t.dungeonButtons.leave,
+        style: 'success',
+      },
+      {
+        customId: dungeonButtonId('heal', ownerId),
+        label: t.dungeonButtons.heal,
+        style: 'secondary',
+        disabled: !d.canHeal,
+      },
+    );
+  } else if (d.runsLeft > 0) {
+    buttons.push({
+      customId: dungeonButtonId('start', ownerId, start),
+      label: t.dungeonButtons.start(d.fee),
+      style: 'primary',
+    });
+  }
+  return { content: t.dungeon(d), ephemeral: false, buttons };
+}
+
+/** Klick auf einen Dungeon-Button: Entscheidung an die API, Nachricht aktualisieren. */
+export async function handleButton(api: ApiClient, input: ButtonInput): Promise<CommandReply> {
+  const t = textsFor(input.locale);
+  const [prefix, action, ownerId, inj, chip] = input.customId.split(':');
+  const actions: DungeonAction[] = ['start', 'continue', 'heal', 'leave'];
+  if (prefix !== 'dg' || !actions.includes(action as DungeonAction) || !ownerId)
+    return { content: errorText(t, 'fallback'), ephemeral: true };
+  if (ownerId !== input.userId) return { content: t.dungeonButtons.notYours, ephemeral: true };
+  const start = { injectors: Number(inj ?? 0) || 0, backupChip: chip === '1' };
+  const res = await api.dungeon({
+    userId: input.userId,
+    displayName: input.displayName,
+    action: action as DungeonAction,
+    ...(action === 'start' ? start : {}),
+  });
+  if (!res.ok) return { content: errorText(t, res.code), ephemeral: true };
+  return dungeonReply(t, res.data, input.userId, start);
 }
 
 export async function handleCommand(api: ApiClient, input: CommandInput): Promise<CommandReply> {
@@ -65,6 +153,33 @@ export async function handleCommand(api: ApiClient, input: CommandInput): Promis
       case 'profil': {
         const res = await api.profile(input.userId);
         return res.ok ? { content: t.profile(res.data), ephemeral: true } : fail(res.code);
+      }
+      case 'dungeon': {
+        const start = {
+          injectors: input.options.integer('injektoren') ?? 0,
+          backupChip: input.options.boolean('backup-chip') ?? false,
+        };
+        const res = await api.dungeon({
+          userId: input.userId,
+          displayName: input.displayName,
+          action: 'status',
+        });
+        return res.ok ? dungeonReply(t, res.data, input.userId, start) : fail(res.code);
+      }
+      case 'team': {
+        const res = await api.teams(input.userId);
+        return res.ok ? { content: t.teams(res.data), ephemeral: true } : fail(res.code);
+      }
+      case 'team-kampf': {
+        const size = input.options.integer('groesse') === 3 ? 3 : 2;
+        const res = await api.teamChallenge({
+          userId: input.userId,
+          displayName: input.displayName,
+          opponentTag: input.options.string('gegner') ?? '',
+          size,
+          mode: input.options.string('modus') === 'friendly' ? 'friendly' : 'rated',
+        });
+        return res.ok ? { content: t.teamFight(res.data), ephemeral: false } : fail(res.code);
       }
       case 'kampf': {
         const opponent = input.options.user('gegner');

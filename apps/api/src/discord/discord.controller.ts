@@ -3,8 +3,10 @@ import {
   discordActivitySchema,
   discordChallengeSchema,
   discordChannelXpSchema,
+  discordDungeonSchema,
   discordRegisterSchema,
   discordSetupSchema,
+  discordTeamChallengeSchema,
 } from '@tbca/shared';
 
 import { ApiError, parseBody } from '../common/api-error.js';
@@ -53,6 +55,26 @@ export class DiscordController {
   @HttpCode(200)
   challenge(@Body() body: unknown) {
     return this.discord.challenge(parseBody(discordChallengeSchema, body));
+  }
+
+  @Post('dungeon')
+  @HttpCode(200)
+  dungeon(@Body() body: unknown) {
+    return this.discord.dungeon(parseBody(discordDungeonSchema, body));
+  }
+
+  @Get('teams')
+  teams(@Query('userId') userId: unknown) {
+    if (typeof userId !== 'string' || !/^\d{5,25}$/.test(userId)) {
+      throw new ApiError(400, 'invalid_request', 'userId fehlt');
+    }
+    return this.discord.teams(userId);
+  }
+
+  @Post('team-challenge')
+  @HttpCode(200)
+  teamChallenge(@Body() body: unknown) {
+    return this.discord.teamChallenge(parseBody(discordTeamChallengeSchema, body));
   }
 
   @Post('activity')

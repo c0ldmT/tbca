@@ -12,8 +12,12 @@ import {
 } from '@tbca/game-core';
 import type {
   DiscordActivityResult,
+  DiscordDungeonView,
   DiscordFightSummary,
   DiscordProfileView,
+  DiscordTeamFightSummary,
+  DiscordTeamView,
+  DungeonView,
   PassiveFlushResult,
 } from '@tbca/shared';
 
@@ -23,7 +27,9 @@ import type { CharacterRepository } from '../character/types.js';
 import { ApiError } from '../common/api-error.js';
 import type { Env } from '../config/env.js';
 import { dayKey } from '../fight/day.js';
+import { DungeonService } from '../dungeon/dungeon.service.js';
 import { FightService } from '../fight/fight.service.js';
+import { TeamService } from '../team/team.service.js';
 import { SeasonService } from '../game/season.js';
 import type { RateLimiter } from '../limits/rate-limiter.js';
 import {
@@ -63,7 +69,135 @@ export class DiscordService {
     @Inject(RATE_LIMITER) private readonly limiter: RateLimiter,
     @Inject(CLOCK) private readonly clock: Clock,
     @Inject(ENV) private readonly env: Env,
+    @Inject(DungeonService) private readonly dungeonService: DungeonService,
+    @Inject(TeamService) private readonly teamService: TeamService,
   ) {}
+
+  /** Dungeon über Discord: Status, Start oder Entscheidung; Antwort für Nachricht mit Buttons. */
+  async dungeon(input: {
+    userId: string;
+    action: 'status' | 'start' | 'continue' | 'heal' | 'leave';
+    injectors?: number | undefined;
+    backupChip?: boolean | undefined;
+  }): Promise<DiscordDungeonView> {
+    const accountId = await this.requireAccount(input.userId);
+    const before = await this.dungeonService.status(accountId);
+    let after: DungeonView;
+    switch (input.action) {
+      case 'status':
+        after = before;
+        break;
+      case 'start':
+        after = await this.dungeonService.start(accountId, {
+          injectors: input.injectors ?? 0,
+          backupChip: input.backupChip ?? false,
+        });
+        break;
+      case 'continue':
+        after = await this.dungeonService.continue(accountId);
+        break;
+      case 'heal':
+        after = await this.dungeonService.heal(accountId);
+        break;
+      case 'leave':
+        after = await this.dungeonService.leave(accountId);
+        break;
+    }
+    const run = after.run;
+    const fought =
+      (input.action === 'continue' || input.action === 'start') && run
+        ? {
+            floor: input.action === 'start' ? 1 : (before.run?.floor ?? 0) + 1,
+            won: run.status === 'active' || run.status === 'left' || run.status === 'timed_out',
+          }
+        : null;
+    return {
+      status: run?.status ?? 'none',
+      floor: run?.floor ?? 0,
+      hp: run?.hp ?? 0,
+      maxHp: run?.maxHp ?? 0,
+      injectors: run?.injectors ?? 0,
+      finds: run?.loot.count ?? 0,
+      credits: run && !run.loot.sealed ? run.loot.credits : 0,
+      items:
+        run && !run.loot.sealed
+          ? run.loot.items.map((i) => ({ templateId: i.templateId, rarity: i.rarity }))
+          : [],
+      xpGained: run?.xpGained ?? 0,
+      next: run?.next
+        ? { floor: run.next.floor, monsterLevel: run.next.monsterLevel, boss: run.next.boss }
+        : null,
+      lastFloor: fought,
+      runsLeft: Math.max(0, after.runsPerDay - after.runsToday),
+      fee: after.fee,
+      canHeal: !!run && run.status === 'active' && run.injectors > 0 && run.hp < run.maxHp,
+      url: `${this.env.WEB_ORIGIN}/fight/dungeon`,
+    };
+  }
+
+  /** Eigene Teams für Discord. */
+  async teams(userId: string): Promise<DiscordTeamView> {
+    const accountId = await this.requireAccount(userId);
+    const teams = await this.teamService.mine(accountId);
+    return {
+      teams: teams.map((t) => ({
+        name: t.name,
+        tag: t.tag,
+        community: t.community.name,
+        joinCode: t.joinCode,
+        captain: t.captain,
+        members: t.members.map((m) => ({
+          name: m.character?.name ?? '—',
+          level: m.character?.level ?? 0,
+          classId: m.character?.classId ?? null,
+        })),
+      })),
+      url: `${this.env.WEB_ORIGIN}/crew/team`,
+    };
+  }
+
+  /**
+   * Team-Herausforderung über Discord: eigenes (erstes) Team gegen ein Team per Kürzel. Die
+   * Aufstellung ist die gespeicherte Standard-Aufstellung, sonst die ersten Mitglieder mit
+   * Charakter.
+   */
+  async teamChallenge(input: {
+    userId: string;
+    opponentTag: string;
+    size: 2 | 3;
+    mode: 'rated' | 'friendly';
+  }): Promise<DiscordTeamFightSummary> {
+    const accountId = await this.requireAccount(input.userId);
+    const own = (await this.teamService.mine(accountId))[0];
+    if (!own) throw new ApiError(HttpStatus.NOT_FOUND, 'no_team', 'Du bist in keinem Team');
+    const tag = input.opponentTag.trim().toUpperCase();
+    const opponent = (await this.teamService.search(tag)).find(
+      (t) => t.tag.toUpperCase() === tag && t.id !== own.id,
+    );
+    if (!opponent)
+      throw new ApiError(HttpStatus.NOT_FOUND, 'team_not_found', 'Gegner-Team nicht gefunden');
+    const saved = input.size === 2 ? own.lineup2 : own.lineup3;
+    const withCharacter = own.members.filter((m) => m.character).map((m) => m.accountId);
+    const lineup =
+      saved.length === input.size && saved.every((id) => withCharacter.includes(id))
+        ? saved
+        : withCharacter.slice(0, input.size);
+    const result = await this.teamService.challenge(accountId, own.id, {
+      opponentTeamId: opponent.id,
+      size: input.size,
+      lineup,
+      mode: input.mode,
+    });
+    return {
+      ownTag: own.tag,
+      opponentTag: opponent.tag,
+      size: input.size,
+      won: result.won,
+      draw: result.draw,
+      rewards: result.rewards.map((r) => ({ name: r.name, xp: r.xp, credits: r.credits })),
+      replayUrl: `${this.env.WEB_ORIGIN}/replay/${result.fightId}`,
+    };
+  }
 
   /**
    * Richtet den Server als Community ein. Wer das tut (Discord-Recht „Server verwalten“), wird

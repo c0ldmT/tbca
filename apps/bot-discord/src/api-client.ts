@@ -1,4 +1,13 @@
-import type { DiscordActivityResult, DiscordFightSummary, DiscordProfileView } from '@tbca/shared';
+import type {
+  DiscordActivityResult,
+  DiscordDungeonView,
+  DiscordFightSummary,
+  DiscordProfileView,
+  DiscordTeamFightSummary,
+  DiscordTeamView,
+} from '@tbca/shared';
+
+export type DungeonAction = 'status' | 'start' | 'continue' | 'heal' | 'leave';
 
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; code: string };
 
@@ -47,6 +56,30 @@ export class ApiClient {
     mode: 'rated' | 'friendly';
   }) {
     return this.call<DiscordFightSummary>('POST', 'challenge', input);
+  }
+
+  dungeon(input: {
+    userId: string;
+    displayName: string;
+    action: DungeonAction;
+    injectors?: number;
+    backupChip?: boolean;
+  }) {
+    return this.call<DiscordDungeonView>('POST', 'dungeon', input);
+  }
+
+  teams(userId: string) {
+    return this.call<DiscordTeamView>('GET', `teams?userId=${encodeURIComponent(userId)}`);
+  }
+
+  teamChallenge(input: {
+    userId: string;
+    displayName: string;
+    opponentTag: string;
+    size: 2 | 3;
+    mode: 'rated' | 'friendly';
+  }) {
+    return this.call<DiscordTeamFightSummary>('POST', 'team-challenge', input);
   }
 
   activity(input: {

@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { fingerprint } from '../src/activity.js';
 import { ApiClient } from '../src/api-client.js';
 import { allCommands } from '../src/commands.js';
-import { handleCommand, handleMessage, type CommandInput } from '../src/handlers.js';
+import { handleButton, handleCommand, handleMessage, type CommandInput } from '../src/handlers.js';
 
 function fakeFetch(responses: Record<string, { status: number; body: unknown }>) {
   const calls: { url: string; init: RequestInit }[] = [];
@@ -32,6 +32,7 @@ const input = (
     user: (n) => (overrides.opts?.[n] as { id: string; bot: boolean }) ?? null,
     channel: (n) => (overrides.opts?.[n] as { id: string }) ?? null,
     boolean: (n) => (overrides.opts?.[n] as boolean) ?? null,
+    integer: (n) => (overrides.opts?.[n] as number) ?? null,
   },
   ...overrides,
 });
@@ -123,5 +124,97 @@ describe('Discord-Bot', () => {
   it('definiert Spieler- und Admin-Commands', () => {
     expect(allCommands.map((c) => c.name)).toEqual(['tbca', 'tbca-admin']);
     expect(allCommands[1]!.default_member_permissions).toBe('32'); // ManageGuild
+  });
+
+  const dungeonView = (overrides: Record<string, unknown> = {}) => ({
+    status: 'active',
+    floor: 3,
+    hp: 200,
+    maxHp: 400,
+    injectors: 1,
+    finds: 3,
+    credits: 0,
+    items: [],
+    xpGained: 120,
+    next: { floor: 4, monsterLevel: 12, boss: false },
+    lastFloor: null,
+    runsLeft: 2,
+    fee: 7,
+    canHeal: true,
+    url: 'https://tbca.example/fight/dungeon',
+    ...overrides,
+  });
+
+  it('zeigt den Dungeon mit Buttons, die Start-Optionen mitführen', async () => {
+    const { fn } = fakeFetch({ dungeon: { status: 200, body: dungeonView({ status: 'none' }) } });
+    const api = new ApiClient('http://api', 't'.repeat(40), fn);
+    const reply = await handleCommand(
+      api,
+      input({ subcommand: 'dungeon', opts: { injektoren: 2, 'backup-chip': true } }),
+    );
+    expect(reply.content).toContain('Kein aktiver Run');
+    expect(reply.buttons).toEqual([
+      expect.objectContaining({ customId: 'dg:start:333333333333333333:2:1' }),
+    ]);
+  });
+
+  it('verbirgt den Loot im laufenden Run und bietet Weiter, Raus und Heilen an', async () => {
+    const { fn, calls } = fakeFetch({ dungeon: { status: 200, body: dungeonView() } });
+    const api = new ApiClient('http://api', 't'.repeat(40), fn);
+    const reply = await handleButton(api, {
+      customId: 'dg:continue:333333333333333333',
+      userId: '333333333333333333',
+      displayName: 'Neo',
+      locale: 'de',
+    });
+    expect(JSON.parse(String(calls[0]!.init.body))).toMatchObject({ action: 'continue' });
+    expect(reply.content).toContain('3 versiegelte Funde');
+    expect(reply.buttons?.map((b) => b.customId.split(':')[1])).toEqual([
+      'continue',
+      'leave',
+      'heal',
+    ]);
+  });
+
+  it('lässt nur den Besitzer eines Runs entscheiden', async () => {
+    const { fn, calls } = fakeFetch({});
+    const api = new ApiClient('http://api', 't'.repeat(40), fn);
+    const reply = await handleButton(api, {
+      customId: 'dg:leave:333333333333333333',
+      userId: '444444444444444444',
+      displayName: 'Trin',
+      locale: 'de',
+    });
+    expect(reply).toMatchObject({ ephemeral: true });
+    expect(calls).toHaveLength(0);
+  });
+
+  it('fordert mit dem Team per Kürzel heraus', async () => {
+    const { fn, calls } = fakeFetch({
+      'team-challenge': {
+        status: 200,
+        body: {
+          ownTag: 'CHW',
+          opponentTag: 'NEON',
+          size: 3,
+          won: true,
+          draw: false,
+          rewards: [{ name: 'Neo', xp: 90, credits: 12 }],
+          replayUrl: 'https://tbca.example/replay/x',
+        },
+      },
+    });
+    const api = new ApiClient('http://api', 't'.repeat(40), fn);
+    const reply = await handleCommand(
+      api,
+      input({ subcommand: 'team-kampf', opts: { gegner: 'neon', groesse: 3 } }),
+    );
+    expect(JSON.parse(String(calls[0]!.init.body))).toMatchObject({
+      opponentTag: 'neon',
+      size: 3,
+      mode: 'rated',
+    });
+    expect(reply.content).toContain('Sieg!');
+    expect(reply.content).toContain('Neo: +90 XP');
   });
 });
