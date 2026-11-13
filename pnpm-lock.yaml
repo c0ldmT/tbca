@@ -358,6 +358,9 @@ importers:
 
   packages/shared:
     dependencies:
+      '@tbca/game-core':
+        specifier: workspace:*
+        version: link:../game-core
       zod:
         specifier: 4.6.7
         version: 4.6.7

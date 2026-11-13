@@ -2,6 +2,8 @@ import 'reflect-metadata';
 
 import { randomUUID } from 'node:crypto';
 
+import { DEFAULT_BATTLE_RULES, DEFAULT_GAME_CONFIG } from '@tbca/game-core';
+
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { Test } from '@nestjs/testing';
 
@@ -15,8 +17,22 @@ import type {
   SessionStore,
   StoredSession,
 } from '../src/auth/types.js';
+import {
+  CharacterExistsError,
+  NameTakenError,
+  type CharacterRecord,
+  type CharacterRepository,
+} from '../src/character/types.js';
 import { loadEnv, type Env } from '../src/config/env.js';
-import { ACCOUNT_REPOSITORY, DB_PING, DISCORD_OAUTH, SESSION_STORE } from '../src/tokens.js';
+import type { CurrentSeason, SeasonRepository } from '../src/game/season.js';
+import {
+  ACCOUNT_REPOSITORY,
+  CHARACTER_REPOSITORY,
+  DB_PING,
+  DISCORD_OAUTH,
+  SEASON_REPOSITORY,
+  SESSION_STORE,
+} from '../src/tokens.js';
 
 export const WEB_ORIGIN = 'http://localhost:4200';
 
@@ -121,11 +137,57 @@ export class FakeDiscord implements DiscordOAuth {
   }
 }
 
+export class FakeSeasons implements SeasonRepository {
+  current: CurrentSeason | null = {
+    id: '01933b5e-0000-7000-8000-000000000001',
+    name: 'Test Season',
+    isTest: true,
+    configVersion: 2,
+    battle: DEFAULT_BATTLE_RULES,
+    game: DEFAULT_GAME_CONFIG,
+  };
+
+  async findCurrent(): Promise<CurrentSeason | null> {
+    return this.current;
+  }
+}
+
+export class InMemoryCharacters implements CharacterRepository {
+  readonly records: CharacterRecord[] = [];
+
+  async findForAccount(accountId: string, seasonId: string): Promise<CharacterRecord | null> {
+    const r = this.records.find((c) => c.accountId === accountId && c.seasonId === seasonId);
+    return r ? structuredClone(r) : null;
+  }
+
+  async create(record: Omit<CharacterRecord, 'id'>): Promise<CharacterRecord> {
+    if (await this.isNameTaken(record.seasonId, record.name)) throw new NameTakenError(record.name);
+    if (await this.findForAccount(record.accountId, record.seasonId))
+      throw new CharacterExistsError();
+    const created = { ...structuredClone(record), id: randomUUID() };
+    this.records.push(created);
+    return structuredClone(created);
+  }
+
+  async save(record: CharacterRecord): Promise<void> {
+    const index = this.records.findIndex((c) => c.id === record.id);
+    this.records[index] = structuredClone(record);
+  }
+
+  async isNameTaken(seasonId: string, name: string): Promise<boolean> {
+    return this.records.some(
+      (c) => c.seasonId === seasonId && c.name.toLowerCase() === name.toLowerCase(),
+    );
+  }
+}
+
 export interface TestApp {
   app: NestFastifyApplication;
   accounts: InMemoryAccounts;
   sessions: InMemorySessions;
   discord: FakeDiscord;
+  seasons: FakeSeasons;
+  characters: InMemoryCharacters;
   dbUp: { value: boolean };
 }
 
@@ -133,6 +195,8 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
   const accounts = new InMemoryAccounts();
   const sessions = new InMemorySessions();
   const discord = new FakeDiscord();
+  const seasons = new FakeSeasons();
+  const characters = new InMemoryCharacters();
   const dbUp = { value: true };
 
   const moduleRef = await Test.createTestingModule({ imports: [AppModule.forRoot(env)] })
@@ -142,6 +206,10 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
     .useValue(sessions)
     .overrideProvider(DISCORD_OAUTH)
     .useValue(discord)
+    .overrideProvider(SEASON_REPOSITORY)
+    .useValue(seasons)
+    .overrideProvider(CHARACTER_REPOSITORY)
+    .useValue(characters)
     .overrideProvider(DB_PING)
     .useValue(async () => {
       if (!dbUp.value) throw new Error('down');
@@ -154,7 +222,7 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
   await configureApp(app, env);
   await app.init();
   await app.getHttpAdapter().getInstance().ready();
-  return { app, accounts, sessions, discord, dbUp };
+  return { app, accounts, sessions, discord, seasons, characters, dbUp };
 }
 
 /** Liest Set-Cookie-Header als Map name → { value, attribute-string }. */
@@ -174,4 +242,27 @@ export function cookieValue(setCookie: string | undefined): string {
   if (!setCookie) throw new Error('Cookie fehlt');
   const pair = setCookie.split(';')[0]!;
   return pair.slice(pair.indexOf('=') + 1);
+}
+
+/** Spielt den Discord-Login bis zum Session-Cookie durch. */
+export async function login(
+  t: TestApp,
+  providerUserId = '80351110224678912',
+): Promise<{ cookie: string; csrfToken: string }> {
+  t.discord.profile = { ...t.discord.profile, providerUserId };
+  const start = await t.app.inject({ method: 'GET', url: '/api/auth/discord' });
+  const state = new URL(start.headers.location as string).searchParams.get('state')!;
+  const stateCookie = cookiesOf(start.headers).get('tbca_oauth_state')!;
+  const callback = await t.app.inject({
+    method: 'GET',
+    url: `/api/auth/discord/callback?code=valid-code&state=${state}`,
+    cookies: { tbca_oauth_state: cookieValue(stateCookie) },
+  });
+  const cookie = cookieValue(cookiesOf(callback.headers).get('tbca_session'));
+  const me = await t.app.inject({
+    method: 'GET',
+    url: '/api/auth/me',
+    cookies: { tbca_session: cookie },
+  });
+  return { cookie, csrfToken: me.json().csrfToken as string };
 }

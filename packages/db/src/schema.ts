@@ -7,7 +7,7 @@
  * - Spielbezogene Tabellen tragen eine `season_id`; Spielwerte liegen versioniert in
  *   `config_version` und hängen an einer Season.
  */
-import type { BattleRules } from '@tbca/game-core';
+import type { BattleRules, GameConfig, TacticRule } from '@tbca/game-core';
 import { sql } from 'drizzle-orm';
 import {
   bigint,
@@ -87,6 +87,8 @@ export const season = pgTable(
 /** Inhalt einer Konfigurationsversion; wächst mit jeder Phase (schemaVersion). */
 export interface SeasonConfigData {
   battle: BattleRules;
+  /** Ab Konfigurationsschema 2; fehlt er, gelten die Startwerte aus game-core. */
+  game?: GameConfig;
 }
 
 export const configVersion = pgTable(
@@ -251,12 +253,11 @@ export const character = pgTable(
     class: characterClass('class').notNull().default('bruiser'),
     level: integer('level').notNull().default(1),
     xp: bigint('xp', { mode: 'number' }).notNull().default(0),
-    /** Frei verteilte Attributspunkte (ohne festen Klassen-Zuwachs). */
+    /** Frei verteilte Attributspunkte (ohne festen Klassen-Zuwachs); freie Punkte werden abgeleitet. */
     attrStr: integer('attr_str').notNull().default(0),
     attrDex: integer('attr_dex').notNull().default(0),
     attrInt: integer('attr_int').notNull().default(0),
     attrCon: integer('attr_con').notNull().default(0),
-    unspentPoints: integer('unspent_points').notNull().default(0),
     renamedAt: timestamp('renamed_at', { withTimezone: true }),
     createdAt: createdAt(),
     updatedAt: timestamp('updated_at', { withTimezone: true })
@@ -272,7 +273,30 @@ export const character = pgTable(
     check('character_level_check', sql`${t.level} >= 1`),
     check(
       'character_points_check',
-      sql`${t.xp} >= 0 AND ${t.attrStr} >= 0 AND ${t.attrDex} >= 0 AND ${t.attrInt} >= 0 AND ${t.attrCon} >= 0 AND ${t.unspentPoints} >= 0`,
+      sql`${t.xp} >= 0 AND ${t.attrStr} >= 0 AND ${t.attrDex} >= 0 AND ${t.attrInt} >= 0 AND ${t.attrCon} >= 0`,
     ),
   ],
+);
+
+/**
+ * Loadout je Charakter und Klasse: aktive Fähigkeiten und Taktikregeln in Reihenfolge.
+ * Beim Klassenwechsel bleibt das Loadout der anderen Klasse erhalten. Mehrere benannte
+ * Presets pro Klasse folgen später.
+ */
+export const loadout = pgTable(
+  'loadout',
+  {
+    id: id(),
+    characterId: uuid('character_id')
+      .notNull()
+      .references(() => character.id, { onDelete: 'cascade' }),
+    classId: characterClass('class_id').notNull(),
+    abilities: jsonb('abilities').$type<string[]>().notNull(),
+    tactics: jsonb('tactics').$type<TacticRule[]>().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => [uniqueIndex('loadout_character_class_idx').on(t.characterId, t.classId)],
 );

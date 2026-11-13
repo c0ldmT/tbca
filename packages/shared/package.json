@@ -16,6 +16,11 @@
       "@tbca/source": "./src/constants.ts",
       "types": "./dist/constants.d.ts",
       "default": "./dist/constants.js"
+    },
+    "./names": {
+      "@tbca/source": "./src/names.ts",
+      "types": "./dist/names.d.ts",
+      "default": "./dist/names.js"
     }
   },
   "files": [
@@ -27,6 +32,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@tbca/game-core": "workspace:*",
     "zod": "4.6.7"
   },
   "devDependencies": {

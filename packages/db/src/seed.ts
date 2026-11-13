@@ -1,4 +1,4 @@
-import { DEFAULT_BATTLE_RULES } from '@tbca/game-core';
+import { DEFAULT_BATTLE_RULES, DEFAULT_GAME_CONFIG } from '@tbca/game-core';
 
 import type { Database } from './client.js';
 import { community, configVersion, season, type SeasonConfigData } from './schema.js';
@@ -6,7 +6,7 @@ import { community, configVersion, season, type SeasonConfigData } from './schem
 const DAY = 24 * 60 * 60 * 1000;
 
 /** Format-Version von SeasonConfigData. */
-export const CONFIG_SCHEMA_VERSION = 1;
+export const CONFIG_SCHEMA_VERSION = 2;
 
 export const DEV_SEASON_SLUG = 'dev';
 export const DEV_COMMUNITY_SLUG = 'dev';
@@ -31,7 +31,10 @@ export async function seedDevelopment(db: Database, now = new Date()): Promise<v
       .returning({ id: season.id });
 
     if (devSeason) {
-      const data: SeasonConfigData = { battle: { ...DEFAULT_BATTLE_RULES } };
+      const data: SeasonConfigData = {
+        battle: { ...DEFAULT_BATTLE_RULES },
+        game: DEFAULT_GAME_CONFIG,
+      };
       await tx.insert(configVersion).values({
         seasonId: devSeason.id,
         version: 1,

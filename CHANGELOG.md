@@ -16,6 +16,13 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 - Charakter-Ableitung: Attributspunkte, Freischaltung nach Level, Loadout-Prüfung,
   Umskill-Kosten, Level aus XP.
 - Website: Der Testkampf nutzt die echten Klassen und zeigt Fähigkeiten und Status im Verlauf.
+- Charaktere: anlegen (ein Charakter pro Account und Season, Namensregeln mit Wortfilter),
+  Punkte verteilen, umskillen, Klasse wechseln, Loadout und Taktikregeln je Klasse speichern;
+  Spielinhalte der Season über `GET /api/game/config`.
+- Datenbank: Tabelle `loadout`, freie Punkte werden abgeleitet statt gespeichert
+  (Migration `0001_character_loadout`).
+- Website: Charakterseite mit Erstellung, Attributen samt Vorschau der Kampfwerte, Klassenwechsel,
+  Fähigkeiten-Auswahl und Taktik-Editor.
 
 ### Phase 0
 

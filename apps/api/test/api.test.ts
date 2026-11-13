@@ -8,6 +8,7 @@ import {
   cookieValue,
   cookiesOf,
   createTestApp,
+  login as loginAs,
   testEnv,
   WEB_ORIGIN,
   type TestApp,
@@ -25,27 +26,7 @@ afterEach(async () => {
 
 const inject = (opts: Parameters<TestApp['app']['inject']>[0]) => t.app.inject(opts);
 
-/** Spielt den Discord-Login bis zum Session-Cookie durch. */
-async function login(): Promise<{ cookie: string; csrfToken: string }> {
-  const start = await inject({ method: 'GET', url: '/api/auth/discord' });
-  const state = new URL(start.headers.location as string).searchParams.get('state')!;
-  const stateCookie = cookiesOf(start.headers).get('tbca_oauth_state')!;
-
-  const callback = await inject({
-    method: 'GET',
-    url: `/api/auth/discord/callback?code=valid-code&state=${state}`,
-    cookies: { tbca_oauth_state: cookieValue(stateCookie) },
-  });
-  expect(callback.headers.location).toBe(`${WEB_ORIGIN}/?login=success`);
-  const session = cookieValue(cookiesOf(callback.headers).get('tbca_session'));
-
-  const me = await inject({
-    method: 'GET',
-    url: '/api/auth/me',
-    cookies: { tbca_session: session },
-  });
-  return { cookie: session, csrfToken: me.json().csrfToken as string };
-}
+const login = () => loginAs(t);
 
 describe('GET /api/health', () => {
   it('meldet ok, wenn die Datenbank erreichbar ist', async () => {

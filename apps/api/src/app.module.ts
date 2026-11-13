@@ -2,10 +2,12 @@ import { Module, type DynamicModule } from '@nestjs/common';
 import { LoggerModule } from 'nestjs-pino';
 
 import { AuthModule } from './auth/auth.module.js';
+import { CharacterModule } from './character/character.module.js';
 import { ClockModule } from './clock/clock.module.js';
 import { ConfigModule } from './config/config.module.js';
 import type { Env } from './config/env.js';
 import { DbModule } from './db/db.module.js';
+import { GameModule } from './game/game.module.js';
 import { HealthModule } from './health/health.module.js';
 
 @Module({})
@@ -20,6 +22,8 @@ export class AppModule {
         DbModule,
         HealthModule,
         AuthModule,
+        GameModule,
+        CharacterModule,
       ],
     };
   }
