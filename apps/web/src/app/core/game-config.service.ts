@@ -3,6 +3,8 @@ import { Injectable, inject, signal } from '@angular/core';
 import type { AbilityDef, GameConfig } from '@tbca/game-core';
 import { firstValueFrom } from 'rxjs';
 
+import { toFailure } from './api-failure';
+
 export interface GameConfigResponse {
   season: { id: string; name: string };
   configVersion: number;
@@ -17,6 +19,7 @@ export class GameConfigService {
 
   readonly current = signal<GameConfigResponse | null>(null);
 
+  /** Wirft ApiFailure, z. B. no_active_season, wenn gerade keine Season läuft. */
   load(): Promise<GameConfigResponse> {
     this.loading ??= firstValueFrom(this.http.get<GameConfigResponse>('/api/game/config')).then(
       (res) => {
@@ -25,7 +28,7 @@ export class GameConfigService {
       },
       (error: unknown) => {
         this.loading = null;
-        throw error;
+        throw toFailure(error);
       },
     );
     return this.loading;

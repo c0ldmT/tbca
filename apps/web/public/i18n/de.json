@@ -260,6 +260,9 @@
     "unavailable": "Der Server ist gerade nicht erreichbar. Bitte versuch es gleich noch einmal.",
     "unknown": "Das hat nicht geklappt. Bitte versuch es noch einmal.",
     "http_0": "Keine Verbindung zum Server.",
-    "http_500": "Serverfehler. Bitte versuch es später noch einmal."
+    "http_500": "Serverfehler. Bitte versuch es später noch einmal.",
+    "http_502": "Der Server ist gerade nicht erreichbar. Läuft die API?",
+    "http_503": "Der Dienst ist gerade nicht verfügbar. Bitte versuch es gleich noch einmal.",
+    "http_504": "Der Server antwortet nicht. Läuft die API?"
   }
 }

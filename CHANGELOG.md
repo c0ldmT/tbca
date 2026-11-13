@@ -47,6 +47,10 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ### Behoben
 
+- `scripts/dev.sh` spielt nach den Migrationen die Entwicklungsdaten ein; ohne aktive Season
+  antwortete `/api/game/config` mit 503. Die Charakterseite zeigt dafür jetzt eine verständliche
+  Meldung statt eines allgemeinen Fehlers.
+
 - Entwicklungsdienste nutzen die Ports 55432 (Postgres) und 56379 (Valkey), damit lokal
   installierte Dienste nicht kollidieren. `scripts/dev.sh` meldet belegte Ports vorab verständlich.
 - `DATABASE_URL` und `VALKEY_URL` werden aus den `POSTGRES_*`- bzw. `VALKEY_PORT`-Werten

@@ -5,14 +5,10 @@ import type { CharacterResponse, LoadoutRequest } from '@tbca/shared';
 import { CSRF_HEADER } from '@tbca/shared/constants';
 import { firstValueFrom, type Observable } from 'rxjs';
 
+import { toFailure } from './api-failure';
 import { AuthService } from './auth.service';
 
-/** Fehlercode der API (z. B. name_taken), für die Übersetzung unter errors.<code>. */
-export class ApiFailure extends Error {
-  constructor(readonly code: string) {
-    super(code);
-  }
-}
+export { ApiFailure } from './api-failure';
 
 /** undefined = wird geladen, null = noch kein Charakter in dieser Season. */
 export type CharacterState = CharacterResponse | null | undefined;
@@ -90,12 +86,4 @@ export class CharacterService {
       throw toFailure(error);
     }
   }
-}
-
-function toFailure(error: unknown): ApiFailure {
-  if (error instanceof HttpErrorResponse) {
-    const code = (error.error as { code?: unknown } | null)?.code;
-    return new ApiFailure(typeof code === 'string' ? code : `http_${error.status}`);
-  }
-  return new ApiFailure('unknown');
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Lokale Entwicklung: Postgres und Valkey laufen in Docker, die Apps nativ mit Hot Reload.
 #
-#   scripts/dev.sh             Dienste starten, migrieren, alle Apps im Watch-Modus
+#   scripts/dev.sh             Dienste starten, migrieren, Dev-Daten, alle Apps im Watch-Modus
 #   scripts/dev.sh services    nur Postgres und Valkey starten
 #   scripts/dev.sh down        Dienste stoppen (Daten bleiben erhalten)
 #   scripts/dev.sh reset       Dienste stoppen und alle lokalen Daten löschen
@@ -41,6 +41,8 @@ case "${1:-all}" in
   all)
     start_services
     "$ROOT_DIR/scripts/migrate.sh"
+    # Dev-Season, Konfiguration und Dev-Community; idempotent, ändert vorhandene Daten nicht.
+    "$ROOT_DIR/scripts/migrate.sh" seed
     info "Starte Apps (Strg+C zum Beenden; Dienste laufen weiter, Stopp mit: scripts/dev.sh down)"
     exec pnpm --recursive --parallel --if-present --stream run dev
     ;;
