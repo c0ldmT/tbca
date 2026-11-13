@@ -5,6 +5,11 @@
     <a class="wordmark" routerLink="/" [attr.aria-label]="t('app.home')">TBCA</a>
 
     <div class="bar__actions">
+      @if (auth.user()) {
+        <a class="nav-link" routerLink="/character" routerLinkActive="nav-link--active">
+          {{ t('app.character') }}
+        </a>
+      }
       <div class="lang" role="group" [attr.aria-label]="t('app.language')">
         @for (locale of language.locales; track locale) {
           <button

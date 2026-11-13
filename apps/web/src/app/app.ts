@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 import type { Locale } from '@tbca/shared/constants';
 
@@ -8,7 +8,7 @@ import { LanguageService } from './core/language.service';
 
 @Component({
   selector: 'tbca-root',
-  imports: [RouterOutlet, RouterLink, TranslocoDirective],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, TranslocoDirective],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })

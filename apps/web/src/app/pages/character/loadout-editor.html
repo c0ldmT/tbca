@@ -1,0 +1,165 @@
+<section class="tbca-panel" *transloco="let t" aria-labelledby="loadout-title">
+  <h2 id="loadout-title">{{ t('character.loadout.title') }}</h2>
+
+  <h3>
+    {{ t('character.loadout.abilities', { count: abilities().length, max: maxAbilities() }) }}
+  </h3>
+  <ul class="abilities">
+    @for (a of classAbilities(); track a.id) {
+      <li>
+        <label
+          class="ability"
+          [class.ability--active]="abilities().includes(a.id)"
+          [class.ability--locked]="isLocked(a)"
+        >
+          <input
+            type="checkbox"
+            [checked]="abilities().includes(a.id)"
+            [disabled]="
+              isLocked(a) || (!abilities().includes(a.id) && abilities().length >= maxAbilities())
+            "
+            (change)="toggleAbility(a.id)"
+          />
+          <span class="ability__name">{{ t('abilities.' + a.id) }}</span>
+          @if (isLocked(a)) {
+            <span class="tbca-hint">{{
+              t('character.loadout.locked', { level: a.unlockLevel })
+            }}</span>
+          } @else {
+            <span class="ability__cost">
+              <span>{{ t('character.loadout.energy', { value: a.energyCost }) }}</span>
+              <span>{{ t('character.loadout.cooldown', { value: a.cooldown }) }}</span>
+            </span>
+          }
+          <ul class="ability__effects">
+            @for (line of describe(a); track $index) {
+              <li>{{ t(line.key, line.params) }}</li>
+            }
+          </ul>
+        </label>
+      </li>
+    }
+  </ul>
+
+  <h3>{{ t('character.loadout.tactics', { count: tactics().length, max: maxRules() }) }}</h3>
+  <p class="tbca-hint">{{ t('character.loadout.tacticsHint') }}</p>
+  <ol class="rules">
+    @for (rule of tactics(); track $index; let i = $index, first = $first, last = $last) {
+      <li class="rule">
+        <span class="rule__index" aria-hidden="true">{{ i + 1 }}</span>
+        <label class="tbca-label">
+          {{ t('character.loadout.when') }}
+          <select
+            class="tbca-select"
+            [value]="rule.when.type"
+            (change)="setConditionType(i, $any($event.target).value)"
+          >
+            @for (c of conditions; track c) {
+              <option [value]="c" [selected]="c === rule.when.type">
+                {{ t('tactic.condition.' + c) }}
+              </option>
+            }
+          </select>
+        </label>
+        @if (conditionNumber(rule.when) !== null) {
+          <label class="tbca-label">
+            {{ t('tactic.param.' + rule.when.type) }}
+            <input
+              class="tbca-input rule__number"
+              type="number"
+              min="0"
+              [value]="conditionNumber(rule.when)"
+              (change)="setConditionNumber(i, $any($event.target).value)"
+            />
+          </label>
+        }
+        @if (conditionStatus(rule.when); as status) {
+          <label class="tbca-label">
+            {{ t('tactic.param.status') }}
+            <select class="tbca-select" (change)="setConditionStatus(i, $any($event.target).value)">
+              @for (s of statuses; track s) {
+                <option [value]="s" [selected]="s === status">
+                  {{ t('battle.statusName.' + s) }}
+                </option>
+              }
+            </select>
+          </label>
+        }
+        <label class="tbca-label">
+          {{ t('character.loadout.then') }}
+          <select class="tbca-select" (change)="setUse(i, $any($event.target).value)">
+            <option [value]="basicAttack" [selected]="rule.use === basicAttack">
+              {{ t('abilities.basic_attack') }}
+            </option>
+            @for (id of abilities(); track id) {
+              <option [value]="id" [selected]="rule.use === id">{{ t('abilities.' + id) }}</option>
+            }
+          </select>
+        </label>
+        @if (targetOptions(rule.use).length > 0) {
+          <label class="tbca-label">
+            {{ t('character.loadout.target') }}
+            <select class="tbca-select" (change)="setTarget(i, $any($event.target).value)">
+              @for (target of targetOptions(rule.use); track target) {
+                <option
+                  [value]="target"
+                  [selected]="(rule.target ?? targetOptions(rule.use)[0]) === target"
+                >
+                  {{ t('tactic.target.' + target) }}
+                </option>
+              }
+            </select>
+          </label>
+        }
+        <div class="rule__actions">
+          <button
+            type="button"
+            class="tbca-icon-button"
+            [disabled]="first"
+            [attr.aria-label]="t('character.loadout.up')"
+            (click)="moveRule(i, -1)"
+          >
+            ↑
+          </button>
+          <button
+            type="button"
+            class="tbca-icon-button"
+            [disabled]="last"
+            [attr.aria-label]="t('character.loadout.down')"
+            (click)="moveRule(i, 1)"
+          >
+            ↓
+          </button>
+          <button
+            type="button"
+            class="tbca-icon-button"
+            [attr.aria-label]="t('character.loadout.remove')"
+            (click)="removeRule(i)"
+          >
+            ×
+          </button>
+        </div>
+      </li>
+    }
+  </ol>
+  <button
+    type="button"
+    class="tbca-button tbca-button--ghost"
+    [disabled]="tactics().length >= maxRules()"
+    (click)="addRule()"
+  >
+    {{ t('character.loadout.addRule') }}
+  </button>
+
+  @if (error()) {
+    <p class="tbca-error" role="alert">{{ t('errors.' + error()) }}</p>
+  }
+  <div class="save" aria-live="polite">
+    <button type="button" class="tbca-button" [disabled]="!dirty() || busy()" (click)="save()">
+      {{ t('character.loadout.save') }}
+    </button>
+    @if (saved() && !dirty()) {
+      <span class="tbca-hint">{{ t('character.loadout.saved') }}</span>
+    }
+  </div>
+</section>

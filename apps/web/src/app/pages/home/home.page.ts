@@ -1,4 +1,5 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
 
 import { AuthService } from '../../core/auth.service';
@@ -11,7 +12,7 @@ type LoginResult = (typeof LOGIN_RESULTS)[number];
 
 @Component({
   selector: 'tbca-home-page',
-  imports: [TranslocoDirective, GlitchDirective],
+  imports: [TranslocoDirective, GlitchDirective, RouterLink],
   templateUrl: './home.page.html',
   styleUrl: './home.page.css',
 })

@@ -17,7 +17,8 @@
       "@tbca/assets": ["../../packages/assets/src/index.ts"],
       "@tbca/game-core": ["../../packages/game-core/src/index.ts"],
       "@tbca/shared": ["../../packages/shared/src/index.ts"],
-      "@tbca/shared/constants": ["../../packages/shared/src/constants.ts"]
+      "@tbca/shared/constants": ["../../packages/shared/src/constants.ts"],
+      "@tbca/shared/names": ["../../packages/shared/src/names.ts"]
     }
   },
   "angularCompilerOptions": {

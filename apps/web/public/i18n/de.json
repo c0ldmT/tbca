@@ -5,7 +5,8 @@
     "language": "Sprache",
     "imprint": "Impressum",
     "privacy": "Datenschutz",
-    "home": "Startseite"
+    "home": "Startseite",
+    "character": "Charakter"
   },
   "auth": {
     "login": "Mit Discord anmelden",
@@ -97,12 +98,168 @@
       "barrier": "Barriere",
       "stim": "Stimulans",
       "toxin": "Toxin"
-    }
+    },
+    "basic_attack": "Basisangriff"
   },
   "classes": {
     "bruiser": "Bruiser",
     "gunner": "Gunner",
     "netrunner": "Netrunner",
     "medtech": "Medtech"
+  },
+  "character": {
+    "title": "Charakter",
+    "loginFirst": "Melde dich an, um deinen Charakter für diese Season zu erstellen.",
+    "loading": "Lade Charakter …",
+    "retry": "Erneut versuchen",
+    "level": "Level {{ level }}",
+    "xp": "{{ xp }} von {{ next }} XP bis zum nächsten Level",
+    "maxLevel": "Maximalstufe erreicht",
+    "create": {
+      "title": "Charakter erstellen",
+      "intro": "Ein Charakter pro Season. Name und Startklasse – die Klasse kannst du jederzeit wechseln.",
+      "name": "Name",
+      "nameRules": "3–20 Zeichen: Buchstaben, Ziffern, Leerzeichen, Punkt, Binde- und Unterstrich.",
+      "class": "Startklasse",
+      "submit": "Charakter erstellen"
+    },
+    "class": {
+      "title": "Klasse",
+      "hint": "Wechsel jederzeit außerhalb von Kämpfen. Das Loadout jeder Klasse bleibt gespeichert."
+    },
+    "attributes": {
+      "title": "Attribute",
+      "unspent": "Freie Punkte: {{ points }}",
+      "remove": "{{ attr }} verringern",
+      "add": "{{ attr }} erhöhen",
+      "save": "Punkte verteilen",
+      "respec": "Umskillen",
+      "respecHint": "Umskillen setzt alle freien Punkte zurück. Kosten später: {{ cost }} Credits."
+    },
+    "loadout": {
+      "title": "Loadout",
+      "abilities": "Aktive Fähigkeiten ({{ count }} von {{ max }})",
+      "locked": "Ab Level {{ level }}",
+      "energy": "{{ value }} Energie",
+      "cooldown": "Abklingzeit {{ value }}",
+      "tactics": "Taktikregeln ({{ count }} von {{ max }})",
+      "tacticsHint": "Von oben nach unten gilt die erste Regel, deren Fähigkeit bereit ist und deren Bedingung zutrifft. Greift keine, folgt ein Basisangriff.",
+      "when": "Wenn",
+      "then": "dann",
+      "target": "Ziel",
+      "up": "Regel nach oben",
+      "down": "Regel nach unten",
+      "remove": "Regel entfernen",
+      "addRule": "Regel hinzufügen",
+      "save": "Loadout speichern",
+      "saved": "Gespeichert."
+    }
+  },
+  "classRole": {
+    "tank": "Tank, Nahkampf",
+    "damage": "Schaden",
+    "support": "Unterstützung"
+  },
+  "classInfo": {
+    "bruiser": "STR. Provoziert, hält viel aus und teilt schwere Treffer aus.",
+    "gunner": "DEX. Schnell, hohe Crit-Chance, Mehrfachschüsse.",
+    "netrunner": "INT. Tech-Schaden, ignoriert Teile der Abwehr, betäubt.",
+    "medtech": "INT und KON. Heilt, schützt mit Barrieren, stärkt Verbündete."
+  },
+  "attributes": {
+    "str": "Stärke",
+    "dex": "Geschicklichkeit",
+    "int": "Intelligenz",
+    "con": "Konstitution"
+  },
+  "stats": {
+    "maxHp": "HP",
+    "armor": "Rüstung",
+    "firewall": "Firewall",
+    "initiative": "Initiative",
+    "accuracy": "Genauigkeit",
+    "evasion": "Ausweichen",
+    "critChance": "Crit-Chance ‰",
+    "critDamage": "Crit-Schaden",
+    "energyMax": "Energie",
+    "energyRegen": "Energie pro Zug",
+    "threat": "Bedrohung"
+  },
+  "effect": {
+    "damage": "{{ percent }} % Waffenschaden",
+    "damageHits": "{{ hits }} Treffer mit je {{ percent }} % Waffenschaden",
+    "heal": "Heilt, skaliert mit INT",
+    "shield": "Schild, skaliert mit KON, {{ turns }} Züge",
+    "stun": "{{ chance }} % Chance auf Betäubung ({{ turns }} Zug)",
+    "dot": "{{ percent }} % Waffenschaden pro Zug, {{ turns }} Züge",
+    "modifier": {
+      "damageDealt": "Verursachter Schaden {{ sign }}{{ percent }} %, {{ turns }} Züge",
+      "damageTaken": "Erlittener Schaden {{ sign }}{{ percent }} %, {{ turns }} Züge",
+      "critChance": "Crit-Chance {{ sign }}{{ percent }}, {{ turns }} Züge",
+      "pierce": "Durchdringung {{ sign }}{{ percent }}, {{ turns }} Züge",
+      "healing": "Heilung {{ sign }}{{ percent }} %, {{ turns }} Züge"
+    },
+    "taunt": "Zieht Angriffe auf sich, {{ turns }} Züge",
+    "drain": "Entzieht {{ amount }} Energie",
+    "cleanse": "Entfernt Schwächungen, Betäubung und Schaden über Zeit"
+  },
+  "tactic": {
+    "condition": {
+      "always": "immer",
+      "self_hp_below": "eigene HP unter",
+      "ally_hp_below": "Verbündeter unter",
+      "energy_at_least": "Energie mindestens",
+      "target_has_status": "Ziel hat",
+      "target_lacks_status": "Ziel hat nicht",
+      "round_at_least": "ab Runde",
+      "enemies_at_least": "Gegner mindestens"
+    },
+    "param": {
+      "self_hp_below": "Prozent",
+      "ally_hp_below": "Prozent",
+      "energy_at_least": "Energie",
+      "round_at_least": "Runde",
+      "enemies_at_least": "Anzahl",
+      "status": "Status"
+    },
+    "target": {
+      "threat": "höchste Bedrohung",
+      "lowest_hp": "niedrigste HP",
+      "highest_hp": "höchste HP",
+      "healer": "Heiler zuerst",
+      "random": "zufällig",
+      "self": "sich selbst",
+      "lowest_hp_ally": "Verbündeter mit niedrigsten HP"
+    }
+  },
+  "errors": {
+    "name_too_short": "Der Name braucht mindestens 3 Zeichen.",
+    "invalid_name_too_short": "Der Name braucht mindestens 3 Zeichen.",
+    "name_too_long": "Der Name darf höchstens 20 Zeichen haben.",
+    "invalid_name_too_long": "Der Name darf höchstens 20 Zeichen haben.",
+    "name_invalid_characters": "Erlaubt sind Buchstaben, Ziffern, einzelne Leerzeichen, Punkt, Binde- und Unterstrich; Anfang und Ende müssen Buchstabe oder Ziffer sein.",
+    "invalid_name_invalid_characters": "Erlaubt sind Buchstaben, Ziffern, einzelne Leerzeichen, Punkt, Binde- und Unterstrich; Anfang und Ende müssen Buchstabe oder Ziffer sein.",
+    "name_blocked": "Dieser Name ist nicht erlaubt.",
+    "invalid_name_blocked": "Dieser Name ist nicht erlaubt.",
+    "name_taken": "Dieser Name ist in dieser Season schon vergeben.",
+    "invalid_name_taken": "Dieser Name ist in dieser Season schon vergeben.",
+    "character_exists": "Du hast in dieser Season schon einen Charakter.",
+    "no_character": "Noch kein Charakter in dieser Season.",
+    "no_active_season": "Gerade läuft keine Season. Schau später wieder vorbei.",
+    "too_many_points": "So viele freie Punkte hast du nicht.",
+    "points_decrease": "Verteilte Punkte lassen sich nur durch Umskillen zurücknehmen.",
+    "negative_points": "Punkte können nicht negativ sein.",
+    "unknown_ability": "Diese Fähigkeit gehört nicht zu deiner Klasse.",
+    "ability_locked": "Diese Fähigkeit ist auf deinem Level noch gesperrt.",
+    "too_many_abilities": "Zu viele aktive Fähigkeiten.",
+    "duplicate_ability": "Eine Fähigkeit ist doppelt ausgewählt.",
+    "too_many_rules": "Zu viele Taktikregeln.",
+    "rule_not_in_loadout": "Eine Regel nutzt eine Fähigkeit, die nicht im Loadout ist.",
+    "invalid_request": "Die Eingabe ist ungültig. Bitte prüfe die Werte.",
+    "invalid_level": "Ungültiges Level.",
+    "unavailable": "Der Server ist gerade nicht erreichbar. Bitte versuch es gleich noch einmal.",
+    "unknown": "Das hat nicht geklappt. Bitte versuch es noch einmal.",
+    "http_0": "Keine Verbindung zum Server.",
+    "http_500": "Serverfehler. Bitte versuch es später noch einmal."
   }
 }

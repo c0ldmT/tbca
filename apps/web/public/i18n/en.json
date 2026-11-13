@@ -5,7 +5,8 @@
     "language": "Language",
     "imprint": "Legal notice",
     "privacy": "Privacy",
-    "home": "Home"
+    "home": "Home",
+    "character": "Character"
   },
   "auth": {
     "login": "Sign in with Discord",
@@ -97,12 +98,168 @@
       "barrier": "Barrier",
       "stim": "Stim",
       "toxin": "Toxin"
-    }
+    },
+    "basic_attack": "Basic attack"
   },
   "classes": {
     "bruiser": "Bruiser",
     "gunner": "Gunner",
     "netrunner": "Netrunner",
     "medtech": "Medtech"
+  },
+  "character": {
+    "title": "Character",
+    "loginFirst": "Sign in to create your character for this season.",
+    "loading": "Loading character …",
+    "retry": "Try again",
+    "level": "Level {{ level }}",
+    "xp": "{{ xp }} of {{ next }} XP to the next level",
+    "maxLevel": "Maximum level reached",
+    "create": {
+      "title": "Create character",
+      "intro": "One character per season. Pick a name and a starting class – you can switch classes any time.",
+      "name": "Name",
+      "nameRules": "3–20 characters: letters, digits, spaces, dot, hyphen and underscore.",
+      "class": "Starting class",
+      "submit": "Create character"
+    },
+    "class": {
+      "title": "Class",
+      "hint": "Switch any time outside of fights. Each class keeps its own loadout."
+    },
+    "attributes": {
+      "title": "Attributes",
+      "unspent": "Unspent points: {{ points }}",
+      "remove": "Decrease {{ attr }}",
+      "add": "Increase {{ attr }}",
+      "save": "Assign points",
+      "respec": "Respec",
+      "respecHint": "Respec resets all assigned points. Later cost: {{ cost }} credits."
+    },
+    "loadout": {
+      "title": "Loadout",
+      "abilities": "Active abilities ({{ count }} of {{ max }})",
+      "locked": "From level {{ level }}",
+      "energy": "{{ value }} energy",
+      "cooldown": "Cooldown {{ value }}",
+      "tactics": "Tactic rules ({{ count }} of {{ max }})",
+      "tacticsHint": "Top to bottom, the first rule whose ability is ready and whose condition holds is used. If none applies, a basic attack follows.",
+      "when": "When",
+      "then": "then",
+      "target": "Target",
+      "up": "Move rule up",
+      "down": "Move rule down",
+      "remove": "Remove rule",
+      "addRule": "Add rule",
+      "save": "Save loadout",
+      "saved": "Saved."
+    }
+  },
+  "classRole": {
+    "tank": "Tank, melee",
+    "damage": "Damage",
+    "support": "Support"
+  },
+  "classInfo": {
+    "bruiser": "STR. Taunts, takes a beating and hits hard.",
+    "gunner": "DEX. Fast, high crit chance, multi-shots.",
+    "netrunner": "INT. Tech damage, ignores part of the defense, stuns.",
+    "medtech": "INT and CON. Heals, shields with barriers, buffs allies."
+  },
+  "attributes": {
+    "str": "Strength",
+    "dex": "Dexterity",
+    "int": "Intelligence",
+    "con": "Constitution"
+  },
+  "stats": {
+    "maxHp": "HP",
+    "armor": "Armor",
+    "firewall": "Firewall",
+    "initiative": "Initiative",
+    "accuracy": "Accuracy",
+    "evasion": "Evasion",
+    "critChance": "Crit chance ‰",
+    "critDamage": "Crit damage",
+    "energyMax": "Energy",
+    "energyRegen": "Energy per turn",
+    "threat": "Threat"
+  },
+  "effect": {
+    "damage": "{{ percent }}% weapon damage",
+    "damageHits": "{{ hits }} hits of {{ percent }}% weapon damage",
+    "heal": "Heals, scales with INT",
+    "shield": "Shield, scales with CON, {{ turns }} turns",
+    "stun": "{{ chance }}% chance to stun ({{ turns }} turn)",
+    "dot": "{{ percent }}% weapon damage per turn, {{ turns }} turns",
+    "modifier": {
+      "damageDealt": "Damage dealt {{ sign }}{{ percent }}%, {{ turns }} turns",
+      "damageTaken": "Damage taken {{ sign }}{{ percent }}%, {{ turns }} turns",
+      "critChance": "Crit chance {{ sign }}{{ percent }}, {{ turns }} turns",
+      "pierce": "Pierce {{ sign }}{{ percent }}, {{ turns }} turns",
+      "healing": "Healing {{ sign }}{{ percent }}%, {{ turns }} turns"
+    },
+    "taunt": "Draws attacks, {{ turns }} turns",
+    "drain": "Drains {{ amount }} energy",
+    "cleanse": "Removes debuffs, stun and damage over time"
+  },
+  "tactic": {
+    "condition": {
+      "always": "always",
+      "self_hp_below": "own HP below",
+      "ally_hp_below": "ally below",
+      "energy_at_least": "energy at least",
+      "target_has_status": "target has",
+      "target_lacks_status": "target lacks",
+      "round_at_least": "from round",
+      "enemies_at_least": "enemies at least"
+    },
+    "param": {
+      "self_hp_below": "Percent",
+      "ally_hp_below": "Percent",
+      "energy_at_least": "Energy",
+      "round_at_least": "Round",
+      "enemies_at_least": "Count",
+      "status": "Status"
+    },
+    "target": {
+      "threat": "highest threat",
+      "lowest_hp": "lowest HP",
+      "highest_hp": "highest HP",
+      "healer": "healer first",
+      "random": "random",
+      "self": "self",
+      "lowest_hp_ally": "ally with lowest HP"
+    }
+  },
+  "errors": {
+    "name_too_short": "The name needs at least 3 characters.",
+    "invalid_name_too_short": "The name needs at least 3 characters.",
+    "name_too_long": "The name may have at most 20 characters.",
+    "invalid_name_too_long": "The name may have at most 20 characters.",
+    "name_invalid_characters": "Use letters, digits, single spaces, dot, hyphen and underscore; start and end with a letter or digit.",
+    "invalid_name_invalid_characters": "Use letters, digits, single spaces, dot, hyphen and underscore; start and end with a letter or digit.",
+    "name_blocked": "This name isn't allowed.",
+    "invalid_name_blocked": "This name isn't allowed.",
+    "name_taken": "This name is already taken this season.",
+    "invalid_name_taken": "This name is already taken this season.",
+    "character_exists": "You already have a character this season.",
+    "no_character": "No character this season yet.",
+    "no_active_season": "No season is running right now. Check back later.",
+    "too_many_points": "You don't have that many unspent points.",
+    "points_decrease": "Assigned points can only be removed by a respec.",
+    "negative_points": "Points can't be negative.",
+    "unknown_ability": "This ability doesn't belong to your class.",
+    "ability_locked": "This ability is still locked at your level.",
+    "too_many_abilities": "Too many active abilities.",
+    "duplicate_ability": "An ability is selected twice.",
+    "too_many_rules": "Too many tactic rules.",
+    "rule_not_in_loadout": "A rule uses an ability that isn't in the loadout.",
+    "invalid_request": "The input is invalid. Please check the values.",
+    "invalid_level": "Invalid level.",
+    "unavailable": "The server can't be reached right now. Please try again shortly.",
+    "unknown": "That didn't work. Please try again.",
+    "http_0": "No connection to the server.",
+    "http_500": "Server error. Please try again later."
   }
 }

@@ -17,6 +17,7 @@
         <a class="tbca-button" [href]="auth.loginUrl()">{{ t('auth.login') }}</a>
       } @else if (auth.user(); as user) {
         <p class="hero__user">{{ t('auth.signedInAs', { name: auth.displayName() }) }}</p>
+        <a class="tbca-button" routerLink="/character">{{ t('app.character') }}</a>
         <button type="button" class="tbca-button tbca-button--ghost" (click)="logout()">
           {{ t('auth.logout') }}
         </button>
