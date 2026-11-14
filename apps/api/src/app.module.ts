@@ -7,6 +7,7 @@ import { ClockModule } from './clock/clock.module.js';
 import { ConfigModule } from './config/config.module.js';
 import type { Env } from './config/env.js';
 import { DbModule } from './db/db.module.js';
+import { FightModule } from './fight/fight.module.js';
 import { GameModule } from './game/game.module.js';
 import { HealthModule } from './health/health.module.js';
 
@@ -24,6 +25,7 @@ export class AppModule {
         AuthModule,
         GameModule,
         CharacterModule,
+        FightModule,
       ],
     };
   }

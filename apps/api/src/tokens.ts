@@ -11,3 +11,4 @@ export const SESSION_STORE = Symbol('SESSION_STORE');
 export const DISCORD_OAUTH = Symbol('DISCORD_OAUTH');
 export const SEASON_REPOSITORY = Symbol('SEASON_REPOSITORY');
 export const CHARACTER_REPOSITORY = Symbol('CHARACTER_REPOSITORY');
+export const FIGHT_REPOSITORY = Symbol('FIGHT_REPOSITORY');

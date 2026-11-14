@@ -7,11 +7,12 @@
  * - Spielbezogene Tabellen tragen eine `season_id`; Spielwerte liegen versioniert in
  *   `config_version` und hängen an einer Season.
  */
-import type { BattleRules, GameConfig, TacticRule } from '@tbca/game-core';
+import type { BattleInput, BattleRules, GameConfig, TacticRule } from '@tbca/game-core';
 import { sql } from 'drizzle-orm';
 import {
   bigint,
   boolean,
+  customType,
   check,
   doublePrecision,
   index,
@@ -299,4 +300,69 @@ export const loadout = pgTable(
       .$onUpdate(() => new Date()),
   },
   (t) => [uniqueIndex('loadout_character_class_idx').on(t.characterId, t.classId)],
+);
+
+// --- Kämpfe ------------------------------------------------------------------
+
+/** Binärdaten (z. B. das gzip-komprimierte Event-Log). */
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () => 'bytea' });
+
+export const fightKind = pgEnum('fight_kind', ['pvp_rated', 'pvp_friendly']);
+export const fightEndReason = pgEnum('fight_end_reason', ['knockout', 'timeout']);
+
+/**
+ * Ein gespeicherter Kampf. Seed, Versionen und Momentaufnahmen (input) reichen, um ihn exakt
+ * nachzurechnen; das komprimierte Event-Log macht Replays schnell und bleibt auch nach
+ * Engine-Updates abspielbar.
+ */
+export const fight = pgTable(
+  'fight',
+  {
+    id: id(),
+    seasonId: uuid('season_id')
+      .notNull()
+      .references(() => season.id, { onDelete: 'cascade' }),
+    kind: fightKind('kind').notNull(),
+    engineVersion: integer('engine_version').notNull(),
+    configVersion: integer('config_version').notNull(),
+    seed: text('seed').notNull(),
+    /** Momentaufnahmen aller Teams und ggf. abweichende Regeln. */
+    input: jsonb('input')
+      .$type<Omit<BattleInput, 'engineVersion' | 'configVersion' | 'seed'>>()
+      .notNull(),
+    events: bytea('events').notNull(),
+    logHash: text('log_hash').notNull(),
+    winnerTeam: integer('winner_team'),
+    reason: fightEndReason('reason').notNull(),
+    rounds: integer('rounds').notNull(),
+    /** Spieltag (Europe/Berlin, laut Clock-Service) für Tageslimits. */
+    rewardDay: text('reward_day').notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index('fight_season_created_idx').on(t.seasonId, t.createdAt)],
+);
+
+export const fightParticipant = pgTable(
+  'fight_participant',
+  {
+    fightId: uuid('fight_id')
+      .notNull()
+      .references(() => fight.id, { onDelete: 'cascade' }),
+    team: integer('team').notNull(),
+    slot: integer('slot').notNull(),
+    /** null für Monster oder gelöschte Charaktere (Kampfdaten bleiben anonym erhalten). */
+    characterId: uuid('character_id').references(() => character.id, { onDelete: 'set null' }),
+    /** Hat den Kampf ausgelöst. */
+    initiator: boolean('initiator').notNull().default(false),
+    won: boolean('won').notNull(),
+    /** Zählt für das Tageslimit belohnter Kämpfe. */
+    rewarded: boolean('rewarded').notNull().default(false),
+    xpAwarded: integer('xp_awarded').notNull().default(0),
+    /** Gegner-Charakter bei 1v1, für die Abnahme gegen denselben Gegner. */
+    opponentCharacterId: uuid('opponent_character_id'),
+  },
+  (t) => [
+    primaryKey({ columns: [t.fightId, t.team, t.slot] }),
+    index('fight_participant_character_idx').on(t.characterId),
+  ],
 );

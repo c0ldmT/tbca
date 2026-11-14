@@ -15,6 +15,13 @@
       "when": 1794361171520,
       "tag": "0001_character_loadout",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794391427058,
+      "tag": "0002_fights",
+      "breakpoints": true
     }
   ]
 }

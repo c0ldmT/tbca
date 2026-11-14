@@ -153,6 +153,21 @@ export interface ClassDef {
   readonly defaultTactics: readonly TacticRule[];
 }
 
+/** Belohnungsregeln für PvP-Herausforderungen (Abschnitt 9). */
+export interface PvpRules {
+  readonly dailyRewardedFights: number;
+  /** Gegen Gegner, die mehr als so viele Level darunter liegen, gibt es nichts. */
+  readonly maxLevelsBelow: number;
+  /** Faktor je bisherigem belohntem Kampf gegen denselben Gegner am Tag (Promille). */
+  readonly sameOpponentPermille: readonly number[];
+  readonly underdogPerLevelPermille: number;
+  readonly underdogMaxPermille: number;
+  /** XP für einen Sieg: base + perOpponentLevel · Gegner-Level. */
+  readonly winXp: { readonly base: number; readonly perOpponentLevel: number };
+  /** Anteil der Sieg-XP bei Niederlage (Promille). */
+  readonly lossXpPermille: number;
+}
+
 export interface GameConfig {
   readonly maxLevel: number;
   readonly baseAttributes: Attributes;
@@ -181,4 +196,5 @@ export interface GameConfig {
   readonly triangleBonus: Fixed;
   readonly classes: Readonly<Record<ClassId, ClassDef>>;
   readonly abilities: readonly AbilityDef[];
+  readonly pvp: PvpRules;
 }

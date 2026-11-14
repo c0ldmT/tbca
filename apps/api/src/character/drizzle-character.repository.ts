@@ -1,5 +1,5 @@
 import { character, loadout, type Database } from '@tbca/db';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, asc, eq, ilike, ne, sql } from 'drizzle-orm';
 
 import {
   CharacterExistsError,
@@ -25,7 +25,43 @@ export class DrizzleCharacterRepository implements CharacterRepository {
       .select()
       .from(character)
       .where(and(eq(character.accountId, accountId), eq(character.seasonId, seasonId)));
-    if (!row) return null;
+    return row ? this.withLoadouts(row) : null;
+  }
+
+  async findById(id: string): Promise<CharacterRecord | null> {
+    const [row] = await this.db.select().from(character).where(eq(character.id, id));
+    return row ? this.withLoadouts(row) : null;
+  }
+
+  async search(
+    seasonId: string,
+    query: string,
+    excludeAccountId: string,
+    nearLevel: number,
+    limit: number,
+  ) {
+    const pattern = `%${query.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+    const rows = await this.db
+      .select({
+        id: character.id,
+        name: character.name,
+        level: character.level,
+        classId: character.class,
+      })
+      .from(character)
+      .where(
+        and(
+          eq(character.seasonId, seasonId),
+          ne(character.accountId, excludeAccountId),
+          query ? ilike(character.name, pattern) : undefined,
+        ),
+      )
+      .orderBy(asc(sql`abs(${character.level} - ${nearLevel})`), asc(character.name))
+      .limit(limit);
+    return rows;
+  }
+
+  private async withLoadouts(row: typeof character.$inferSelect): Promise<CharacterRecord> {
     const loadouts = await this.db.select().from(loadout).where(eq(loadout.characterId, row.id));
     return {
       id: row.id,

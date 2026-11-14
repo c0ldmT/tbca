@@ -2,7 +2,12 @@ import 'reflect-metadata';
 
 import { randomUUID } from 'node:crypto';
 
-import { DEFAULT_BATTLE_RULES, DEFAULT_GAME_CONFIG } from '@tbca/game-core';
+import {
+  DEFAULT_BATTLE_RULES,
+  DEFAULT_GAME_CONFIG,
+  GameClock,
+  ManualTimeSource,
+} from '@tbca/game-core';
 
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { Test } from '@nestjs/testing';
@@ -24,11 +29,20 @@ import {
   type CharacterRepository,
 } from '../src/character/types.js';
 import { loadEnv, type Env } from '../src/config/env.js';
+import type {
+  FightTx,
+  FightRepository,
+  NewFight,
+  RewardCounts,
+  StoredFight,
+} from '../src/fight/types.js';
 import type { CurrentSeason, SeasonRepository } from '../src/game/season.js';
 import {
   ACCOUNT_REPOSITORY,
   CHARACTER_REPOSITORY,
+  CLOCK,
   DB_PING,
+  FIGHT_REPOSITORY,
   DISCORD_OAUTH,
   SEASON_REPOSITORY,
   SESSION_STORE,
@@ -179,6 +193,82 @@ export class InMemoryCharacters implements CharacterRepository {
       (c) => c.seasonId === seasonId && c.name.toLowerCase() === name.toLowerCase(),
     );
   }
+
+  async findById(id: string): Promise<CharacterRecord | null> {
+    const r = this.records.find((c) => c.id === id);
+    return r ? structuredClone(r) : null;
+  }
+
+  async search(
+    seasonId: string,
+    query: string,
+    excludeAccountId: string,
+    nearLevel: number,
+    limit: number,
+  ) {
+    return this.records
+      .filter(
+        (c) =>
+          c.seasonId === seasonId &&
+          c.accountId !== excludeAccountId &&
+          c.name.toLowerCase().includes(query.toLowerCase()),
+      )
+      .sort((a, b) => Math.abs(a.level - nearLevel) - Math.abs(b.level - nearLevel))
+      .slice(0, limit)
+      .map(({ id, name, level, classId }) => ({ id, name, level, classId }));
+  }
+}
+
+export class InMemoryFights implements FightRepository {
+  readonly fights: StoredFight[] = [];
+
+  constructor(private readonly characters: InMemoryCharacters) {}
+
+  async locked<T>(_characterId: string, fn: (tx: FightTx) => Promise<T>): Promise<T> {
+    return fn({
+      rewardCounts: (id, day) => this.rewardCounts(id, day),
+      insert: async (f: NewFight) => {
+        const id = randomUUID();
+        this.fights.push({
+          ...structuredClone(f),
+          id,
+          createdAt: new Date(),
+          engineVersion: f.result.engineVersion,
+        });
+        return id;
+      },
+      setProgress: async (id, xp, level) => {
+        const c = this.characters.records.find((r) => r.id === id)!;
+        Object.assign(c, { xp, level });
+      },
+    });
+  }
+
+  async rewardCounts(characterId: string, day: string): Promise<RewardCounts> {
+    const byOpponent = new Map<string, number>();
+    let today = 0;
+    for (const f of this.fights.filter((x) => x.rewardDay === day)) {
+      for (const p of f.participants) {
+        if (p.characterId !== characterId || !p.rewarded) continue;
+        today++;
+        if (p.opponentCharacterId) {
+          byOpponent.set(p.opponentCharacterId, (byOpponent.get(p.opponentCharacterId) ?? 0) + 1);
+        }
+      }
+    }
+    return { today, byOpponent };
+  }
+
+  async findById(id: string): Promise<StoredFight | null> {
+    return this.fights.find((f) => f.id === id) ?? null;
+  }
+
+  async listForCharacter(characterId: string, limit: number): Promise<StoredFight[]> {
+    return this.fights
+      .filter((f) => f.participants.some((p) => p.characterId === characterId))
+      .reverse()
+      .slice(0, limit);
+  }
 }
 
 export interface TestApp {
@@ -188,6 +278,8 @@ export interface TestApp {
   discord: FakeDiscord;
   seasons: FakeSeasons;
   characters: InMemoryCharacters;
+  fights: InMemoryFights;
+  time: ManualTimeSource;
   dbUp: { value: boolean };
 }
 
@@ -197,6 +289,9 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
   const discord = new FakeDiscord();
   const seasons = new FakeSeasons();
   const characters = new InMemoryCharacters();
+  const fights = new InMemoryFights(characters);
+  // 12.11.2026, 12:00 Uhr in Berlin
+  const time = new ManualTimeSource(Date.UTC(2026, 10, 12, 11, 0));
   const dbUp = { value: true };
 
   const moduleRef = await Test.createTestingModule({ imports: [AppModule.forRoot(env)] })
@@ -210,6 +305,10 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
     .useValue(seasons)
     .overrideProvider(CHARACTER_REPOSITORY)
     .useValue(characters)
+    .overrideProvider(FIGHT_REPOSITORY)
+    .useValue(fights)
+    .overrideProvider(CLOCK)
+    .useValue(new GameClock({ source: time.read }))
     .overrideProvider(DB_PING)
     .useValue(async () => {
       if (!dbUp.value) throw new Error('down');
@@ -222,7 +321,7 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
   await configureApp(app, env);
   await app.init();
   await app.getHttpAdapter().getInstance().ready();
-  return { app, accounts, sessions, discord, seasons, characters, dbUp };
+  return { app, accounts, sessions, discord, seasons, characters, fights, time, dbUp };
 }
 
 /** Liest Set-Cookie-Header als Map name → { value, attribute-string }. */

@@ -44,6 +44,7 @@ export {
   type CharacterBuild,
 } from './character/build.js';
 export { levelFromXp, totalXpForLevel, xpToNext } from './character/xp.js';
+export { pvpReward, type PvpReward, type PvpRewardInput, type RewardLimit } from './pvp/rewards.js';
 
 export {
   BASIC_ATTACK,

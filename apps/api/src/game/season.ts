@@ -52,9 +52,10 @@ export class DrizzleSeasonRepository implements SeasonRepository {
       name: row.name,
       isTest: row.isTest,
       configVersion: row.version,
-      battle: row.data.battle ?? DEFAULT_BATTLE_RULES,
-      // Konfigurationen vor Schema 2 enthalten noch keine Spielinhalte.
-      game: row.data.game ?? DEFAULT_GAME_CONFIG,
+      // Ältere Konfigurationen kennen neuere Regelwerte (z. B. triangleBonus) noch nicht.
+      battle: { ...DEFAULT_BATTLE_RULES, ...row.data.battle },
+      // Ältere Konfigurationen haben noch nicht alle Bereiche; fehlende kommen aus den Startwerten.
+      game: { ...DEFAULT_GAME_CONFIG, ...row.data.game },
     };
   }
 }

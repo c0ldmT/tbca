@@ -28,4 +28,13 @@ export interface CharacterRepository {
   /** Speichert Klasse, Punkte und das Loadout der aktuellen Klasse. */
   save(record: CharacterRecord): Promise<void>;
   isNameTaken(seasonId: string, name: string): Promise<boolean>;
+  findById(id: string): Promise<CharacterRecord | null>;
+  /** Charaktere der Season, nach Name gefiltert, ohne den eigenen Account, nahe `nearLevel` zuerst. */
+  search(
+    seasonId: string,
+    query: string,
+    excludeAccountId: string,
+    nearLevel: number,
+    limit: number,
+  ): Promise<Pick<CharacterRecord, 'id' | 'name' | 'level' | 'classId'>[]>;
 }

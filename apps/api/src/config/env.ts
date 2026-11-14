@@ -24,6 +24,18 @@ export const envSchema = z
     /** Secure-Flag für Cookies; Standard: nur in Produktion. */
     COOKIE_SECURE: bool.optional(),
     SESSION_TTL_DAYS: z.coerce.number().int().min(1).max(365).default(30),
+    /** Zeitzone für Spieltage und Tageslimits. */
+    GAME_TIMEZONE: z
+      .string()
+      .refine((tz) => {
+        try {
+          new Intl.DateTimeFormat('en', { timeZone: tz });
+          return true;
+        } catch {
+          return false;
+        }
+      }, 'Unbekannte Zeitzone')
+      .default('Europe/Berlin'),
     DISCORD_CLIENT_ID: z.string().optional(),
     DISCORD_CLIENT_SECRET: z.string().optional(),
     DISCORD_REDIRECT_URI: z.url().optional(),

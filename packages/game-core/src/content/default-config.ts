@@ -296,4 +296,13 @@ export const DEFAULT_GAME_CONFIG: GameConfig = {
   triangleBonus: 1_500,
   classes,
   abilities,
+  pvp: {
+    dailyRewardedFights: 10,
+    maxLevelsBelow: 10,
+    sameOpponentPermille: [1000, 500],
+    underdogPerLevelPermille: 50,
+    underdogMaxPermille: 500,
+    winXp: { base: 40, perOpponentLevel: 20 },
+    lossXpPermille: 250,
+  },
 };

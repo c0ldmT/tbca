@@ -23,6 +23,13 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
   (Migration `0001_character_loadout`).
 - Website: Charakterseite mit Erstellung, Attributen samt Vorschau der Kampfwerte, Klassenwechsel,
   Fähigkeiten-Auswahl und Taktik-Editor.
+- PvP: asynchrone Herausforderungen gegen die Momentaufnahme des Gegners, gewertet oder als
+  Freundschaftskampf; Belohnungsregeln (10 belohnte Kämpfe pro Tag, nichts gegen Gegner mehr als
+  10 Level darunter, Underdog-Bonus, 100/50/0 % gegen denselben Gegner) und XP mit Levelaufstieg.
+- Kämpfe werden mit Seed, Versionen, Momentaufnahmen und gzip-komprimiertem Event-Log gespeichert
+  (Migration `0002_fights`); parallele Herausforderungen zählen dank Sperre korrekt.
+- Website: Arena mit Gegnersuche und letzten Kämpfen, HUD-Replay mit Lebens- und Energiebalken,
+  Schadenszahlen, Status, Glitch bei Crits, Geschwindigkeit und Textlog; Replays per Link teilbar.
 
 ### Phase 0
 
@@ -46,6 +53,9 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
   Glitch-Effekt und einem Testkampf, den die Engine direkt im Browser berechnet.
 
 ### Behoben
+
+- Ältere Season-Konfigurationen werden mit den Startwerten ergänzt; sonst brach ein Kampf mit
+  einer Konfiguration aus Phase 0 ab (fehlender `triangleBonus`).
 
 - `scripts/dev.sh` spielt nach den Migrationen die Entwicklungsdaten ein; ohne aktive Season
   antwortete `/api/game/config` mit 503. Die Charakterseite zeigt dafür jetzt eine verständliche

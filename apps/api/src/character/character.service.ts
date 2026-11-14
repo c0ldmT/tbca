@@ -12,6 +12,7 @@ import {
   type Attributes,
   type CharacterBuild,
   type ClassId,
+  type CombatantSnapshot,
 } from '@tbca/game-core';
 import type { CharacterResponse, CreateCharacterRequest, LoadoutRequest } from '@tbca/shared';
 
@@ -154,29 +155,12 @@ export class CharacterService {
     return this.view(season, record);
   }
 
-  /** Gespeichertes Loadout, falls es zur aktuellen Konfiguration passt, sonst das Standard-Loadout. */
   private usableLoadout(season: CurrentSeason, record: CharacterRecord): CharacterBuild['loadout'] {
-    const stored = record.loadouts[record.classId];
-    if (stored) {
-      try {
-        validateBuild(season.game, this.build(record, stored));
-        return stored;
-      } catch {
-        // z. B. Fähigkeit nach einer Konfigurationsänderung entfernt
-      }
-    }
-    return defaultLoadout(season.game, record.classId, record.level);
+    return usableLoadout(season, record);
   }
 
   private build(record: CharacterRecord, loadout: CharacterBuild['loadout']): CharacterBuild {
-    return {
-      id: record.id,
-      name: record.name,
-      level: record.level,
-      classId: record.classId,
-      allocated: record.allocated,
-      loadout,
-    };
+    return toBuild(record, loadout);
   }
 
   private view(season: CurrentSeason, record: CharacterRecord): CharacterResponse {
@@ -213,4 +197,40 @@ export class CharacterService {
       loadout: { abilities: [...loadout.abilities], tactics: [...loadout.tactics] },
     };
   }
+}
+
+export function toBuild(
+  record: CharacterRecord,
+  loadout: CharacterBuild['loadout'],
+): CharacterBuild {
+  return {
+    id: record.id,
+    name: record.name,
+    level: record.level,
+    classId: record.classId,
+    allocated: record.allocated,
+    loadout,
+  };
+}
+
+/** Gespeichertes Loadout, falls es zur aktuellen Konfiguration passt, sonst das Standard-Loadout. */
+export function usableLoadout(
+  season: CurrentSeason,
+  record: CharacterRecord,
+): CharacterBuild['loadout'] {
+  const stored = record.loadouts[record.classId];
+  if (stored) {
+    try {
+      validateBuild(season.game, toBuild(record, stored));
+      return stored;
+    } catch {
+      // z. B. Fähigkeit nach einer Konfigurationsänderung entfernt
+    }
+  }
+  return defaultLoadout(season.game, record.classId, record.level);
+}
+
+/** Kampf-Momentaufnahme eines gespeicherten Charakters. */
+export function snapshotOf(season: CurrentSeason, record: CharacterRecord): CombatantSnapshot {
+  return deriveSnapshot(season.game, toBuild(record, usableLoadout(season, record)));
 }

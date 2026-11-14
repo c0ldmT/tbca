@@ -12,13 +12,20 @@ import {
   seedDevelopment,
   type DbConnection,
 } from '@tbca/db';
-import { DEFAULT_GAME_CONFIG, defaultLoadout } from '@tbca/game-core';
+import {
+  DEFAULT_GAME_CONFIG,
+  defaultLoadout,
+  deriveSnapshot,
+  ENGINE_VERSION,
+  simulateBattle,
+} from '@tbca/game-core';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { DrizzleAccountRepository, DrizzleSessionStore } from '../src/auth/drizzle-repositories.js';
 import { DrizzleCharacterRepository } from '../src/character/drizzle-character.repository.js';
 import { CharacterExistsError, NameTakenError } from '../src/character/types.js';
+import { DrizzleFightRepository } from '../src/fight/drizzle-fight.repository.js';
 import { DrizzleSeasonRepository } from '../src/game/season.js';
 
 const url = process.env['TBCA_TEST_DATABASE_URL'];
@@ -143,5 +150,84 @@ describe.skipIf(!url)('Drizzle-Repositories (Integration)', () => {
       'bruiser.heavy_strike',
       'bruiser.provoke',
     ]);
+  });
+
+  it('speichert Kämpfe komprimiert, zählt Belohnungen und sperrt parallele Kämpfe', async () => {
+    const current = (await new DrizzleSeasonRepository(conn.db).findCurrent())!;
+    const chars = new DrizzleCharacterRepository(conn.db);
+    const make = async (name: string) => {
+      const [acc] = await conn.db.insert(account).values({}).returning();
+      return chars.create({
+        accountId: acc!.id,
+        seasonId: current.id,
+        name: `${name}${Date.now() % 100000}`,
+        classId: 'gunner',
+        level: 1,
+        xp: 0,
+        allocated: { str: 0, dex: 0, int: 0, con: 0 },
+        loadouts: { gunner: defaultLoadout(DEFAULT_GAME_CONFIG, 'gunner', 1) },
+      });
+    };
+    const a = await make('A');
+    const b = await make('B');
+    const snap = (c: typeof a) =>
+      deriveSnapshot(DEFAULT_GAME_CONFIG, { ...c, loadout: c.loadouts.gunner! });
+    const teams = [[snap(a)], [snap(b)]];
+    const result = simulateBattle({
+      engineVersion: ENGINE_VERSION,
+      configVersion: 1,
+      seed: 's',
+      teams,
+    });
+
+    const repo = new DrizzleFightRepository(conn.db);
+    const record = (rewarded: boolean) =>
+      repo.locked(a.id, async (tx) => {
+        const id = await tx.insert({
+          seasonId: current.id,
+          kind: 'pvp_rated',
+          seed: 's',
+          configVersion: 1,
+          input: { teams },
+          result,
+          rewardDay: '2026-11-12',
+          participants: [
+            {
+              team: 0,
+              slot: 0,
+              characterId: a.id,
+              initiator: true,
+              won: true,
+              rewarded,
+              xpAwarded: 60,
+              opponentCharacterId: b.id,
+            },
+            {
+              team: 1,
+              slot: 0,
+              characterId: b.id,
+              initiator: false,
+              won: false,
+              rewarded: false,
+              xpAwarded: 0,
+              opponentCharacterId: a.id,
+            },
+          ],
+        });
+        await tx.setProgress(a.id, 60, 1);
+        return id;
+      });
+    const ids = await Promise.all([record(true), record(true), record(false)]);
+
+    const counts = await repo.rewardCounts(a.id, '2026-11-12');
+    expect(counts.today).toBe(2);
+    expect(counts.byOpponent.get(b.id)).toBe(2);
+    expect((await repo.rewardCounts(a.id, '2026-11-13')).today).toBe(0);
+
+    const stored = await repo.findById(ids[0]!);
+    expect(stored!.result.events).toEqual(result.events);
+    expect(stored!.participants).toHaveLength(2);
+    expect(await repo.listForCharacter(b.id, 10)).toHaveLength(3);
+    expect((await chars.findById(a.id))!.xp).toBe(60);
   });
 });
