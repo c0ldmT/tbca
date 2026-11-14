@@ -1,0 +1,118 @@
+:host {
+  display: grid;
+  gap: var(--tbca-space-6);
+  width: min(100%, 60rem);
+  margin-inline: auto;
+  padding: var(--tbca-space-8) clamp(var(--tbca-space-4), 4vw, var(--tbca-space-12));
+}
+
+.head {
+  display: grid;
+  gap: var(--tbca-space-2);
+}
+
+h1 {
+  font-size: clamp(2rem, 7vw, 3.5rem);
+}
+
+.status {
+  display: flex;
+  align-items: baseline;
+  gap: var(--tbca-space-3);
+}
+
+.status__value {
+  font: 700 var(--tbca-text-2xl) / 1 var(--tbca-font-mono);
+  color: var(--tbca-neon-yellow);
+}
+
+.opponents,
+.recent {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--tbca-space-2);
+}
+
+.opponent {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--tbca-space-2) var(--tbca-space-4);
+  align-items: center;
+  padding: var(--tbca-space-3) var(--tbca-space-4);
+  background: var(--tbca-surface-2);
+}
+
+@media (min-width: 40rem) {
+  .opponent {
+    grid-template-columns: 1fr auto auto;
+  }
+}
+
+.opponent__who {
+  display: grid;
+}
+
+.opponent__name {
+  font: 700 var(--tbca-text-lg) / 1.2 var(--tbca-font-display);
+}
+
+.opponent__reward {
+  font: 600 var(--tbca-text-sm) / 1.2 var(--tbca-font-mono);
+  color: var(--tbca-neon-yellow);
+}
+
+.opponent__reward--none {
+  color: var(--tbca-text-muted);
+}
+
+.opponent__actions {
+  display: flex;
+  gap: var(--tbca-space-2);
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 40rem) {
+  .opponent__actions {
+    grid-column: auto;
+  }
+}
+
+.fight {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--tbca-space-2) var(--tbca-space-4);
+  min-height: var(--tbca-touch-target);
+  padding: var(--tbca-space-2) var(--tbca-space-4);
+  background: var(--tbca-surface-2);
+  color: var(--tbca-text-primary);
+  text-decoration: none;
+}
+
+.fight:hover {
+  box-shadow: inset 3px 0 0 var(--tbca-neon-cyan);
+}
+
+.fight__result {
+  font: 700 var(--tbca-text-sm) / 1.6 var(--tbca-font-mono);
+  min-width: 6rem;
+}
+
+.fight__result[data-result='won'] {
+  color: var(--tbca-neon-cyan);
+}
+
+.fight__result[data-result='lost'] {
+  color: var(--tbca-neon-magenta);
+}
+
+.fight__vs {
+  flex: 1;
+}
+
+.fight__xp {
+  font: var(--tbca-text-sm) var(--tbca-font-mono);
+  color: var(--tbca-neon-yellow);
+}

@@ -6,7 +6,8 @@
     "imprint": "Legal notice",
     "privacy": "Privacy",
     "home": "Home",
-    "character": "Character"
+    "character": "Character",
+    "arena": "Arena"
   },
   "auth": {
     "login": "Sign in with Discord",
@@ -263,6 +264,59 @@
     "http_500": "Server error. Please try again later.",
     "http_502": "The server can't be reached right now. Is the API running?",
     "http_503": "The service is unavailable right now. Please try again shortly.",
-    "http_504": "The server doesn't respond. Is the API running?"
+    "http_504": "The server doesn't respond. Is the API running?",
+    "opponent_not_found": "This opponent doesn't exist (anymore).",
+    "self_challenge": "You can't challenge yourself.",
+    "fight_not_found": "This fight doesn't exist.",
+    "http_400": "Invalid request.",
+    "http_401": "Please sign in.",
+    "http_404": "Not found."
+  },
+  "pvp": {
+    "title": "Arena",
+    "intro": "Challenge others. You fight their snapshot – nobody needs to be online at the same time.",
+    "loginFirst": "Sign in to fight in the arena.",
+    "characterFirst": "Create a character first.",
+    "rewardedToday": "rewarded fights today",
+    "opponents": "Opponents",
+    "search": "Search name",
+    "noOpponents": "No opponents found.",
+    "loading": "Loading opponents …",
+    "winXp": "Win: +{{ xp }} XP",
+    "rated": "Rated",
+    "friendly": "Friendly",
+    "recent": "Recent fights",
+    "noFights": "No fights yet.",
+    "won": "Win",
+    "lost": "Loss",
+    "draw": "Draw",
+    "vs": "vs {{ names }}",
+    "limit": {
+      "none": "Full reward",
+      "friendly": "Friendly fight: no reward",
+      "daily_limit": "Daily limit reached: no reward",
+      "level_gap": "Opponent too weak: no reward",
+      "same_opponent": "Already fought this opponent today"
+    }
+  },
+  "replay": {
+    "loading": "Loading fight …",
+    "team": "Team {{ team }}",
+    "play": "Play",
+    "pause": "Pause",
+    "restart": "Restart",
+    "end": "Skip to end",
+    "speed": "Speed",
+    "back": "Back to the arena",
+    "share": "Copy link",
+    "copied": "Link copied",
+    "draw": "Draw after {{ rounds }} rounds",
+    "winner": "{{ name }} wins after {{ rounds }} rounds",
+    "reward": "+{{ xp }} XP",
+    "levelUp": "Reached level {{ level }}!",
+    "kind": {
+      "pvp_rated": "Rated challenge",
+      "pvp_friendly": "Friendly fight"
+    }
   }
 }

@@ -1,0 +1,117 @@
+<ng-container *transloco="let t">
+  <header class="head">
+    <h1>{{ t('pvp.title') }}</h1>
+    <p class="tbca-hint">{{ t('pvp.intro') }}</p>
+  </header>
+
+  @if (auth.state() === null) {
+    <section class="tbca-panel">
+      <p>{{ t('pvp.loginFirst') }}</p>
+      <a class="tbca-button" [href]="auth.loginUrl()">{{ t('auth.login') }}</a>
+    </section>
+  } @else if (characters.state() === null) {
+    <section class="tbca-panel">
+      <p>{{ t('pvp.characterFirst') }}</p>
+      <a class="tbca-button" routerLink="/character">{{ t('character.create.title') }}</a>
+    </section>
+  } @else {
+    @if (error()) {
+      <p class="tbca-error" role="alert">{{ t('errors.' + error()) }}</p>
+    }
+
+    @if (status(); as s) {
+      <p class="status" aria-live="polite">
+        <span class="status__value">{{ s.rewardedToday }}/{{ s.dailyLimit }}</span>
+        {{ t('pvp.rewardedToday') }}
+      </p>
+    }
+
+    <section class="tbca-panel" aria-labelledby="opponents-title">
+      <h2 id="opponents-title">{{ t('pvp.opponents') }}</h2>
+      <label class="tbca-label">
+        {{ t('pvp.search') }}
+        <input
+          class="tbca-input"
+          type="search"
+          autocomplete="off"
+          [value]="query()"
+          (input)="search($any($event.target).value)"
+        />
+      </label>
+
+      @if (opponents(); as list) {
+        @if (list.length === 0) {
+          <p class="tbca-hint">{{ t('pvp.noOpponents') }}</p>
+        } @else {
+          <ul class="opponents">
+            @for (o of list; track o.id) {
+              <li class="opponent">
+                <div class="opponent__who">
+                  <span class="opponent__name">{{ o.name }}</span>
+                  <span class="tbca-hint"
+                    >{{ t('classes.' + o.classId) }},
+                    {{ t('character.level', { level: o.level }) }}</span
+                  >
+                </div>
+                <span class="opponent__reward" [class.opponent__reward--none]="o.winXp === 0">
+                  @if (o.winXp > 0) {
+                    {{ t('pvp.winXp', { xp: o.winXp }) }}
+                  } @else {
+                    {{ t('pvp.limit.' + o.limit) }}
+                  }
+                </span>
+                <div class="opponent__actions">
+                  <button
+                    type="button"
+                    class="tbca-button"
+                    [disabled]="busy() !== null"
+                    (click)="challenge(o, 'rated')"
+                  >
+                    {{ t('pvp.rated') }}
+                  </button>
+                  <button
+                    type="button"
+                    class="tbca-button tbca-button--ghost"
+                    [disabled]="busy() !== null"
+                    (click)="challenge(o, 'friendly')"
+                  >
+                    {{ t('pvp.friendly') }}
+                  </button>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      } @else {
+        <p class="tbca-hint">{{ t('pvp.loading') }}</p>
+      }
+    </section>
+
+    <section class="tbca-panel" aria-labelledby="recent-title">
+      <h2 id="recent-title">{{ t('pvp.recent') }}</h2>
+      @if (recent().length === 0) {
+        <p class="tbca-hint">{{ t('pvp.noFights') }}</p>
+      } @else {
+        <ul class="recent">
+          @for (f of recent(); track f.id) {
+            <li>
+              <a class="fight" [routerLink]="['/replay', f.id]">
+                <span
+                  class="fight__result"
+                  [attr.data-result]="f.draw ? 'draw' : f.won ? 'won' : 'lost'"
+                >
+                  {{ t(f.draw ? 'pvp.draw' : f.won ? 'pvp.won' : 'pvp.lost') }}
+                </span>
+                <span class="fight__vs">{{ t('pvp.vs', { names: f.opponents.join(', ') }) }}</span>
+                <span class="tbca-hint">{{ t('replay.kind.' + f.kind) }}</span>
+                @if (f.xp > 0) {
+                  <span class="fight__xp">+{{ f.xp }} XP</span>
+                }
+              </a>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  }
+</ng-container>

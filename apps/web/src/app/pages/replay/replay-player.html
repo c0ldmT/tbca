@@ -1,0 +1,114 @@
+<div class="hud" *transloco="let t">
+  <p class="hud__round">{{ t('battle.round', { round: frame().round }) }}</p>
+
+  <div class="arena">
+    @for (team of teamOrder(); track team.index) {
+      <section
+        class="team"
+        [class.team--own]="team.index === ownTeam()"
+        [attr.aria-label]="t('replay.team', { team: team.index + 1 })"
+      >
+        @for (c of team.members; track c.id) {
+          @let state = frame().units[c.id]!;
+          @let hit = frame().hit[c.id];
+          <article
+            class="unit"
+            [class.unit--active]="frame().actor === c.id"
+            [class.unit--down]="state.hp === 0"
+            [class.unit--hit]="hit === 'hit'"
+            [class.unit--crit]="hit === 'crit'"
+          >
+            <header class="unit__head">
+              <span class="unit__name">{{ c.name }}</span>
+              <span class="unit__meta">
+                {{ c.classId ? t('classes.' + c.classId) : '' }}
+                {{ t('character.level', { level: c.level }) }}
+              </span>
+            </header>
+            <div class="bar bar--hp" aria-hidden="true">
+              <span class="bar__fill" [style.width.%]="percent(state.hp, c.maxHp)"></span>
+              @if (state.shield > 0) {
+                <span class="bar__shield" [style.width.%]="percent(state.shield, c.maxHp)"></span>
+              }
+            </div>
+            <p class="unit__numbers">
+              <span>{{ state.hp }}/{{ c.maxHp }} HP</span>
+              <span class="unit__energy">{{ state.energy }} EN</span>
+            </p>
+            <div class="bar bar--energy" aria-hidden="true">
+              <span class="bar__fill" [style.width.%]="percent(state.energy, c.energyMax)"></span>
+            </div>
+            @if (state.statuses.length > 0) {
+              <ul class="statuses">
+                @for (s of state.statuses; track $index) {
+                  <li class="status" [attr.data-kind]="s.kind">
+                    {{ t('battle.statusName.' + s.kind) }}
+                  </li>
+                }
+              </ul>
+            }
+            <div class="popups" aria-hidden="true">
+              @for (p of frame().popups; track $index) {
+                @if (p.target === c.id) {
+                  <span class="popup" [attr.data-kind]="p.kind">{{ p.text }}</span>
+                }
+              }
+            </div>
+          </article>
+        }
+      </section>
+    }
+  </div>
+
+  <p class="caption" aria-hidden="true">
+    @if (caption(); as line) {
+      {{ text(line, t) }}
+    }
+  </p>
+
+  <div class="controls">
+    <button
+      type="button"
+      class="tbca-icon-button"
+      [attr.aria-label]="t('replay.restart')"
+      (click)="restart()"
+    >
+      ⟲
+    </button>
+    @if (playing()) {
+      <button type="button" class="tbca-button" (click)="pause()">{{ t('replay.pause') }}</button>
+    } @else {
+      <button type="button" class="tbca-button" (click)="play()">{{ t('replay.play') }}</button>
+    }
+    <button
+      type="button"
+      class="tbca-icon-button"
+      [attr.aria-label]="t('replay.end')"
+      (click)="toEnd()"
+    >
+      ⏭
+    </button>
+    <div class="speeds" role="group" [attr.aria-label]="t('replay.speed')">
+      @for (s of speeds; track s) {
+        <button
+          type="button"
+          class="speed"
+          [attr.aria-pressed]="speed() === s"
+          (click)="setSpeed(s)"
+        >
+          {{ s }}×
+        </button>
+      }
+    </div>
+    <span class="progress">{{ frameIndex() + 1 }}/{{ frames().length }}</span>
+  </div>
+
+  <details class="log-box">
+    <summary>{{ t('home.demo.log') }}</summary>
+    <ol class="log">
+      @for (line of log(); track $index) {
+        <li class="log__line" [attr.data-tone]="line.tone">{{ text(line, t) }}</li>
+      }
+    </ol>
+  </details>
+</div>

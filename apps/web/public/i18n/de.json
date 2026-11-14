@@ -6,7 +6,8 @@
     "imprint": "Impressum",
     "privacy": "Datenschutz",
     "home": "Startseite",
-    "character": "Charakter"
+    "character": "Charakter",
+    "arena": "Arena"
   },
   "auth": {
     "login": "Mit Discord anmelden",
@@ -263,6 +264,59 @@
     "http_500": "Serverfehler. Bitte versuch es später noch einmal.",
     "http_502": "Der Server ist gerade nicht erreichbar. Läuft die API?",
     "http_503": "Der Dienst ist gerade nicht verfügbar. Bitte versuch es gleich noch einmal.",
-    "http_504": "Der Server antwortet nicht. Läuft die API?"
+    "http_504": "Der Server antwortet nicht. Läuft die API?",
+    "opponent_not_found": "Diesen Gegner gibt es nicht (mehr).",
+    "self_challenge": "Du kannst dich nicht selbst herausfordern.",
+    "fight_not_found": "Diesen Kampf gibt es nicht.",
+    "http_400": "Ungültige Anfrage.",
+    "http_401": "Bitte melde dich an.",
+    "http_404": "Nicht gefunden."
+  },
+  "pvp": {
+    "title": "Arena",
+    "intro": "Fordere andere heraus. Gekämpft wird gegen ihre Momentaufnahme – niemand muss gleichzeitig online sein.",
+    "loginFirst": "Melde dich an, um in der Arena zu kämpfen.",
+    "characterFirst": "Erstelle zuerst einen Charakter.",
+    "rewardedToday": "belohnte Kämpfe heute",
+    "opponents": "Gegner",
+    "search": "Name suchen",
+    "noOpponents": "Keine Gegner gefunden.",
+    "loading": "Lade Gegner …",
+    "winXp": "Sieg: +{{ xp }} XP",
+    "rated": "Gewertet",
+    "friendly": "Freundschaft",
+    "recent": "Letzte Kämpfe",
+    "noFights": "Noch keine Kämpfe.",
+    "won": "Sieg",
+    "lost": "Niederlage",
+    "draw": "Remis",
+    "vs": "gegen {{ names }}",
+    "limit": {
+      "none": "Volle Belohnung",
+      "friendly": "Freundschaftskampf: keine Belohnung",
+      "daily_limit": "Tageslimit erreicht: keine Belohnung",
+      "level_gap": "Gegner zu schwach: keine Belohnung",
+      "same_opponent": "Heute schon gegen diesen Gegner gekämpft"
+    }
+  },
+  "replay": {
+    "loading": "Lade Kampf …",
+    "team": "Team {{ team }}",
+    "play": "Abspielen",
+    "pause": "Pause",
+    "restart": "Von vorn",
+    "end": "Zum Ende",
+    "speed": "Geschwindigkeit",
+    "back": "Zur Arena",
+    "share": "Link kopieren",
+    "copied": "Link kopiert",
+    "draw": "Unentschieden nach {{ rounds }} Runden",
+    "winner": "{{ name }} gewinnt nach {{ rounds }} Runden",
+    "reward": "+{{ xp }} XP",
+    "levelUp": "Level {{ level }} erreicht!",
+    "kind": {
+      "pvp_rated": "Gewertete Herausforderung",
+      "pvp_friendly": "Freundschaftskampf"
+    }
   }
 }

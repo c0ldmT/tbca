@@ -10,6 +10,14 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/character/character.page').then((m) => m.CharacterPage),
   },
   {
+    path: 'pvp',
+    loadComponent: () => import('./pages/pvp/pvp.page').then((m) => m.PvpPage),
+  },
+  {
+    path: 'replay/:id',
+    loadComponent: () => import('./pages/replay/replay.page').then((m) => m.ReplayPage),
+  },
+  {
     path: 'impressum',
     data: { section: 'imprint' },
     loadComponent: () => import('./pages/legal/legal.page').then((m) => m.LegalPage),

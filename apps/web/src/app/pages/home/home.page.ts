@@ -5,7 +5,8 @@ import { TranslocoDirective } from '@jsverse/transloco';
 import { AuthService } from '../../core/auth.service';
 import { LanguageService } from '../../core/language.service';
 import { GlitchDirective } from '../../shared/glitch.directive';
-import { DEMO_FIGHTERS, DEMO_SEED, runDemoBattle, toLogLines, type LogLine } from './demo-battle';
+import { translateLine, type LogLine } from '../../shared/battle-log';
+import { DEMO_FIGHTERS, DEMO_SEED, runDemoBattle, toDemoLogLines } from './demo-battle';
 
 const LOGIN_RESULTS = ['success', 'cancelled', 'failed'] as const;
 type LoginResult = (typeof LOGIN_RESULTS)[number];
@@ -47,16 +48,15 @@ export class HomePage {
   protected readonly lines = computed(() => {
     const locale = this.language.current();
     const format = (n: number) => n.toLocaleString(locale, { maximumFractionDigits: 1 });
-    return toLogLines(this.result().events, format);
+    return toDemoLogLines(this.result().events, format);
   });
   protected readonly outcome = computed(() => this.lines().at(-1));
 
-  /** Setzt übersetzte Namen (Fähigkeit, Status) in die Parameter einer Zeile ein. */
-  protected paramsOf(line: LogLine, t: (key: string) => string): Record<string, string | number> {
-    if (!line.nested) return line.params;
-    const resolved: Record<string, string | number> = { ...line.params };
-    for (const [param, key] of Object.entries(line.nested)) resolved[param] = t(key);
-    return resolved;
+  protected text(
+    line: LogLine,
+    t: (key: string, params?: Record<string, unknown>) => string,
+  ): string {
+    return translateLine(line, t);
   }
 
   protected rerun(): void {

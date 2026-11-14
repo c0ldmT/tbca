@@ -53,7 +53,7 @@
 
       @if (outcome(); as end) {
         <p class="arena__outcome" [tbcaGlitch]="result().logHash">
-          {{ t(end.key, paramsOf(end, t)) }}
+          {{ text(end, t) }}
         </p>
       }
 
@@ -61,7 +61,7 @@
       <ol class="log" tabindex="0" [attr.aria-label]="t('home.demo.log')">
         @for (line of lines(); track $index) {
           <li class="log__line" [attr.data-tone]="line.tone">
-            {{ t(line.key, paramsOf(line, t)) }}
+            {{ text(line, t) }}
           </li>
         }
       </ol>
