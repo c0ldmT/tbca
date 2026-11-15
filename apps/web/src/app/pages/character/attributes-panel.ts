@@ -82,7 +82,7 @@ const STAT_KEYS = [
         <button
           class="tbca-button tbca-button--ghost"
           type="button"
-          [disabled]="busy() || spent() === 0"
+          [disabled]="busy() || spent() === 0 || character().credits < character().respecCost"
           (click)="respec()"
         >
           {{ t('character.attributes.respec') }}

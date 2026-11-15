@@ -360,11 +360,69 @@ export const fightParticipant = pgTable(
     /** Zählt für das Tageslimit belohnter Kämpfe. */
     rewarded: boolean('rewarded').notNull().default(false),
     xpAwarded: integer('xp_awarded').notNull().default(0),
+    creditsAwarded: integer('credits_awarded').notNull().default(0),
     /** Gegner-Charakter bei 1v1, für die Abnahme gegen denselben Gegner. */
     opponentCharacterId: uuid('opponent_character_id'),
   },
   (t) => [
     primaryKey({ columns: [t.fightId, t.team, t.slot] }),
     index('fight_participant_character_idx').on(t.characterId),
+  ],
+);
+
+// --- Credits (Abschnitt 12) ------------------------------------------------
+
+/** Eine Buchung; ihre Zeilen (credit_entry) summieren sich zu 0. */
+export const creditTransaction = pgTable(
+  'credit_transaction',
+  {
+    id: id(),
+    seasonId: uuid('season_id')
+      .notNull()
+      .references(() => season.id, { onDelete: 'cascade' }),
+    /** Art, z. B. pvp_reward, respec, shop_purchase. */
+    kind: text('kind').notNull(),
+    /** Bezug, z. B. die Kampf-ID. */
+    refId: uuid('ref_id'),
+    createdAt: createdAt(),
+  },
+  (t) => [index('credit_transaction_season_kind_idx').on(t.seasonId, t.kind, t.createdAt)],
+);
+
+export const creditEntry = pgTable(
+  'credit_entry',
+  {
+    id: id(),
+    transactionId: uuid('transaction_id')
+      .notNull()
+      .references(() => creditTransaction.id, { onDelete: 'cascade' }),
+    seasonId: uuid('season_id').notNull(),
+    /** Spielerkonto oder … */
+    accountId: uuid('account_id').references(() => account.id, { onDelete: 'set null' }),
+    /** … Systemkonto (Quelle oder Senke). */
+    systemAccount: text('system_account'),
+    amount: bigint('amount', { mode: 'number' }).notNull(),
+  },
+  (t) => [
+    index('credit_entry_account_idx').on(t.seasonId, t.accountId),
+    index('credit_entry_transaction_idx').on(t.transactionId),
+  ],
+);
+
+/** Saldo je Spieler und Season als Cache des Ledgers; nie negativ. */
+export const wallet = pgTable(
+  'wallet',
+  {
+    seasonId: uuid('season_id')
+      .notNull()
+      .references(() => season.id, { onDelete: 'cascade' }),
+    accountId: uuid('account_id')
+      .notNull()
+      .references(() => account.id, { onDelete: 'cascade' }),
+    balance: bigint('balance', { mode: 'number' }).notNull().default(0),
+  },
+  (t) => [
+    primaryKey({ columns: [t.seasonId, t.accountId] }),
+    check('wallet_balance_check', sql`${t.balance} >= 0`),
   ],
 );

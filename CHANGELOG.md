@@ -33,6 +33,9 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
   Test-Seasons (Migration `0003_bots_training`).
 - Training: Kampf gegen einen Computer-Gegner frei wählbarer Klasse und Stufe, ohne Belohnung,
   mit Replay – zum Testen von Punkten, Loadout und Taktik.
+- Credits: Ledger mit doppelter Buchführung (Buchungen summieren sich zu 0, Systemkonten als
+  Quellen und Senken) und Saldo je Spieler, der nie negativ wird (Migration `0004_credits`).
+  Gewertete Kämpfe bringen Credits, Umskillen kostet Level × 10 Credits.
 - Website: Arena mit Gegnersuche und letzten Kämpfen, HUD-Replay mit Lebens- und Energiebalken,
   Schadenszahlen, Status, Glitch bei Crits, Geschwindigkeit und Textlog; Replays per Link teilbar.
 

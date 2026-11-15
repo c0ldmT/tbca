@@ -12,6 +12,10 @@ import {
   character,
   community,
   communityMember,
+  creditBalance,
+  creditEntry,
+  InsufficientCreditsError,
+  transferCredits,
   configVersion,
   createDb,
   DEV_SEASON_SLUG,
@@ -144,5 +148,54 @@ describe.skipIf(!url)('Datenbank (Integration)', () => {
     await conn.db.delete(account).where(eq(account.id, acc!.id));
     const left = await conn.db.select().from(identity).where(eq(identity.providerUserId, 'gone'));
     expect(left).toHaveLength(0);
+  });
+
+  it('bucht Credits doppelt, hält den Saldo nicht negativ und rollt Fehler zurück', async () => {
+    const [devSeason] = await conn.db.select().from(season).where(eq(season.slug, DEV_SEASON_SLUG));
+    const [acc] = await conn.db.insert(account).values({}).returning();
+    const seasonId = devSeason!.id;
+
+    const txId = await conn.db.transaction((tx) =>
+      transferCredits(tx, {
+        seasonId,
+        kind: 'pvp_reward',
+        lines: [
+          { accountId: acc!.id, amount: 50 },
+          { system: 'source:pvp', amount: -50 },
+        ],
+      }),
+    );
+    expect(await creditBalance(conn.db, seasonId, acc!.id)).toBe(50);
+    const entries = await conn.db
+      .select()
+      .from(creditEntry)
+      .where(eq(creditEntry.transactionId, txId));
+    expect(entries.reduce((sum, e) => sum + e.amount, 0)).toBe(0);
+
+    const spend = (amount: number) =>
+      conn.db.transaction((tx) =>
+        transferCredits(tx, {
+          seasonId,
+          kind: 'respec',
+          lines: [
+            { accountId: acc!.id, amount: -amount },
+            { system: 'sink:respec', amount },
+          ],
+        }),
+      );
+    await expect(spend(80)).rejects.toBeInstanceOf(InsufficientCreditsError);
+    await spend(30);
+    expect(await creditBalance(conn.db, seasonId, acc!.id)).toBe(20);
+
+    await expect(
+      conn.db.transaction((tx) =>
+        transferCredits(tx, {
+          seasonId,
+          kind: 'broken',
+          lines: [{ accountId: acc!.id, amount: 5 }],
+        }),
+      ),
+    ).rejects.toThrow(RangeError);
+    expect(await creditBalance(conn.db, seasonId, acc!.id)).toBe(20);
   });
 });

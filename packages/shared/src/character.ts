@@ -83,6 +83,8 @@ export const characterResponseSchema = z.object({
   allocated: attributesSchema,
   attributes: attributesSchema,
   unspentPoints: z.number().int(),
+  /** Credits in dieser Season. */
+  credits: z.number().int(),
   respecCost: z.number().int(),
   stats: z.object({
     maxHp: z.number().int(),

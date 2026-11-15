@@ -24,6 +24,7 @@ export interface PvpRewardInput {
 
 export interface PvpReward {
   readonly xp: number;
+  readonly credits: number;
   /** Ob der Kampf als belohnter Kampf zählt (Tageslimit). */
   readonly rewarded: boolean;
   /** Angewendeter Faktor in Promille (Gegner-Abnahme × Underdog). */
@@ -35,6 +36,7 @@ export interface PvpReward {
 
 const NONE = (limit: RewardLimit): PvpReward => ({
   xp: 0,
+  credits: 0,
   rewarded: false,
   factor: 0,
   limit,
@@ -61,10 +63,11 @@ export function pvpReward(config: GameConfig, input: PvpRewardInput): PvpReward 
     ? Math.min(rules.underdogMaxPermille, levelsAbove * rules.underdogPerLevelPermille)
     : 0;
   const factor = roundDiv(repeat * (1000 + underdogBonus), 1000);
-  const base = rules.winXp.base + rules.winXp.perOpponentLevel * input.opponentLevel;
-  const full = input.won ? base : roundDiv(base * rules.lossXpPermille, 1000);
+  const scale = (base: number) =>
+    roundDiv((input.won ? base : roundDiv(base * rules.lossXpPermille, 1000)) * factor, 1000);
   return {
-    xp: roundDiv(full * factor, 1000),
+    xp: scale(rules.winXp.base + rules.winXp.perOpponentLevel * input.opponentLevel),
+    credits: scale(rules.winCredits.base + rules.winCredits.perOpponentLevel * input.opponentLevel),
     rewarded: true,
     factor,
     limit: repeat < 1000 ? 'same_opponent' : 'none',

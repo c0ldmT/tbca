@@ -17,6 +17,7 @@ export type TrainingRequest = z.infer<typeof trainingRequestSchema>;
 
 export interface RewardView {
   xp: number;
+  credits: number;
   rewarded: boolean;
   limit: RewardLimit;
   underdogBonus: number;

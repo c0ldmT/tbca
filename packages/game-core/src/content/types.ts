@@ -166,6 +166,8 @@ export interface PvpRules {
   readonly winXp: { readonly base: number; readonly perOpponentLevel: number };
   /** Anteil der Sieg-XP bei Niederlage (Promille). */
   readonly lossXpPermille: number;
+  /** Credits für einen Sieg: base + perOpponentLevel · Gegner-Level; Niederlage wie bei XP. */
+  readonly winCredits: { readonly base: number; readonly perOpponentLevel: number };
 }
 
 export interface GameConfig {

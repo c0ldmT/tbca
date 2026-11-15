@@ -16,6 +16,8 @@ import {
 } from '@tbca/game-core';
 import type { CharacterResponse, CreateCharacterRequest, LoadoutRequest } from '@tbca/shared';
 
+import { InsufficientCreditsError } from '@tbca/db';
+
 import { ApiError } from '../common/api-error.js';
 import { SeasonService, type CurrentSeason } from '../game/season.js';
 import { CHARACTER_REPOSITORY } from '../tokens.js';
@@ -100,13 +102,19 @@ export class CharacterService {
     return this.update(season, { ...record, allocated });
   }
 
-  /**
-   * Setzt alle freien Punkte zurück. Die Kosten (Level × 10 Credits) werden abgebucht,
-   * sobald das Credits-Ledger existiert; bis dahin ist Umskillen kostenlos.
-   */
+  /** Setzt alle freien Punkte zurück; kostet Level × 10 Credits (laut Konfiguration). */
   async respec(accountId: string): Promise<CharacterResponse> {
     const { season, record } = await this.load(accountId);
-    return this.update(season, { ...record, allocated: NO_POINTS });
+    const spent = ATTRIBUTES.reduce((sum, a) => sum + record.allocated[a], 0);
+    if (spent === 0) return this.view(season, record);
+    return this.update(
+      season,
+      { ...record, allocated: NO_POINTS },
+      {
+        amount: respecCost(season.game, record.level),
+        kind: 'respec',
+      },
+    );
   }
 
   /** Wechselt die Klasse; das Loadout der anderen Klasse bleibt gespeichert. */
@@ -143,7 +151,11 @@ export class CharacterService {
     return { season, record };
   }
 
-  private async update(season: CurrentSeason, record: CharacterRecord): Promise<CharacterResponse> {
+  private async update(
+    season: CurrentSeason,
+    record: CharacterRecord,
+    charge?: { amount: number; kind: 'respec' },
+  ): Promise<CharacterResponse> {
     try {
       validateBuild(season.game, this.build(record, record.loadouts[record.classId]!));
     } catch (error) {
@@ -151,7 +163,14 @@ export class CharacterService {
         throw new ApiError(HttpStatus.BAD_REQUEST, error.code, error.message);
       throw error;
     }
-    await this.repo.save(record);
+    try {
+      await this.repo.save(record, charge);
+    } catch (error) {
+      if (error instanceof InsufficientCreditsError) {
+        throw new ApiError(HttpStatus.CONFLICT, 'insufficient_credits', 'Nicht genug Credits');
+      }
+      throw error;
+    }
     return this.view(season, record);
   }
 
@@ -163,7 +182,7 @@ export class CharacterService {
     return toBuild(record, loadout);
   }
 
-  private view(season: CurrentSeason, record: CharacterRecord): CharacterResponse {
+  private async view(season: CurrentSeason, record: CharacterRecord): Promise<CharacterResponse> {
     const game = season.game;
     const loadout = this.usableLoadout(season, record);
     const snapshot = deriveSnapshot(game, this.build(record, loadout));
@@ -181,6 +200,7 @@ export class CharacterService {
       attributes: snapshot.attributes,
       unspentPoints: unspentPoints(game, record.level, record.allocated),
       respecCost: respecCost(game, record.level),
+      credits: await this.repo.balance(record.accountId, season.id),
       stats: {
         maxHp: stats.maxHp,
         armor: stats.armor,

@@ -135,7 +135,7 @@
       "add": "Increase {{ attr }}",
       "save": "Assign points",
       "respec": "Respec",
-      "respecHint": "Respec resets all assigned points. Later cost: {{ cost }} credits."
+      "respecHint": "Respec resets all assigned points and costs {{ cost }} credits."
     },
     "loadout": {
       "title": "Loadout",
@@ -154,7 +154,8 @@
       "addRule": "Add rule",
       "save": "Save loadout",
       "saved": "Saved."
-    }
+    },
+    "credits": "{{ credits }} credits"
   },
   "classRole": {
     "tank": "Tank, melee",
@@ -270,7 +271,8 @@
     "fight_not_found": "This fight doesn't exist.",
     "http_400": "Invalid request.",
     "http_401": "Please sign in.",
-    "http_404": "Not found."
+    "http_404": "Not found.",
+    "insufficient_credits": "You don't have enough credits for that."
   },
   "pvp": {
     "title": "Arena",
@@ -322,7 +324,7 @@
     "copied": "Link copied",
     "draw": "Draw after {{ rounds }} rounds",
     "winner": "{{ name }} wins after {{ rounds }} rounds",
-    "reward": "+{{ xp }} XP",
+    "reward": "+{{ xp }} XP, +{{ credits }} credits",
     "levelUp": "Reached level {{ level }}!",
     "kind": {
       "pvp_rated": "Rated challenge",

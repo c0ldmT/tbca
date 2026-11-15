@@ -34,7 +34,7 @@ import { ReplayPlayer } from './replay-player';
           @if (result(); as r) {
             <p class="reward" role="status">
               @if (r.reward.rewarded) {
-                {{ t('replay.reward', { xp: r.reward.xp }) }}
+                {{ t('replay.reward', { xp: r.reward.xp, credits: r.reward.credits }) }}
                 @if (r.level.after > r.level.before) {
                   <strong>{{ t('replay.levelUp', { level: r.level.after }) }}</strong>
                 }

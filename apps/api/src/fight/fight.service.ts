@@ -136,6 +136,7 @@ export class FightService {
             won,
             rewarded: reward.rewarded,
             xpAwarded: reward.xp,
+            creditsAwarded: reward.credits,
             opponentCharacterId: opponent.id,
           },
           {
@@ -146,10 +147,12 @@ export class FightService {
             won: result.winner === 1,
             rewarded: false,
             xpAwarded: 0,
+            creditsAwarded: 0,
             opponentCharacterId: me.id,
           },
         ],
       });
+      if (reward.credits > 0) await tx.rewardCredits(season.id, accountId, reward.credits, fightId);
 
       // XP erst nach dem Kampf anrechnen; das Level folgt aus der XP-Kurve der Season.
       let after = me.level;
@@ -164,6 +167,7 @@ export class FightService {
         draw: result.winner === null,
         reward: {
           xp: reward.xp,
+          credits: reward.credits,
           rewarded: reward.rewarded,
           limit: reward.limit,
           underdogBonus: reward.underdogBonus,
@@ -221,6 +225,7 @@ export class FightService {
             won,
             rewarded: false,
             xpAwarded: 0,
+            creditsAwarded: 0,
             opponentCharacterId: null,
           },
           {
@@ -231,6 +236,7 @@ export class FightService {
             won: result.winner === 1,
             rewarded: false,
             xpAwarded: 0,
+            creditsAwarded: 0,
             opponentCharacterId: me.id,
           },
         ],
@@ -240,7 +246,7 @@ export class FightService {
       fightId,
       won,
       draw: result.winner === null,
-      reward: { xp: 0, rewarded: false, limit: 'training', underdogBonus: 0 },
+      reward: { xp: 0, credits: 0, rewarded: false, limit: 'training', underdogBonus: 0 },
       level: { before: me.level, after: me.level },
     };
   }

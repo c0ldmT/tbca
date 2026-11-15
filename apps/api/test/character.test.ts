@@ -135,14 +135,26 @@ describe('Attribute und Umskillen', () => {
     expect(decrease.json().code).toBe('points_decrease');
   });
 
-  it('setzt beim Umskillen alle Punkte zurück', async () => {
+  it('setzt beim Umskillen alle Punkte zurück und bucht Level × 10 Credits ab', async () => {
     await call('PUT', '/api/characters/me/attributes', { str: 5, dex: 0, int: 0, con: 0 });
+    const me = t.characters.records[0]!;
+    t.characters.credit(me.seasonId, me.accountId, 25);
     const res = await call('POST', '/api/characters/me/respec');
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({
       unspentPoints: 5,
       allocated: { str: 0, dex: 0, int: 0, con: 0 },
+      respecCost: 10,
+      credits: 15,
     });
+  });
+
+  it('lehnt Umskillen ohne genug Credits ab und ändert nichts', async () => {
+    await call('PUT', '/api/characters/me/attributes', { str: 5, dex: 0, int: 0, con: 0 });
+    const res = await call('POST', '/api/characters/me/respec');
+    expect(res.statusCode).toBe(409);
+    expect(res.json().code).toBe('insufficient_credits');
+    expect((await call('GET', '/api/characters/me')).json().allocated.str).toBe(5);
   });
 });
 

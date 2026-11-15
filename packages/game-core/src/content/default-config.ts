@@ -304,5 +304,6 @@ export const DEFAULT_GAME_CONFIG: GameConfig = {
     underdogMaxPermille: 500,
     winXp: { base: 40, perOpponentLevel: 20 },
     lossXpPermille: 250,
+    winCredits: { base: 10, perOpponentLevel: 2 },
   },
 };

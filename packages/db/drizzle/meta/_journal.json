@@ -29,6 +29,13 @@
       "when": 1794393701493,
       "tag": "0003_bots_training",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794394101807,
+      "tag": "0004_credits",
+      "breakpoints": true
     }
   ]
 }

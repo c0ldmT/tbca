@@ -1,4 +1,11 @@
-import { account, character, loadout, type Database } from '@tbca/db';
+import {
+  account,
+  character,
+  creditBalance,
+  loadout,
+  transferCredits,
+  type Database,
+} from '@tbca/db';
 import { and, asc, eq, ilike, ne, sql } from 'drizzle-orm';
 
 import {
@@ -122,8 +129,23 @@ export class DrizzleCharacterRepository implements CharacterRepository {
     }
   }
 
-  async save(record: CharacterRecord): Promise<void> {
+  balance(accountId: string, seasonId: string): Promise<number> {
+    return creditBalance(this.db, seasonId, accountId);
+  }
+
+  async save(record: CharacterRecord, charge?: { amount: number; kind: 'respec' }): Promise<void> {
     await this.db.transaction(async (tx) => {
+      if (charge && charge.amount > 0) {
+        await transferCredits(tx, {
+          seasonId: record.seasonId,
+          kind: charge.kind,
+          refId: record.id,
+          lines: [
+            { accountId: record.accountId, amount: -charge.amount },
+            { system: 'sink:respec', amount: charge.amount },
+          ],
+        });
+      }
       await tx
         .update(character)
         .set({

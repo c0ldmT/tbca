@@ -18,6 +18,7 @@ export interface NewFight {
     won: boolean;
     rewarded: boolean;
     xpAwarded: number;
+    creditsAwarded: number;
     opponentCharacterId: string | null;
   }[];
 }
@@ -42,6 +43,13 @@ export interface FightTx {
   insert(fight: NewFight): Promise<string>;
   /** Setzt XP und Level eines Charakters. */
   setProgress(characterId: string, xp: number, level: number): Promise<void>;
+  /** Bucht eine PvP-Belohnung vom Systemkonto auf den Spieler. */
+  rewardCredits(
+    seasonId: string,
+    accountId: string,
+    amount: number,
+    fightId: string,
+  ): Promise<void>;
 }
 
 export interface FightRepository {

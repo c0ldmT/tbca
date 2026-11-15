@@ -27,8 +27,13 @@ export interface CharacterRepository {
   findForAccount(accountId: string, seasonId: string): Promise<CharacterRecord | null>;
   /** Legt Charakter und Loadout an; wirft NameTakenError oder CharacterExistsError. */
   create(record: Omit<CharacterRecord, 'id'>): Promise<CharacterRecord>;
-  /** Speichert Klasse, Punkte und das Loadout der aktuellen Klasse. */
-  save(record: CharacterRecord): Promise<void>;
+  /**
+   * Speichert Klasse, Punkte und das Loadout der aktuellen Klasse; mit `charge` wird in derselben
+   * Transaktion abgebucht (wirft InsufficientCreditsError, wenn der Saldo nicht reicht).
+   */
+  save(record: CharacterRecord, charge?: { amount: number; kind: 'respec' }): Promise<void>;
+  /** Credits des Accounts in der Season. */
+  balance(accountId: string, seasonId: string): Promise<number>;
   isNameTaken(seasonId: string, name: string): Promise<boolean>;
   findById(id: string): Promise<CharacterRecord | null>;
   /** Charaktere der Season, nach Name gefiltert, ohne den eigenen Account, nahe `nearLevel` zuerst. */

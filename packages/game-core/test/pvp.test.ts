@@ -15,12 +15,14 @@ describe('pvpReward', () => {
   it('belohnt Siege nach Gegner-Level und Niederlagen mit einem Viertel', () => {
     expect(pvpReward(config, base)).toEqual({
       xp: 440,
+      credits: 50,
       rewarded: true,
       factor: 1000,
       limit: 'none',
       underdogBonus: 0,
     });
     expect(pvpReward(config, { ...base, won: false }).xp).toBe(110);
+    expect(pvpReward(config, { ...base, won: false }).credits).toBe(13);
   });
 
   it('gibt einen Underdog-Bonus gegen Stärkere, gedeckelt bei +50 %', () => {

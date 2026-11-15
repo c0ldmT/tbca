@@ -2,6 +2,8 @@ import 'reflect-metadata';
 
 import { randomUUID } from 'node:crypto';
 
+import { InsufficientCreditsError } from '@tbca/db';
+
 import {
   DEFAULT_BATTLE_RULES,
   DEFAULT_GAME_CONFIG,
@@ -168,6 +170,19 @@ export class FakeSeasons implements SeasonRepository {
 
 export class InMemoryCharacters implements CharacterRepository {
   readonly records: CharacterRecord[] = [];
+  /** Saldo je `${seasonId}:${accountId}`. */
+  readonly wallets = new Map<string, number>();
+
+  async balance(accountId: string, seasonId: string): Promise<number> {
+    return this.wallets.get(`${seasonId}:${accountId}`) ?? 0;
+  }
+
+  credit(seasonId: string, accountId: string, amount: number): void {
+    const key = `${seasonId}:${accountId}`;
+    const next = (this.wallets.get(key) ?? 0) + amount;
+    if (next < 0) throw new InsufficientCreditsError();
+    this.wallets.set(key, next);
+  }
 
   async findForAccount(accountId: string, seasonId: string): Promise<CharacterRecord | null> {
     const r = this.records.find((c) => c.accountId === accountId && c.seasonId === seasonId);
@@ -183,7 +198,8 @@ export class InMemoryCharacters implements CharacterRepository {
     return structuredClone(created);
   }
 
-  async save(record: CharacterRecord): Promise<void> {
+  async save(record: CharacterRecord, charge?: { amount: number; kind: 'respec' }): Promise<void> {
+    if (charge) this.credit(record.seasonId, record.accountId, -charge.amount);
     const index = this.records.findIndex((c) => c.id === record.id);
     this.records[index] = structuredClone(record);
   }
@@ -246,6 +262,9 @@ export class InMemoryFights implements FightRepository {
       setProgress: async (id, xp, level) => {
         const c = this.characters.records.find((r) => r.id === id)!;
         Object.assign(c, { xp, level });
+      },
+      rewardCredits: async (seasonId, accountId, amount) => {
+        this.characters.credit(seasonId, accountId, amount);
       },
     });
   }

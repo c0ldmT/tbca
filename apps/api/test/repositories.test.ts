@@ -200,6 +200,7 @@ describe.skipIf(!url)('Drizzle-Repositories (Integration)', () => {
               won: true,
               rewarded,
               xpAwarded: 60,
+              creditsAwarded: 0,
               opponentCharacterId: b.id,
             },
             {
@@ -210,6 +211,7 @@ describe.skipIf(!url)('Drizzle-Repositories (Integration)', () => {
               won: false,
               rewarded: false,
               xpAwarded: 0,
+              creditsAwarded: 0,
               opponentCharacterId: a.id,
             },
           ],

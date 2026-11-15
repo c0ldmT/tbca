@@ -57,9 +57,11 @@ describe('PvP-Herausforderungen', () => {
     const body = res.json();
     expect(body.reward.rewarded).toBe(true);
     expect(body.reward.xp).toBe(body.won ? 60 : 15);
+    expect(body.reward.credits).toBe(body.won ? 12 : 3);
 
     const me = (await call(alice, 'GET', '/api/characters/me')).json();
     expect(me.xp).toBe(body.reward.xp);
+    expect(me.credits).toBe(body.reward.credits);
     expect((await call(alice, 'GET', '/api/pvp/status')).json()).toMatchObject({
       day: '2026-11-12',
       rewardedToday: 1,

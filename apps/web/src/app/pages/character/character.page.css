@@ -82,3 +82,8 @@ h1 {
     grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
   }
 }
+
+.credits {
+  font-family: var(--tbca-font-mono);
+  color: var(--tbca-neon-yellow);
+}

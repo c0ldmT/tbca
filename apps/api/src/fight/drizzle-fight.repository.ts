@@ -1,6 +1,6 @@
 import { gunzipSync, gzipSync } from 'node:zlib';
 
-import { character, fight, fightParticipant, type Database } from '@tbca/db';
+import { character, fight, fightParticipant, transferCredits, type Database } from '@tbca/db';
 import type { BattleEvent } from '@tbca/game-core';
 import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 
@@ -64,6 +64,17 @@ export class DrizzleFightRepository implements FightRepository {
         },
         setProgress: async (id, xp, level) => {
           await tx.update(character).set({ xp, level }).where(eq(character.id, id));
+        },
+        rewardCredits: async (seasonId, accountId, amount, fightId) => {
+          await transferCredits(tx, {
+            seasonId,
+            kind: 'pvp_reward',
+            refId: fightId,
+            lines: [
+              { accountId, amount },
+              { system: 'source:pvp', amount: -amount },
+            ],
+          });
         },
       });
     });
