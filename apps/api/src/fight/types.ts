@@ -1,6 +1,6 @@
 import type { BattleInput, BattleResult } from '@tbca/game-core';
 
-export type FightKind = 'pvp_rated' | 'pvp_friendly';
+export type FightKind = 'pvp_rated' | 'pvp_friendly' | 'training';
 
 export interface NewFight {
   seasonId: string;

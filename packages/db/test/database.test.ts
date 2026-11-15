@@ -57,6 +57,15 @@ describe.skipIf(!url)('Datenbank (Integration)', () => {
     expect(configs).toHaveLength(1);
     expect(configs[0]).toMatchObject({ status: 'published', version: 1 });
     expect(configs[0]!.data.battle.actionThreshold).toBe(1000);
+
+    // Bot-Gegner: jede Klasse auf jeder Bot-Stufe, nur einmal angelegt.
+    const bots = await conn.db
+      .select({ name: character.name, level: character.level, isBot: account.isBot })
+      .from(character)
+      .innerJoin(account, eq(account.id, character.accountId))
+      .where(eq(character.seasonId, seasons[0]!.id));
+    expect(bots.filter((b) => b.isBot)).toHaveLength(16);
+    expect(new Set(bots.map((b) => b.level))).toEqual(new Set([1, 3, 6, 10]));
   });
 
   it('ordnet Identitäten eindeutig über Anbieter und Plattform-ID zu', async () => {

@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import {
   challengeRequestSchema,
+  trainingRequestSchema,
   type ChallengeResponse,
   type FightSummary,
   type FightView,
@@ -44,6 +45,13 @@ export class PvpController {
   @HttpCode(201)
   challenge(@Req() req: FastifyRequest, @Body() body: unknown): Promise<ChallengeResponse> {
     return this.fights.challenge(req.auth!.accountId, parseBody(challengeRequestSchema, body));
+  }
+
+  /** Trainingskampf gegen einen Computer-Gegner frei wählbarer Klasse und Stufe. */
+  @Post('training')
+  @HttpCode(201)
+  training(@Req() req: FastifyRequest, @Body() body: unknown): Promise<ChallengeResponse> {
+    return this.fights.training(req.auth!.accountId, parseBody(trainingRequestSchema, body));
   }
 }
 

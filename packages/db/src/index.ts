@@ -9,8 +9,10 @@ export {
 } from './client.js';
 export { MIGRATIONS_FOLDER, runMigrations } from './migrate.js';
 export {
+  BOT_LEVELS,
   CONFIG_SCHEMA_VERSION,
   DEV_COMMUNITY_SLUG,
   DEV_SEASON_SLUG,
+  seedBots,
   seedDevelopment,
 } from './seed.js';

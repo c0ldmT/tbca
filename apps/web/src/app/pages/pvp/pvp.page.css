@@ -116,3 +116,23 @@ h1 {
   font: var(--tbca-text-sm) var(--tbca-font-mono);
   color: var(--tbca-neon-yellow);
 }
+
+.bot-chip {
+  margin-left: var(--tbca-space-2);
+  padding: 0 var(--tbca-space-2);
+  border: 1px solid var(--tbca-line);
+  font: 500 0.75rem / 1.6 var(--tbca-font-mono);
+  color: var(--tbca-text-muted);
+  vertical-align: middle;
+}
+
+.training {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--tbca-space-3);
+}
+
+.training__level {
+  width: 6rem;
+}

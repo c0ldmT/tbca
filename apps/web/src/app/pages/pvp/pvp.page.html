@@ -47,7 +47,12 @@
             @for (o of list; track o.id) {
               <li class="opponent">
                 <div class="opponent__who">
-                  <span class="opponent__name">{{ o.name }}</span>
+                  <span class="opponent__name">
+                    {{ o.name }}
+                    @if (o.isBot) {
+                      <span class="bot-chip">{{ t('pvp.bot') }}</span>
+                    }
+                  </span>
                   <span class="tbca-hint"
                     >{{ t('classes.' + o.classId) }},
                     {{ t('character.level', { level: o.level }) }}</span
@@ -85,6 +90,37 @@
       } @else {
         <p class="tbca-hint">{{ t('pvp.loading') }}</p>
       }
+    </section>
+
+    <section class="tbca-panel" aria-labelledby="training-title">
+      <h2 id="training-title">{{ t('pvp.training.title') }}</h2>
+      <p class="tbca-hint">{{ t('pvp.training.intro') }}</p>
+      <div class="training">
+        <label class="tbca-label">
+          {{ t('pvp.training.class') }}
+          <select class="tbca-select" (change)="trainingClass.set($any($event.target).value)">
+            @for (id of classIds; track id) {
+              <option [value]="id" [selected]="trainingClass() === id">
+                {{ t('classes.' + id) }}
+              </option>
+            }
+          </select>
+        </label>
+        <label class="tbca-label">
+          {{ t('pvp.training.level') }}
+          <input
+            class="tbca-input training__level"
+            type="number"
+            min="1"
+            max="100"
+            [value]="trainingLevel()"
+            (change)="setTrainingLevel($any($event.target).value)"
+          />
+        </label>
+        <button type="button" class="tbca-button" [disabled]="busy() !== null" (click)="train()">
+          {{ t('pvp.training.start') }}
+        </button>
+      </div>
     </section>
 
     <section class="tbca-panel" aria-labelledby="recent-title">

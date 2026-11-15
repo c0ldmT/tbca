@@ -1,4 +1,4 @@
-import type { BattleEvent, ClassId, RewardLimit } from '@tbca/game-core';
+import { CLASS_IDS, type BattleEvent, type ClassId, type RewardLimit } from '@tbca/game-core';
 import { z } from 'zod';
 
 /** POST /api/pvp/challenges */
@@ -7,6 +7,13 @@ export const challengeRequestSchema = z.object({
   mode: z.enum(['rated', 'friendly']),
 });
 export type ChallengeRequest = z.infer<typeof challengeRequestSchema>;
+
+/** POST /api/pvp/training */
+export const trainingRequestSchema = z.object({
+  classId: z.enum(CLASS_IDS),
+  level: z.number().int().min(1).max(1000),
+});
+export type TrainingRequest = z.infer<typeof trainingRequestSchema>;
 
 export interface RewardView {
   xp: number;
@@ -34,6 +41,7 @@ export interface OpponentView {
   name: string;
   level: number;
   classId: ClassId;
+  isBot: boolean;
   /** Erwartete XP bei einem Sieg im gewerteten Modus; 0 wenn er nichts brächte. */
   winXp: number;
   limit: RewardLimit;
@@ -51,7 +59,7 @@ export interface FightCombatantView {
 /** GET /api/fights/:id – alles, was ein Replay braucht. */
 export interface FightView {
   id: string;
-  kind: 'pvp_rated' | 'pvp_friendly';
+  kind: 'pvp_rated' | 'pvp_friendly' | 'training';
   createdAt: string;
   engineVersion: number;
   configVersion: number;
@@ -68,7 +76,7 @@ export interface FightView {
 /** GET /api/fights – eigene letzte Kämpfe. */
 export interface FightSummary {
   id: string;
-  kind: 'pvp_rated' | 'pvp_friendly';
+  kind: 'pvp_rated' | 'pvp_friendly' | 'training';
   createdAt: string;
   won: boolean;
   draw: boolean;

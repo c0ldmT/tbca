@@ -7,6 +7,7 @@ import type {
   FightView,
   OpponentView,
   PvpStatus,
+  TrainingRequest,
 } from '@tbca/shared';
 import { CSRF_HEADER } from '@tbca/shared/constants';
 import { firstValueFrom, type Observable } from 'rxjs';
@@ -30,6 +31,11 @@ export class PvpService {
   challenge(req: ChallengeRequest): Promise<ChallengeResponse> {
     const headers = { [CSRF_HEADER]: this.auth.user()?.csrfToken ?? '' };
     return this.read(this.http.post<ChallengeResponse>('/api/pvp/challenges', req, { headers }));
+  }
+
+  training(req: TrainingRequest): Promise<ChallengeResponse> {
+    const headers = { [CSRF_HEADER]: this.auth.user()?.csrfToken ?? '' };
+    return this.read(this.http.post<ChallengeResponse>('/api/pvp/training', req, { headers }));
   }
 
   recent(): Promise<FightSummary[]> {

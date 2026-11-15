@@ -296,7 +296,17 @@
       "friendly": "Friendly fight: no reward",
       "daily_limit": "Daily limit reached: no reward",
       "level_gap": "Opponent too weak: no reward",
-      "same_opponent": "Already fought this opponent today"
+      "same_opponent": "Already fought this opponent today",
+      "bot": "Bot outside a test season: no reward",
+      "training": "Training: no reward"
+    },
+    "bot": "Bot",
+    "training": {
+      "title": "Training",
+      "intro": "Test points, loadout and tactics against a computer opponent of any class and level. No reward, doesn't count towards the daily limit.",
+      "class": "Class",
+      "level": "Level",
+      "start": "Start training fight"
     }
   },
   "replay": {
@@ -316,7 +326,8 @@
     "levelUp": "Reached level {{ level }}!",
     "kind": {
       "pvp_rated": "Rated challenge",
-      "pvp_friendly": "Friendly fight"
+      "pvp_friendly": "Friendly fight",
+      "training": "Training"
     }
   }
 }

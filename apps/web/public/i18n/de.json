@@ -296,7 +296,17 @@
       "friendly": "Freundschaftskampf: keine Belohnung",
       "daily_limit": "Tageslimit erreicht: keine Belohnung",
       "level_gap": "Gegner zu schwach: keine Belohnung",
-      "same_opponent": "Heute schon gegen diesen Gegner gekämpft"
+      "same_opponent": "Heute schon gegen diesen Gegner gekämpft",
+      "bot": "Bot außerhalb einer Test-Season: keine Belohnung",
+      "training": "Training: keine Belohnung"
+    },
+    "bot": "Bot",
+    "training": {
+      "title": "Training",
+      "intro": "Teste Punkte, Loadout und Taktik gegen einen Computer-Gegner beliebiger Klasse und Stufe. Ohne Belohnung, zählt nicht fürs Tageslimit.",
+      "class": "Klasse",
+      "level": "Stufe",
+      "start": "Trainingskampf starten"
     }
   },
   "replay": {
@@ -316,7 +326,8 @@
     "levelUp": "Level {{ level }} erreicht!",
     "kind": {
       "pvp_rated": "Gewertete Herausforderung",
-      "pvp_friendly": "Freundschaftskampf"
+      "pvp_friendly": "Freundschaftskampf",
+      "training": "Training"
     }
   }
 }

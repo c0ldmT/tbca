@@ -39,7 +39,15 @@ describe('PvP-Herausforderungen', () => {
   it('findet Gegner der Season ohne den eigenen Charakter', async () => {
     const res = await call(alice, 'GET', '/api/pvp/opponents?q=bo');
     expect(res.json()).toEqual([
-      { id: bobId, name: 'Bob', level: 1, classId: 'bruiser', winXp: 60, limit: 'none' },
+      {
+        id: bobId,
+        name: 'Bob',
+        level: 1,
+        classId: 'bruiser',
+        isBot: false,
+        winXp: 60,
+        limit: 'none',
+      },
     ]);
   });
 
@@ -133,5 +141,64 @@ describe('Replays', () => {
       url: '/api/fights/01933b5e-0000-7000-8000-00000000abcd',
     });
     expect(res.statusCode).toBe(404);
+  });
+});
+
+describe('Bots und Training', () => {
+  function addBot(name: string, level: number) {
+    const record = {
+      id: `01933b5e-0000-7000-8000-0000000000${String(t.characters.records.length).padStart(2, '0')}`,
+      accountId: `bot-${name}`,
+      seasonId: t.seasons.current!.id,
+      name,
+      classId: 'netrunner' as const,
+      level,
+      xp: 0,
+      allocated: { str: 0, dex: 0, int: 3, con: 2 },
+      loadouts: {},
+      isBot: true,
+    };
+    t.characters.records.push(record);
+    return record.id;
+  }
+
+  it('zeigt Bots als Gegner und belohnt sie in Test-Seasons', async () => {
+    const botId = addBot('Echo', 1);
+    const list = (await call(alice, 'GET', '/api/pvp/opponents?q=echo')).json();
+    expect(list[0]).toMatchObject({ name: 'Echo', isBot: true, limit: 'none' });
+    expect((await challenge('rated', botId)).json().reward.rewarded).toBe(true);
+  });
+
+  it('belohnt Bots nicht in echten Seasons', async () => {
+    t.seasons.current = { ...t.seasons.current!, isTest: false };
+    const botId = addBot('Echo', 1);
+    expect((await call(alice, 'GET', '/api/pvp/opponents?q=echo')).json()[0].limit).toBe('bot');
+    expect((await challenge('rated', botId)).json().reward).toMatchObject({
+      rewarded: false,
+      limit: 'bot',
+    });
+  });
+
+  it('trainiert gegen einen Computer-Gegner frei wählbarer Klasse und Stufe', async () => {
+    const res = await call(alice, 'POST', '/api/pvp/training', { classId: 'medtech', level: 8 });
+    expect(res.statusCode).toBe(201);
+    const body = res.json();
+    expect(body.reward).toMatchObject({ xp: 0, rewarded: false, limit: 'training' });
+
+    const view = (await t.app.inject({ method: 'GET', url: `/api/fights/${body.fightId}` })).json();
+    expect(view.kind).toBe('training');
+    expect(view.teams[1][0]).toMatchObject({ classId: 'medtech', level: 8 });
+    expect((await call(alice, 'GET', '/api/characters/me')).json().xp).toBe(0);
+    expect((await call(alice, 'GET', '/api/pvp/status')).json().rewardedToday).toBe(0);
+  });
+
+  it('prüft Klasse und Stufe des Trainingsgegners', async () => {
+    const bad = await call(alice, 'POST', '/api/pvp/training', { classId: 'mage', level: 8 });
+    expect(bad.json().code).toBe('invalid_request');
+    const tooHigh = await call(alice, 'POST', '/api/pvp/training', {
+      classId: 'gunner',
+      level: 101,
+    });
+    expect(tooHigh.json().code).toBe('invalid_level');
   });
 });

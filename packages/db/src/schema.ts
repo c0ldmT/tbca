@@ -126,6 +126,8 @@ export const configVersion = pgTable(
 export const account = pgTable('account', {
   id: id(),
   globalRole: globalRole('global_role').notNull().default('player'),
+  /** Computergesteuerter Gegner ohne Identität; kann sich nicht anmelden. */
+  isBot: boolean('is_bot').notNull().default(false),
   /** Bevorzugte Sprache; null = Standard der Community bzw. Browser. */
   locale: locale('locale'),
   createdAt: createdAt(),
@@ -307,7 +309,7 @@ export const loadout = pgTable(
 /** Binärdaten (z. B. das gzip-komprimierte Event-Log). */
 const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () => 'bytea' });
 
-export const fightKind = pgEnum('fight_kind', ['pvp_rated', 'pvp_friendly']);
+export const fightKind = pgEnum('fight_kind', ['pvp_rated', 'pvp_friendly', 'training']);
 export const fightEndReason = pgEnum('fight_end_reason', ['knockout', 'timeout']);
 
 /**

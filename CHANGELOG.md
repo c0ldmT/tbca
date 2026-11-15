@@ -28,6 +28,11 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
   10 Level darunter, Underdog-Bonus, 100/50/0 % gegen denselben Gegner) und XP mit Levelaufstieg.
 - Kämpfe werden mit Seed, Versionen, Momentaufnahmen und gzip-komprimiertem Event-Log gespeichert
   (Migration `0002_fights`); parallele Herausforderungen zählen dank Sperre korrekt.
+- Bot-Gegner: Die Dev-Season enthält 16 computergesteuerte Charaktere (jede Klasse auf Stufe 1, 3,
+  6 und 10) mit plausibler Punkteverteilung; gewertete Kämpfe gegen Bots belohnen nur in
+  Test-Seasons (Migration `0003_bots_training`).
+- Training: Kampf gegen einen Computer-Gegner frei wählbarer Klasse und Stufe, ohne Belohnung,
+  mit Replay – zum Testen von Punkten, Loadout und Taktik.
 - Website: Arena mit Gegnersuche und letzten Kämpfen, HUD-Replay mit Lebens- und Energiebalken,
   Schadenszahlen, Status, Glitch bei Crits, Geschwindigkeit und Textlog; Replays per Link teilbar.
 

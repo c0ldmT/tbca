@@ -2,7 +2,8 @@ import type { GameConfig } from '../content/types.js';
 import { roundDiv } from '../math/fixed.js';
 
 /** Warum ein Kampf keine oder weniger Belohnung bringt; für Anzeige und Logs. */
-export type RewardLimit = 'none' | 'friendly' | 'daily_limit' | 'level_gap' | 'same_opponent';
+export type RewardLimit =
+  'none' | 'friendly' | 'training' | 'daily_limit' | 'level_gap' | 'same_opponent' | 'bot';
 
 export interface PvpRewardInput {
   readonly mode: 'rated' | 'friendly';
@@ -13,6 +14,12 @@ export interface PvpRewardInput {
   readonly rewardedToday: number;
   /** Bereits belohnte Kämpfe heute gegen denselben Gegner (vor diesem). */
   readonly rewardedVsOpponentToday: number;
+  /**
+   * Gegner ist ein Bot. Bots belohnen nur in Test-Seasons, sonst wären sie eine
+   * unbegrenzte XP-Quelle ohne echten Gegner.
+   */
+  readonly opponentIsBot?: boolean;
+  readonly testSeason?: boolean;
 }
 
 export interface PvpReward {
@@ -38,11 +45,12 @@ const NONE = (limit: RewardLimit): PvpReward => ({
  * Belohnung einer Herausforderung (Spezifikation, Abschnitt 9):
  * höchstens N belohnte Kämpfe pro Tag, nichts gegen Gegner mehr als X Level darunter,
  * Underdog-Bonus gegen Stärkere, abnehmend gegen denselben Gegner (100 %, 50 %, 0 %).
- * Freundschaftskämpfe bringen nie etwas.
+ * Freundschaftskämpfe bringen nie etwas, Bots nur in Test-Seasons.
  */
 export function pvpReward(config: GameConfig, input: PvpRewardInput): PvpReward {
   const rules = config.pvp;
   if (input.mode === 'friendly') return NONE('friendly');
+  if (input.opponentIsBot && !input.testSeason) return NONE('bot');
   if (input.rewardedToday >= rules.dailyRewardedFights) return NONE('daily_limit');
   if (input.level - input.opponentLevel > rules.maxLevelsBelow) return NONE('level_gap');
   const repeat = rules.sameOpponentPermille[input.rewardedVsOpponentToday] ?? 0;

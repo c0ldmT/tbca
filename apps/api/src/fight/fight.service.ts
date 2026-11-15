@@ -2,6 +2,9 @@ import { randomUUID } from 'node:crypto';
 
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import {
+  BOT_NAMES,
+  botBuild,
+  deriveSnapshot,
   ENGINE_VERSION,
   levelFromXp,
   pvpReward,
@@ -12,6 +15,7 @@ import {
 import type {
   ChallengeRequest,
   ChallengeResponse,
+  TrainingRequest,
   FightSummary,
   FightView,
   OpponentView,
@@ -62,12 +66,15 @@ export class FightService {
         opponentLevel: o.level,
         rewardedToday: counts.today,
         rewardedVsOpponentToday: counts.byOpponent.get(o.id) ?? 0,
+        opponentIsBot: o.isBot,
+        testSeason: season.isTest,
       });
       return {
         id: o.id,
         name: o.name,
         level: o.level,
         classId: o.classId,
+        isBot: o.isBot,
         winXp: reward.xp,
         limit: reward.limit,
       };
@@ -109,6 +116,8 @@ export class FightService {
         opponentLevel: opponent.level,
         rewardedToday: counts.today,
         rewardedVsOpponentToday: counts.byOpponent.get(opponent.id) ?? 0,
+        opponentIsBot: opponent.isBot ?? false,
+        testSeason: season.isTest,
       });
       const fightId = await tx.insert({
         seasonId: season.id,
@@ -162,6 +171,78 @@ export class FightService {
         level: { before: me.level, after },
       };
     });
+  }
+
+  /**
+   * Trainingskampf gegen einen computergesteuerten Gegner beliebiger Klasse und Stufe.
+   * Zum Ausprobieren von Punkten, Loadout und Taktik: gespeichert und abspielbar, ohne Belohnung.
+   */
+  async training(accountId: string, req: TrainingRequest): Promise<ChallengeResponse> {
+    const { season, me } = await this.mine(accountId);
+    if (req.level > season.game.maxLevel) {
+      throw new ApiError(HttpStatus.BAD_REQUEST, 'invalid_level', 'Ungültiges Level');
+    }
+    const seed = randomUUID();
+    const name = BOT_NAMES[Number.parseInt(seed.slice(0, 8), 16) % BOT_NAMES.length]!;
+    const dummy = deriveSnapshot(
+      season.game,
+      botBuild(season.game, {
+        id: `training-${seed}`,
+        name,
+        classId: req.classId,
+        level: req.level,
+        seed,
+      }),
+    );
+    const teams: CombatantSnapshot[][] = [[snapshotOf(season, me)], [dummy]];
+    const result = simulateBattle({
+      engineVersion: ENGINE_VERSION,
+      configVersion: season.configVersion,
+      seed,
+      rules: season.battle,
+      teams,
+    });
+    const won = result.winner === 0;
+    const fightId = await this.fights.locked(me.id, (tx) =>
+      tx.insert({
+        seasonId: season.id,
+        kind: 'training',
+        seed,
+        configVersion: season.configVersion,
+        input: { rules: season.battle, teams },
+        result,
+        rewardDay: this.today(),
+        participants: [
+          {
+            team: 0,
+            slot: 0,
+            characterId: me.id,
+            initiator: true,
+            won,
+            rewarded: false,
+            xpAwarded: 0,
+            opponentCharacterId: null,
+          },
+          {
+            team: 1,
+            slot: 0,
+            characterId: null,
+            initiator: false,
+            won: result.winner === 1,
+            rewarded: false,
+            xpAwarded: 0,
+            opponentCharacterId: me.id,
+          },
+        ],
+      }),
+    );
+    return {
+      fightId,
+      won,
+      draw: result.winner === null,
+      reward: { xp: 0, rewarded: false, limit: 'training', underdogBonus: 0 },
+      level: { before: me.level, after: me.level },
+    };
   }
 
   async get(id: string): Promise<FightView> {

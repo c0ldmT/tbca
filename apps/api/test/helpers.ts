@@ -215,7 +215,13 @@ export class InMemoryCharacters implements CharacterRepository {
       )
       .sort((a, b) => Math.abs(a.level - nearLevel) - Math.abs(b.level - nearLevel))
       .slice(0, limit)
-      .map(({ id, name, level, classId }) => ({ id, name, level, classId }));
+      .map(({ id, name, level, classId, isBot }) => ({
+        id,
+        name,
+        level,
+        classId,
+        isBot: isBot ?? false,
+      }));
   }
 }
 

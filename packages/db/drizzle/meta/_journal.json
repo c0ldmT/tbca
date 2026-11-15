@@ -22,6 +22,13 @@
       "when": 1794391427058,
       "tag": "0002_fights",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794393701493,
+      "tag": "0003_bots_training",
+      "breakpoints": true
     }
   ]
 }

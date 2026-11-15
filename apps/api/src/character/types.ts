@@ -11,6 +11,8 @@ export interface CharacterRecord {
   xp: number;
   allocated: Attributes;
   loadouts: Partial<Record<ClassId, CharacterBuild['loadout']>>;
+  /** Computergesteuerter Gegner (Bot-Account). */
+  isBot?: boolean;
 }
 
 export class NameTakenError extends Error {
@@ -36,5 +38,5 @@ export interface CharacterRepository {
     excludeAccountId: string,
     nearLevel: number,
     limit: number,
-  ): Promise<Pick<CharacterRecord, 'id' | 'name' | 'level' | 'classId'>[]>;
+  ): Promise<(Pick<CharacterRecord, 'id' | 'name' | 'level' | 'classId'> & { isBot: boolean })[]>;
 }

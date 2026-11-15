@@ -68,3 +68,15 @@ describe('pvpReward', () => {
     });
   });
 });
+
+describe('Bots', () => {
+  it('belohnen nur in Test-Seasons', () => {
+    expect(pvpReward(config, { ...base, opponentIsBot: true, testSeason: true }).rewarded).toBe(
+      true,
+    );
+    expect(pvpReward(config, { ...base, opponentIsBot: true, testSeason: false })).toMatchObject({
+      rewarded: false,
+      limit: 'bot',
+    });
+  });
+});

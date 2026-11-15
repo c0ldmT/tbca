@@ -1,4 +1,4 @@
-import { character, loadout, type Database } from '@tbca/db';
+import { account, character, loadout, type Database } from '@tbca/db';
 import { and, asc, eq, ilike, ne, sql } from 'drizzle-orm';
 
 import {
@@ -47,8 +47,10 @@ export class DrizzleCharacterRepository implements CharacterRepository {
         name: character.name,
         level: character.level,
         classId: character.class,
+        isBot: account.isBot,
       })
       .from(character)
+      .innerJoin(account, eq(account.id, character.accountId))
       .where(
         and(
           eq(character.seasonId, seasonId),
@@ -63,6 +65,10 @@ export class DrizzleCharacterRepository implements CharacterRepository {
 
   private async withLoadouts(row: typeof character.$inferSelect): Promise<CharacterRecord> {
     const loadouts = await this.db.select().from(loadout).where(eq(loadout.characterId, row.id));
+    const [owner] = await this.db
+      .select({ isBot: account.isBot })
+      .from(account)
+      .where(eq(account.id, row.accountId));
     return {
       id: row.id,
       accountId: row.accountId,
@@ -75,6 +81,7 @@ export class DrizzleCharacterRepository implements CharacterRepository {
       loadouts: Object.fromEntries(
         loadouts.map((l) => [l.classId, { abilities: l.abilities, tactics: l.tactics }]),
       ),
+      isBot: owner?.isBot ?? false,
     };
   }
 
