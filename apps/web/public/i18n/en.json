@@ -272,7 +272,13 @@
     "http_400": "Invalid request.",
     "http_401": "Please sign in.",
     "http_404": "Not found.",
-    "insufficient_credits": "You don't have enough credits for that."
+    "insufficient_credits": "You don't have enough credits for that.",
+    "item_not_found": "This item doesn't belong to you (anymore).",
+    "wrong_slot": "This item doesn't fit that slot.",
+    "two_handed_blocks_off_hand": "A two-handed weapon blocks the off hand.",
+    "test_season_only": "Only available in test seasons.",
+    "invalid_slot": "Unknown equipment slot.",
+    "http_403": "That's not allowed."
   },
   "pvp": {
     "title": "Arena",
@@ -331,5 +337,58 @@
       "pvp_friendly": "Friendly fight",
       "training": "Training"
     }
+  },
+  "inventory": {
+    "title": "Equipment",
+    "itemLevel": "Item level {{ level }}",
+    "rarity": "{{ rarity }} stars",
+    "unequip": "Unequip",
+    "empty": "Empty",
+    "backpack": "Inventory ({{ count }})",
+    "noItems": "No other items.",
+    "equip": "Equip",
+    "equipTo": "{{ slot }}",
+    "testLoot": "Roll test loot",
+    "testLootHint": "Test seasons only: a random item at your level, up to 12 stars. In real seasons, items only come from playing."
+  },
+  "slots": {
+    "head": "Head",
+    "torso": "Torso",
+    "legs": "Legs",
+    "feet": "Feet",
+    "hands": "Hands",
+    "main_hand": "Main hand",
+    "off_hand": "Off hand",
+    "implant_1": "Implant 1",
+    "implant_2": "Implant 2",
+    "core_implant": "Core implant"
+  },
+  "items": {
+    "blade": "Blade",
+    "club": "Club",
+    "pistol": "Pistol",
+    "rifle": "Rifle",
+    "cyberdeck": "Cyberdeck",
+    "injector": "Injector",
+    "shield": "Shield",
+    "neural_interface": "Neural interface",
+    "vest": "Armor vest",
+    "pants": "Pants",
+    "boots": "Boots",
+    "gloves": "Gloves",
+    "implant": "Implant",
+    "core_implant": "Core implant"
+  },
+  "itemStats": {
+    "weaponDamage": "Weapon damage",
+    "maxHp": "HP",
+    "armor": "Armor",
+    "firewall": "Firewall",
+    "accuracy": "Accuracy",
+    "evasion": "Evasion",
+    "critChance": "Crit chance",
+    "initiative": "Initiative",
+    "energyRegen": "Energy per turn",
+    "damageDealt": "Damage"
   }
 }

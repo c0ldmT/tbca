@@ -272,7 +272,13 @@
     "http_400": "Ungültige Anfrage.",
     "http_401": "Bitte melde dich an.",
     "http_404": "Nicht gefunden.",
-    "insufficient_credits": "Dafür hast du nicht genug Credits."
+    "insufficient_credits": "Dafür hast du nicht genug Credits.",
+    "item_not_found": "Dieses Item gehört dir nicht (mehr).",
+    "wrong_slot": "Dieses Item passt nicht in diesen Platz.",
+    "two_handed_blocks_off_hand": "Ein Zweihänder blockiert die Nebenhand.",
+    "test_season_only": "Nur in Test-Seasons verfügbar.",
+    "invalid_slot": "Unbekannter Ausrüstungsplatz.",
+    "http_403": "Das ist nicht erlaubt."
   },
   "pvp": {
     "title": "Arena",
@@ -331,5 +337,58 @@
       "pvp_friendly": "Freundschaftskampf",
       "training": "Training"
     }
+  },
+  "inventory": {
+    "title": "Ausrüstung",
+    "itemLevel": "Item-Level {{ level }}",
+    "rarity": "{{ rarity }} Sterne",
+    "unequip": "Ablegen",
+    "empty": "Leer",
+    "backpack": "Inventar ({{ count }})",
+    "noItems": "Keine weiteren Items.",
+    "equip": "Anlegen",
+    "equipTo": "{{ slot }}",
+    "testLoot": "Test-Beute würfeln",
+    "testLootHint": "Nur in Test-Seasons: ein zufälliges Item auf deinem Level, bis Stern 12. In echten Seasons gibt es Items nur durch Spielen."
+  },
+  "slots": {
+    "head": "Kopf",
+    "torso": "Torso",
+    "legs": "Beine",
+    "feet": "Füße",
+    "hands": "Hände",
+    "main_hand": "Haupthand",
+    "off_hand": "Nebenhand",
+    "implant_1": "Implantat 1",
+    "implant_2": "Implantat 2",
+    "core_implant": "Kern-Implantat"
+  },
+  "items": {
+    "blade": "Klinge",
+    "club": "Schlagwaffe",
+    "pistol": "Pistole",
+    "rifle": "Gewehr",
+    "cyberdeck": "Cyberdeck",
+    "injector": "Injektor",
+    "shield": "Schild",
+    "neural_interface": "Neural-Interface",
+    "vest": "Panzerweste",
+    "pants": "Hose",
+    "boots": "Stiefel",
+    "gloves": "Handschuhe",
+    "implant": "Implantat",
+    "core_implant": "Kern-Implantat"
+  },
+  "itemStats": {
+    "weaponDamage": "Waffenschaden",
+    "maxHp": "HP",
+    "armor": "Rüstung",
+    "firewall": "Firewall",
+    "accuracy": "Genauigkeit",
+    "evasion": "Ausweichen",
+    "critChance": "Crit-Chance",
+    "initiative": "Initiative",
+    "energyRegen": "Energie pro Zug",
+    "damageDealt": "Schaden"
   }
 }

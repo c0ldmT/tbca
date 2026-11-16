@@ -175,6 +175,7 @@ export class AttributesPanel {
       classId: c.classId,
       allocated: this.pending(),
       loadout: { abilities: [], tactics: [] },
+      equipment: c.gear,
     });
   });
 

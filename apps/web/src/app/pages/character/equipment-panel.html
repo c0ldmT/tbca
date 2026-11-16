@@ -1,0 +1,73 @@
+<section class="tbca-panel" *transloco="let t" aria-labelledby="gear-title">
+  <h2 id="gear-title">{{ t('inventory.title') }}</h2>
+
+  <ul class="slots">
+    @for (slot of slots; track slot) {
+      <li class="slot">
+        <span class="slot__name">{{ t('slots.' + slot) }}</span>
+        @if (equipped(slot); as item) {
+          <tbca-item-card [item]="item" />
+          <button
+            type="button"
+            class="tbca-button tbca-button--ghost slot__action"
+            [disabled]="busy()"
+            (click)="unequip(slot)"
+          >
+            {{ t('inventory.unequip') }}
+          </button>
+        } @else {
+          <span class="slot__empty">{{ t('inventory.empty') }}</span>
+        }
+      </li>
+    }
+  </ul>
+
+  <div class="backpack-head">
+    <h3>{{ t('inventory.backpack', { count: backpack().length }) }}</h3>
+    @if (testSeason()) {
+      <button
+        type="button"
+        class="tbca-button tbca-button--ghost"
+        [disabled]="busy()"
+        (click)="testLoot()"
+      >
+        {{ t('inventory.testLoot') }}
+      </button>
+    }
+  </div>
+  @if (testSeason()) {
+    <p class="tbca-hint">{{ t('inventory.testLootHint') }}</p>
+  }
+
+  @if (error()) {
+    <p class="tbca-error" role="alert">{{ t('errors.' + error()) }}</p>
+  }
+
+  @if (backpack().length === 0) {
+    <p class="tbca-hint">{{ t('inventory.noItems') }}</p>
+  } @else {
+    <ul class="backpack">
+      @for (item of backpack(); track item.id) {
+        <li class="backpack__item">
+          <tbca-item-card [item]="item" />
+          <div class="backpack__actions">
+            @for (slot of targets(item); track slot) {
+              <button
+                type="button"
+                class="tbca-button tbca-button--ghost"
+                [disabled]="busy()"
+                (click)="equip(slot, item)"
+              >
+                {{
+                  targets(item).length > 1
+                    ? t('inventory.equipTo', { slot: t('slots.' + slot) })
+                    : t('inventory.equip')
+                }}
+              </button>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</section>

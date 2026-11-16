@@ -6,7 +6,7 @@ import { firstValueFrom } from 'rxjs';
 import { toFailure } from './api-failure';
 
 export interface GameConfigResponse {
-  season: { id: string; name: string };
+  season: { id: string; name: string; isTest: boolean };
   configVersion: number;
   game: GameConfig;
 }

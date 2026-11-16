@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
-import type { Attributes, ClassId } from '@tbca/game-core';
-import type { CharacterResponse, LoadoutRequest } from '@tbca/shared';
+import type { Attributes, ClassId, EquipSlot } from '@tbca/game-core';
+import type { CharacterResponse, InventoryView, ItemView, LoadoutRequest } from '@tbca/shared';
 import { CSRF_HEADER } from '@tbca/shared/constants';
 import { firstValueFrom, type Observable } from 'rxjs';
 
@@ -65,6 +65,42 @@ export class CharacterService {
     return this.write((h) =>
       this.http.put<CharacterResponse>('/api/characters/me/class', { classId }, h),
     );
+  }
+
+  inventory(): Promise<InventoryView> {
+    return this.read(this.http.get<InventoryView>('/api/inventory'));
+  }
+
+  async equip(slot: EquipSlot, itemId: string): Promise<InventoryView> {
+    const view = await this.read(
+      this.http.put<InventoryView>(`/api/inventory/equipment/${slot}`, { itemId }, this.csrf()),
+    );
+    await this.refresh();
+    return view;
+  }
+
+  async unequip(slot: EquipSlot): Promise<InventoryView> {
+    const view = await this.read(
+      this.http.delete<InventoryView>(`/api/inventory/equipment/${slot}`, this.csrf()),
+    );
+    await this.refresh();
+    return view;
+  }
+
+  testLoot(): Promise<ItemView> {
+    return this.read(this.http.post<ItemView>('/api/inventory/test-loot', null, this.csrf()));
+  }
+
+  private csrf() {
+    return { headers: { [CSRF_HEADER]: this.auth.user()?.csrfToken ?? '' } };
+  }
+
+  private async read<T>(request: Observable<T>): Promise<T> {
+    try {
+      return await firstValueFrom(request);
+    } catch (error) {
+      throw toFailure(error);
+    }
   }
 
   setLoadout(loadout: LoadoutRequest) {
