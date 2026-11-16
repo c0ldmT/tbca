@@ -1,3 +1,4 @@
+import type { ItemRules } from '../items/types.js';
 import type { Fixed } from '../math/fixed.js';
 
 /**
@@ -199,4 +200,15 @@ export interface GameConfig {
   readonly classes: Readonly<Record<ClassId, ClassDef>>;
   readonly abilities: readonly AbilityDef[];
   readonly pvp: PvpRules;
+  readonly items: ItemRules;
+  readonly loot: LootRules;
+}
+
+export interface LootRules {
+  /** Rarität-Bänder mit Gewicht je Wurf (z. B. pro Million). */
+  readonly rarityBands: readonly {
+    readonly from: number;
+    readonly to: number;
+    readonly weight: number;
+  }[];
 }

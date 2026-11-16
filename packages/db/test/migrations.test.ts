@@ -3,7 +3,9 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { MIGRATIONS_FOLDER } from '../src/index.js';
+import { EQUIP_SLOTS } from '@tbca/game-core';
+
+import { EQUIP_SLOT_VALUES, MIGRATIONS_FOLDER } from '../src/index.js';
 
 describe('Migrationen', () => {
   it('liegen im erwarteten Ordner und sind im Journal erfasst', () => {
@@ -14,5 +16,9 @@ describe('Migrationen', () => {
     for (const { tag } of journal.entries) {
       expect(existsSync(join(MIGRATIONS_FOLDER, `${tag}.sql`))).toBe(true);
     }
+  });
+
+  it('kennt dieselben Ausrüstungsplätze wie game-core', () => {
+    expect([...EQUIP_SLOT_VALUES]).toEqual([...EQUIP_SLOTS]);
   });
 });

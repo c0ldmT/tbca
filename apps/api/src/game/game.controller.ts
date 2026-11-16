@@ -10,13 +10,13 @@ export class GameController {
   /** Spielinhalte der laufenden Season (Klassen, Fähigkeiten, Formeln) für die Website. */
   @Get('config')
   async config(): Promise<{
-    season: { id: string; name: string };
+    season: { id: string; name: string; isTest: boolean };
     configVersion: number;
     game: GameConfig;
   }> {
     const current = await this.seasons.current();
     return {
-      season: { id: current.id, name: current.name },
+      season: { id: current.id, name: current.name, isTest: current.isTest },
       configVersion: current.configVersion,
       game: current.game,
     };

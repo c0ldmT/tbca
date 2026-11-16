@@ -36,6 +36,14 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 - Credits: Ledger mit doppelter Buchführung (Buchungen summieren sich zu 0, Systemkonten als
   Quellen und Senken) und Saldo je Spieler, der nie negativ wird (Migration `0004_credits`).
   Gewertete Kämpfe bringen Credits, Umskillen kostet Level × 10 Credits.
+- Items: Power-Budget aus Slot, Item-Level und Rarität (1 + 0,35 · ln R als Tabelle), 14 Vorlagen
+  aus dem Startset, Affixe nach Tier mit 70–100 % ihres Budgetanteils, Einhand, Zweihand, Schild
+  und Beidhändigkeit; Ausrüstung wirkt auf Attribute, Kampfwerte und den Angriff
+  (Migration `0005_items`).
+- Startausrüstung (Klassenwaffe und Weste) für neue und bestehende Charaktere; in Test-Seasons
+  lässt sich Test-Beute würfeln.
+- Website: Ausrüstung und Inventar auf der Charakterseite mit Sternen in Tierfarbe, Basiswerten,
+  Affixen und Vorschau der Kampfwerte inklusive Ausrüstung.
 - Website: Arena mit Gegnersuche und letzten Kämpfen, HUD-Replay mit Lebens- und Energiebalken,
   Schadenszahlen, Status, Glitch bei Crits, Geschwindigkeit und Textlog; Replays per Link teilbar.
 

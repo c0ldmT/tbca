@@ -9,6 +9,9 @@ import {
   DEFAULT_GAME_CONFIG,
   GameClock,
   ManualTimeSource,
+  type Equipment,
+  type EquipSlot,
+  type ItemData,
 } from '@tbca/game-core';
 
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
@@ -38,6 +41,7 @@ import type {
   RewardCounts,
   StoredFight,
 } from '../src/fight/types.js';
+import type { InventoryRepository, StoredItem } from '../src/inventory/types.js';
 import type { CurrentSeason, SeasonRepository } from '../src/game/season.js';
 import {
   ACCOUNT_REPOSITORY,
@@ -45,6 +49,7 @@ import {
   CLOCK,
   DB_PING,
   FIGHT_REPOSITORY,
+  INVENTORY_REPOSITORY,
   DISCORD_OAUTH,
   SEASON_REPOSITORY,
   SESSION_STORE,
@@ -170,6 +175,13 @@ export class FakeSeasons implements SeasonRepository {
 
 export class InMemoryCharacters implements CharacterRepository {
   readonly records: CharacterRecord[] = [];
+  /** Liefert die Ausrüstung beim Laden mit, wie die Datenbank-Variante. */
+  inventory: InMemoryInventory | null = null;
+
+  private withGear(r: CharacterRecord): CharacterRecord {
+    const copy = structuredClone(r);
+    return this.inventory ? { ...copy, equipment: this.inventory.gearOf(r.id) } : copy;
+  }
   /** Saldo je `${seasonId}:${accountId}`. */
   readonly wallets = new Map<string, number>();
 
@@ -186,7 +198,7 @@ export class InMemoryCharacters implements CharacterRepository {
 
   async findForAccount(accountId: string, seasonId: string): Promise<CharacterRecord | null> {
     const r = this.records.find((c) => c.accountId === accountId && c.seasonId === seasonId);
-    return r ? structuredClone(r) : null;
+    return r ? this.withGear(r) : null;
   }
 
   async create(record: Omit<CharacterRecord, 'id'>): Promise<CharacterRecord> {
@@ -212,7 +224,7 @@ export class InMemoryCharacters implements CharacterRepository {
 
   async findById(id: string): Promise<CharacterRecord | null> {
     const r = this.records.find((c) => c.id === id);
-    return r ? structuredClone(r) : null;
+    return r ? this.withGear(r) : null;
   }
 
   async search(
@@ -238,6 +250,67 @@ export class InMemoryCharacters implements CharacterRepository {
         classId,
         isBot: isBot ?? false,
       }));
+  }
+}
+
+export class InMemoryInventory implements InventoryRepository {
+  readonly items: (StoredItem & { accountId: string; seasonId: string })[] = [];
+  readonly equipped = new Map<string, Partial<Record<EquipSlot, string>>>();
+
+  async listItems(accountId: string, seasonId: string): Promise<StoredItem[]> {
+    return this.items
+      .filter((i) => i.accountId === accountId && i.seasonId === seasonId)
+      .map(({ id, data, source, createdAt }) => ({ id, data, source, createdAt }));
+  }
+
+  async countItems(accountId: string, seasonId: string): Promise<number> {
+    return (await this.listItems(accountId, seasonId)).length;
+  }
+
+  async addItems(
+    accountId: string,
+    seasonId: string,
+    items: readonly { data: ItemData; source: string }[],
+  ) {
+    return items.map((i) => {
+      const id = randomUUID();
+      this.items.push({
+        id,
+        accountId,
+        seasonId,
+        data: structuredClone(i.data),
+        source: i.source,
+        createdAt: new Date(),
+      });
+      return id;
+    });
+  }
+
+  async equipmentOf(characterId: string): Promise<Partial<Record<EquipSlot, string>>> {
+    return { ...(this.equipped.get(characterId) ?? {}) };
+  }
+
+  async setEquipment(
+    characterId: string,
+    changes: Partial<Record<EquipSlot, string | null>>,
+  ): Promise<void> {
+    const current = { ...(this.equipped.get(characterId) ?? {}) };
+    for (const [slot, itemId] of Object.entries(changes) as [EquipSlot, string | null][]) {
+      if (itemId) current[slot] = itemId;
+      else delete current[slot];
+    }
+    this.equipped.set(characterId, current);
+  }
+
+  /** Ausgerüstete Items als Daten, wie sie die Charakter-Repository liefert. */
+  gearOf(characterId: string): Equipment {
+    const byId = new Map(this.items.map((i) => [i.id, i.data]));
+    return Object.fromEntries(
+      Object.entries(this.equipped.get(characterId) ?? {}).map(([slot, id]) => [
+        slot,
+        byId.get(id)!,
+      ]),
+    );
   }
 }
 
@@ -304,6 +377,7 @@ export interface TestApp {
   seasons: FakeSeasons;
   characters: InMemoryCharacters;
   fights: InMemoryFights;
+  inventory: InMemoryInventory;
   time: ManualTimeSource;
   dbUp: { value: boolean };
 }
@@ -315,6 +389,8 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
   const seasons = new FakeSeasons();
   const characters = new InMemoryCharacters();
   const fights = new InMemoryFights(characters);
+  const inventory = new InMemoryInventory();
+  characters.inventory = inventory;
   // 12.11.2026, 12:00 Uhr in Berlin
   const time = new ManualTimeSource(Date.UTC(2026, 10, 12, 11, 0));
   const dbUp = { value: true };
@@ -332,6 +408,8 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
     .useValue(characters)
     .overrideProvider(FIGHT_REPOSITORY)
     .useValue(fights)
+    .overrideProvider(INVENTORY_REPOSITORY)
+    .useValue(inventory)
     .overrideProvider(CLOCK)
     .useValue(new GameClock({ source: time.read }))
     .overrideProvider(DB_PING)
@@ -346,7 +424,7 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
   await configureApp(app, env);
   await app.init();
   await app.getHttpAdapter().getInstance().ready();
-  return { app, accounts, sessions, discord, seasons, characters, fights, time, dbUp };
+  return { app, accounts, sessions, discord, seasons, characters, fights, inventory, time, dbUp };
 }
 
 /** Liest Set-Cookie-Header als Map name → { value, attribute-string }. */

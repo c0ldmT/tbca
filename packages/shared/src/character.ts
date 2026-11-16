@@ -1,4 +1,10 @@
-import { ATTRIBUTES, CLASS_IDS, STATUS_KINDS } from '@tbca/game-core';
+import {
+  ATTRIBUTES,
+  CLASS_IDS,
+  STATUS_KINDS,
+  type EquipSlot,
+  type ItemData,
+} from '@tbca/game-core';
 import { z } from 'zod';
 
 import { checkName, NAME_MAX_LENGTH } from './names.js';
@@ -100,5 +106,7 @@ export const characterResponseSchema = z.object({
     threat: z.number().int(),
   }),
   loadout: loadoutRequestSchema,
+  /** Ausgerüstete Items, z. B. für die Vorschau der Kampfwerte im Browser. */
+  gear: z.custom<Partial<Record<EquipSlot, ItemData>>>((v) => typeof v === 'object' && v !== null),
 });
 export type CharacterResponse = z.infer<typeof characterResponseSchema>;

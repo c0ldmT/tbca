@@ -36,6 +36,13 @@
       "when": 1794394101807,
       "tag": "0004_credits",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794396569217,
+      "tag": "0005_items",
+      "breakpoints": true
     }
   ]
 }

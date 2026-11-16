@@ -44,6 +44,22 @@ export {
   type CharacterBuild,
 } from './character/build.js';
 export { levelFromXp, totalXpForLevel, xpToNext } from './character/xp.js';
+export * from './items/types.js';
+export {
+  equipmentBonus,
+  findTemplate,
+  ItemError,
+  itemBudget,
+  rarityFactor,
+  rarityTier,
+  rollItem,
+  slotsFor,
+  validateEquipment,
+  type Equipment,
+  type EquipmentBonus,
+  type RollItemInput,
+} from './items/items.js';
+export { rollLoot, rollRarity } from './items/loot.js';
 export { BOT_NAMES, botBuild, type BotSpec } from './bots/bot-build.js';
 export { pvpReward, type PvpReward, type PvpRewardInput, type RewardLimit } from './pvp/rewards.js';
 

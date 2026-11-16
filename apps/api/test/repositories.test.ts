@@ -17,6 +17,7 @@ import {
   defaultLoadout,
   deriveSnapshot,
   ENGINE_VERSION,
+  rollItem,
   simulateBattle,
 } from '@tbca/game-core';
 import { eq } from 'drizzle-orm';
@@ -26,6 +27,7 @@ import { DrizzleAccountRepository, DrizzleSessionStore } from '../src/auth/drizz
 import { DrizzleCharacterRepository } from '../src/character/drizzle-character.repository.js';
 import { CharacterExistsError, NameTakenError } from '../src/character/types.js';
 import { DrizzleFightRepository } from '../src/fight/drizzle-fight.repository.js';
+import { DrizzleInventoryRepository } from '../src/inventory/drizzle-inventory.repository.js';
 import { DrizzleSeasonRepository } from '../src/game/season.js';
 
 const url = process.env['TBCA_TEST_DATABASE_URL'];
@@ -231,5 +233,45 @@ describe.skipIf(!url)('Drizzle-Repositories (Integration)', () => {
     expect(stored!.participants).toHaveLength(2);
     expect(await repo.listForCharacter(b.id, 10)).toHaveLength(3);
     expect((await chars.findById(a.id))!.xp).toBe(60);
+  });
+
+  it('speichert Items und Ausrüstung und liefert sie mit dem Charakter', async () => {
+    const current = (await new DrizzleSeasonRepository(conn.db).findCurrent())!;
+    const chars = new DrizzleCharacterRepository(conn.db);
+    const [acc] = await conn.db.insert(account).values({}).returning();
+    const c = await chars.create({
+      accountId: acc!.id,
+      seasonId: current.id,
+      name: `Gear${Date.now() % 100000}`,
+      classId: 'gunner',
+      level: 1,
+      xp: 0,
+      allocated: { str: 0, dex: 0, int: 0, con: 0 },
+      loadouts: {},
+    });
+    const inv = new DrizzleInventoryRepository(conn.db);
+    const pistol = rollItem(DEFAULT_GAME_CONFIG, {
+      templateId: 'pistol',
+      itemLevel: 3,
+      rarity: 5,
+      seed: 1,
+    });
+    const rifle = rollItem(DEFAULT_GAME_CONFIG, {
+      templateId: 'rifle',
+      itemLevel: 3,
+      rarity: 2,
+      seed: 2,
+    });
+    const [p, r] = await inv.addItems(acc!.id, current.id, [
+      { data: pistol, source: 'test' },
+      { data: rifle, source: 'test' },
+    ]);
+    expect(await inv.countItems(acc!.id, current.id)).toBe(2);
+
+    await inv.setEquipment(c.id, { main_hand: p! });
+    await inv.setEquipment(c.id, { off_hand: p!, main_hand: r! }); // Item wechselt den Platz
+    expect(await inv.equipmentOf(c.id)).toEqual({ off_hand: p, main_hand: r });
+    await inv.setEquipment(c.id, { off_hand: null });
+    expect((await chars.findById(c.id))!.equipment).toEqual({ main_hand: rifle });
   });
 });

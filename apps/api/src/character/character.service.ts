@@ -19,6 +19,7 @@ import type { CharacterResponse, CreateCharacterRequest, LoadoutRequest } from '
 import { InsufficientCreditsError } from '@tbca/db';
 
 import { ApiError } from '../common/api-error.js';
+import { InventoryService } from '../inventory/inventory.service.js';
 import { SeasonService, type CurrentSeason } from '../game/season.js';
 import { CHARACTER_REPOSITORY } from '../tokens.js';
 import {
@@ -39,10 +40,13 @@ export class CharacterService {
   constructor(
     @Inject(CHARACTER_REPOSITORY) private readonly repo: CharacterRepository,
     @Inject(SeasonService) private readonly seasons: SeasonService,
+    @Inject(InventoryService) private readonly inventory: InventoryService,
   ) {}
 
   async get(accountId: string): Promise<CharacterResponse> {
     const { season, record } = await this.load(accountId);
+    // Charaktere von vor der Item-Einführung bekommen ihre Startausrüstung beim ersten Abruf.
+    if (await this.inventory.ensureStarterKit(season, record)) return this.get(accountId);
     return this.view(season, record);
   }
 
@@ -59,7 +63,9 @@ export class CharacterService {
         allocated: NO_POINTS,
         loadouts: { [req.classId]: defaultLoadout(season.game, req.classId, 1) },
       });
-      return this.view(season, record);
+      await this.inventory.ensureStarterKit(season, record);
+      const fresh = await this.repo.findForAccount(accountId, season.id);
+      return await this.view(season, fresh ?? record);
     } catch (error) {
       if (error instanceof NameTakenError) {
         throw new ApiError(
@@ -201,6 +207,7 @@ export class CharacterService {
       unspentPoints: unspentPoints(game, record.level, record.allocated),
       respecCost: respecCost(game, record.level),
       credits: await this.repo.balance(record.accountId, season.id),
+      gear: record.equipment ?? {},
       stats: {
         maxHp: stats.maxHp,
         armor: stats.armor,
@@ -230,6 +237,7 @@ export function toBuild(
     classId: record.classId,
     allocated: record.allocated,
     loadout,
+    equipment: record.equipment ?? {},
   };
 }
 

@@ -7,7 +7,14 @@
  * - Spielbezogene Tabellen tragen eine `season_id`; Spielwerte liegen versioniert in
  *   `config_version` und hängen an einer Season.
  */
-import type { BattleInput, BattleRules, GameConfig, TacticRule } from '@tbca/game-core';
+import type {
+  BattleInput,
+  BattleRules,
+  EquipSlot,
+  GameConfig,
+  ItemData,
+  TacticRule,
+} from '@tbca/game-core';
 import { sql } from 'drizzle-orm';
 import {
   bigint,
@@ -425,4 +432,72 @@ export const wallet = pgTable(
     primaryKey({ columns: [t.seasonId, t.accountId] }),
     check('wallet_balance_check', sql`${t.balance} >= 0`),
   ],
+);
+
+// --- Items (Abschnitt 7) -----------------------------------------------------
+
+export const itemBinding = pgEnum('item_binding', ['account', 'tradeable']);
+/**
+ * Plätze wie EQUIP_SLOTS in game-core. Hier ausgeschrieben, weil drizzle-kit das Schema ohne
+ * Laufzeit-Import aus anderen Paketen laden muss; ein Test prüft die Übereinstimmung.
+ */
+export const EQUIP_SLOT_VALUES = [
+  'head',
+  'torso',
+  'legs',
+  'feet',
+  'hands',
+  'main_hand',
+  'off_hand',
+  'implant_1',
+  'implant_2',
+  'core_implant',
+] as const satisfies readonly EquipSlot[];
+export const equipSlot = pgEnum('equip_slot', EQUIP_SLOT_VALUES);
+
+/**
+ * Ein gewürfeltes Item im Besitz eines Accounts in einer Season. Die Werte (Basis, Affixe)
+ * stehen als JSON in `data`, Budget und Rarität zusätzlich als Spalten für Auswertungen.
+ * Bis zur Handelsphase sind alle Items account-gebunden.
+ */
+export const itemInstance = pgTable(
+  'item_instance',
+  {
+    id: id(),
+    seasonId: uuid('season_id')
+      .notNull()
+      .references(() => season.id, { onDelete: 'cascade' }),
+    accountId: uuid('account_id')
+      .notNull()
+      .references(() => account.id, { onDelete: 'cascade' }),
+    templateId: text('template_id').notNull(),
+    itemLevel: integer('item_level').notNull(),
+    rarity: integer('rarity').notNull(),
+    budget: integer('budget').notNull(),
+    data: jsonb('data').$type<ItemData>().notNull(),
+    binding: itemBinding('binding').notNull().default('account'),
+    /** Herkunft, z. B. starter, test, dungeon. */
+    source: text('source').notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index('item_instance_owner_idx').on(t.accountId, t.seasonId),
+    check('item_instance_values_check', sql`${t.itemLevel} >= 1 AND ${t.rarity} >= 1`),
+  ],
+);
+
+/** Ausgerüstete Items je Charakter und Platz; ein Item steckt höchstens in einem Platz. */
+export const equipment = pgTable(
+  'equipment',
+  {
+    characterId: uuid('character_id')
+      .notNull()
+      .references(() => character.id, { onDelete: 'cascade' }),
+    slot: equipSlot('slot').notNull(),
+    itemId: uuid('item_id')
+      .notNull()
+      .unique()
+      .references(() => itemInstance.id, { onDelete: 'cascade' }),
+  },
+  (t) => [primaryKey({ columns: [t.characterId, t.slot] })],
 );

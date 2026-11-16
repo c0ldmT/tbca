@@ -1,3 +1,4 @@
+import type { ItemRules, ItemStat } from '../items/types.js';
 import type { AbilityDef, ClassDef, GameConfig } from './types.js';
 
 /**
@@ -272,6 +273,128 @@ const abilities: AbilityDef[] = [
   },
 ];
 
+const ARMOR_AFFIXES: ItemStat[] = ['con', 'maxHp', 'armor', 'firewall', 'evasion', 'initiative'];
+const WEAPON_AFFIXES: ItemStat[] = ['str', 'dex', 'int', 'accuracy', 'critChance', 'damageDealt'];
+const IMPLANT_AFFIXES: ItemStat[] = [
+  'str',
+  'dex',
+  'int',
+  'con',
+  'initiative',
+  'critChance',
+  'energyRegen',
+];
+
+/** Startset an Item-Vorlagen und Budget-Regeln (Abschnitt 7). */
+const items: ItemRules = {
+  categoryBudget: {
+    head: 6,
+    torso: 8,
+    legs: 6,
+    feet: 4,
+    hands: 4,
+    weapon_1h: 10,
+    weapon_2h: 20,
+    shield: 6,
+    implant: 5,
+    core_implant: 7,
+  },
+  baseSharePermille: {
+    head: 600,
+    torso: 600,
+    legs: 600,
+    feet: 600,
+    hands: 600,
+    weapon_1h: 600,
+    weapon_2h: 600,
+    shield: 600,
+    implant: 0,
+    core_implant: 0,
+  },
+  statCost: {
+    str: 4,
+    dex: 4,
+    int: 4,
+    con: 4,
+    maxHp: 1,
+    armor: 1,
+    firewall: 1,
+    accuracy: 2,
+    evasion: 2,
+    critChance: 1,
+    initiative: 3,
+    energyRegen: 6,
+    damageDealt: 2,
+    weaponDamage: 4,
+  },
+  weaponDamageFloor: 12,
+  affixCount: [
+    [0, 1],
+    [1, 2],
+    [2, 3],
+    [3, 4],
+  ],
+  affixRollMinPermille: 700,
+  offHandDamagePermille: 500,
+  templates: [
+    {
+      id: 'blade',
+      category: 'weapon_1h',
+      weapon: { kind: 'physical', scalesWith: 'str', scaling: 9_000 },
+      base: { weaponDamage: 1 },
+      affixPool: WEAPON_AFFIXES,
+    },
+    {
+      id: 'club',
+      category: 'weapon_1h',
+      weapon: { kind: 'physical', scalesWith: 'str', scaling: 10_000 },
+      base: { weaponDamage: 1 },
+      affixPool: WEAPON_AFFIXES,
+    },
+    {
+      id: 'pistol',
+      category: 'weapon_1h',
+      weapon: { kind: 'physical', scalesWith: 'dex', scaling: 7_500 },
+      base: { weaponDamage: 1 },
+      affixPool: WEAPON_AFFIXES,
+    },
+    {
+      id: 'rifle',
+      category: 'weapon_2h',
+      weapon: { kind: 'physical', scalesWith: 'dex', scaling: 9_000 },
+      base: { weaponDamage: 1 },
+      affixPool: WEAPON_AFFIXES,
+    },
+    {
+      id: 'cyberdeck',
+      category: 'weapon_1h',
+      weapon: { kind: 'tech', scalesWith: 'int', scaling: 9_000 },
+      base: { weaponDamage: 1 },
+      affixPool: WEAPON_AFFIXES,
+    },
+    {
+      id: 'injector',
+      category: 'weapon_1h',
+      weapon: { kind: 'tech', scalesWith: 'int', scaling: 8_000 },
+      base: { weaponDamage: 1 },
+      affixPool: [...WEAPON_AFFIXES, 'con'],
+    },
+    { id: 'shield', category: 'shield', base: { armor: 2, firewall: 1 }, affixPool: ARMOR_AFFIXES },
+    {
+      id: 'neural_interface',
+      category: 'head',
+      base: { firewall: 2, armor: 1 },
+      affixPool: ARMOR_AFFIXES,
+    },
+    { id: 'vest', category: 'torso', base: { armor: 2, firewall: 1 }, affixPool: ARMOR_AFFIXES },
+    { id: 'pants', category: 'legs', base: { armor: 1, firewall: 1 }, affixPool: ARMOR_AFFIXES },
+    { id: 'boots', category: 'feet', base: { armor: 1, evasion: 1 }, affixPool: ARMOR_AFFIXES },
+    { id: 'gloves', category: 'hands', base: { armor: 1, accuracy: 1 }, affixPool: ARMOR_AFFIXES },
+    { id: 'implant', category: 'implant', base: {}, affixPool: IMPLANT_AFFIXES },
+    { id: 'core_implant', category: 'core_implant', base: {}, affixPool: IMPLANT_AFFIXES },
+  ],
+};
+
 export const DEFAULT_GAME_CONFIG: GameConfig = {
   maxLevel: 100,
   baseAttributes: { str: 5, dex: 5, int: 5, con: 5 },
@@ -305,5 +428,17 @@ export const DEFAULT_GAME_CONFIG: GameConfig = {
     winXp: { base: 40, perOpponentLevel: 20 },
     lossXpPermille: 250,
     winCredits: { base: 10, perOpponentLevel: 2 },
+  },
+  items,
+  loot: {
+    // Gewichte pro Million Würfe: 70 %, 25 %, 4,9 %, 0,1 %, 0,001 %, Stern 16 kalibriert.
+    rarityBands: [
+      { from: 1, to: 3, weight: 700_000 },
+      { from: 4, to: 6, weight: 250_000 },
+      { from: 7, to: 9, weight: 49_000 },
+      { from: 10, to: 12, weight: 1_000 },
+      { from: 13, to: 15, weight: 10 },
+      { from: 16, to: 16, weight: 1 },
+    ],
   },
 };

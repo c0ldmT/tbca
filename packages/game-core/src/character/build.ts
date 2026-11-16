@@ -9,6 +9,7 @@ import type {
   TacticRule,
 } from '../content/types.js';
 import { ATTRIBUTES } from '../content/types.js';
+import { equipmentBonus, type Equipment } from '../items/items.js';
 import { clamp, roundDiv } from '../math/fixed.js';
 
 /** Was ein Spieler an seinem Charakter festlegt; alles andere wird abgeleitet. */
@@ -24,6 +25,8 @@ export interface CharacterBuild {
     readonly abilities: readonly string[];
     readonly tactics: readonly TacticRule[];
   };
+  /** Ausgerüstete Items; fehlt die Haupthand-Waffe, kämpft die Klasse mit ihrer Startwaffe. */
+  readonly equipment?: Equipment;
 }
 
 export class BuildError extends Error {
@@ -167,12 +170,22 @@ export function evalStat(f: StatFormula, level: number, attrs: Attributes): numb
 export function deriveSnapshot(config: GameConfig, build: CharacterBuild): CombatantSnapshot {
   validateBuild(config, build);
   const cls = config.classes[build.classId];
-  const attributes = totalAttributes(config, build);
+  const gear = equipmentBonus(config, build.equipment ?? {});
+  const own = totalAttributes(config, build);
+  const attributes = {
+    str: own.str + gear.attributes.str,
+    dex: own.dex + gear.attributes.dex,
+    int: own.int + gear.attributes.int,
+    con: own.con + gear.attributes.con,
+  };
   const stat = (f: StatFormula) => evalStat(f, build.level, attributes);
   const energyMax = stat(config.stats.energyMax);
   const abilityDefs = build.loadout.abilities.map((id) =>
     config.abilities.find((a) => a.id === id)!,
   );
+  const weapon = gear.attack ?? cls.starterWeapon;
+  const passive = cls.passive.modifiers;
+  const gearDamage = gear.modifiers.damageDealt ?? 0;
 
   return {
     id: build.id,
@@ -183,26 +196,29 @@ export function deriveSnapshot(config: GameConfig, build: CharacterBuild): Comba
     affinity: cls.affinity,
     attributes,
     stats: {
-      maxHp: Math.max(1, stat(config.stats.maxHp)),
-      armor: stat(config.stats.armor),
-      firewall: stat(config.stats.firewall),
-      initiative: Math.max(1, stat(config.stats.initiative)),
-      accuracy: stat(config.stats.accuracy),
-      evasion: stat(config.stats.evasion),
-      critChance: clamp(stat(config.stats.critChance), 0, 1000),
+      maxHp: Math.max(1, stat(config.stats.maxHp) + gear.stats.maxHp),
+      armor: stat(config.stats.armor) + gear.stats.armor,
+      firewall: stat(config.stats.firewall) + gear.stats.firewall,
+      initiative: Math.max(1, stat(config.stats.initiative) + gear.stats.initiative),
+      accuracy: stat(config.stats.accuracy) + gear.stats.accuracy,
+      evasion: stat(config.stats.evasion) + gear.stats.evasion,
+      critChance: clamp(stat(config.stats.critChance) + gear.stats.critChance, 0, 1000),
       critDamage: Math.max(10_000, stat(config.stats.critDamage)),
       threat: cls.threat,
       energyMax,
       energyStart: roundDiv(energyMax * config.energyStartPermille, 1000),
-      energyRegen: stat(config.stats.energyRegen),
+      energyRegen: stat(config.stats.energyRegen) + gear.stats.energyRegen,
     },
     attack: {
-      kind: cls.starterWeapon.kind,
-      base: cls.starterWeapon.base,
-      attribute: attributes[cls.starterWeapon.scalesWith],
-      scaling: cls.starterWeapon.scaling,
+      kind: weapon.kind,
+      base: 'base' in weapon ? weapon.base : 0,
+      attribute: attributes[weapon.scalesWith],
+      scaling: weapon.scaling,
     },
-    modifiers: cls.passive.modifiers,
+    modifiers:
+      gearDamage === 0
+        ? passive
+        : { ...passive, damageDealt: (passive.damageDealt ?? 0) + gearDamage },
     abilities: abilityDefs,
     tactics: build.loadout.tactics,
   };

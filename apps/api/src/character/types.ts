@@ -1,4 +1,4 @@
-import type { Attributes, CharacterBuild, ClassId } from '@tbca/game-core';
+import type { Attributes, CharacterBuild, ClassId, Equipment } from '@tbca/game-core';
 
 /** Gespeicherter Charakter einer Season mit seinen Loadouts je Klasse. */
 export interface CharacterRecord {
@@ -13,6 +13,8 @@ export interface CharacterRecord {
   loadouts: Partial<Record<ClassId, CharacterBuild['loadout']>>;
   /** Computergesteuerter Gegner (Bot-Account). */
   isBot?: boolean;
+  /** Ausgerüstete Items (beim Laden gefüllt). */
+  equipment?: Equipment;
 }
 
 export class NameTakenError extends Error {

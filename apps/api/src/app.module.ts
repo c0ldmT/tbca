@@ -9,6 +9,7 @@ import type { Env } from './config/env.js';
 import { DbModule } from './db/db.module.js';
 import { FightModule } from './fight/fight.module.js';
 import { GameModule } from './game/game.module.js';
+import { InventoryModule } from './inventory/inventory.module.js';
 import { HealthModule } from './health/health.module.js';
 
 @Module({})
@@ -26,6 +27,7 @@ export class AppModule {
         GameModule,
         CharacterModule,
         FightModule,
+        InventoryModule,
       ],
     };
   }

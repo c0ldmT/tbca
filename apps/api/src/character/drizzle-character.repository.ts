@@ -2,6 +2,8 @@ import {
   account,
   character,
   creditBalance,
+  equipment,
+  itemInstance,
   loadout,
   transferCredits,
   type Database,
@@ -76,6 +78,11 @@ export class DrizzleCharacterRepository implements CharacterRepository {
       .select({ isBot: account.isBot })
       .from(account)
       .where(eq(account.id, row.accountId));
+    const gear = await this.db
+      .select({ slot: equipment.slot, data: itemInstance.data })
+      .from(equipment)
+      .innerJoin(itemInstance, eq(itemInstance.id, equipment.itemId))
+      .where(eq(equipment.characterId, row.id));
     return {
       id: row.id,
       accountId: row.accountId,
@@ -89,6 +96,7 @@ export class DrizzleCharacterRepository implements CharacterRepository {
         loadouts.map((l) => [l.classId, { abilities: l.abilities, tactics: l.tactics }]),
       ),
       isBot: owner?.isBot ?? false,
+      equipment: Object.fromEntries(gear.map((g) => [g.slot, g.data])),
     };
   }
 
