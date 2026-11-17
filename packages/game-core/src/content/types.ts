@@ -1,4 +1,4 @@
-import type { ItemRules } from '../items/types.js';
+import type { CraftingRules, ItemRules, ShopRules } from '../items/types.js';
 import type { Fixed } from '../math/fixed.js';
 
 /**
@@ -202,6 +202,8 @@ export interface GameConfig {
   readonly pvp: PvpRules;
   readonly items: ItemRules;
   readonly loot: LootRules;
+  readonly crafting: CraftingRules;
+  readonly shop: ShopRules;
 }
 
 export interface LootRules {

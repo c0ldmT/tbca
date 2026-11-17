@@ -2,7 +2,7 @@ import 'reflect-metadata';
 
 import { randomUUID } from 'node:crypto';
 
-import { InsufficientCreditsError } from '@tbca/db';
+import { InsufficientCreditsError, InsufficientMaterialsError } from '@tbca/db';
 
 import {
   DEFAULT_BATTLE_RULES,
@@ -42,6 +42,12 @@ import type {
   StoredFight,
 } from '../src/fight/types.js';
 import type { InventoryRepository, StoredItem } from '../src/inventory/types.js';
+import {
+  AlreadyPurchasedError,
+  ItemEquippedError,
+  type EconomyChange,
+  type EconomyRepository,
+} from '../src/economy/types.js';
 import type { CurrentSeason, SeasonRepository } from '../src/game/season.js';
 import {
   ACCOUNT_REPOSITORY,
@@ -50,6 +56,7 @@ import {
   DB_PING,
   FIGHT_REPOSITORY,
   INVENTORY_REPOSITORY,
+  ECONOMY_REPOSITORY,
   DISCORD_OAUTH,
   SEASON_REPOSITORY,
   SESSION_STORE,
@@ -314,6 +321,68 @@ export class InMemoryInventory implements InventoryRepository {
   }
 }
 
+export class InMemoryEconomy implements EconomyRepository {
+  readonly stackMap = new Map<string, Record<string, number>>();
+  readonly purchaseSet = new Set<string>();
+
+  constructor(
+    private readonly characters: InMemoryCharacters,
+    private readonly inventory: InMemoryInventory,
+  ) {}
+
+  async commit(change: EconomyChange): Promise<{ addedIds: string[] }> {
+    const { seasonId, accountId } = change;
+    // Erst alles prüfen, dann alles anwenden – wie eine Transaktion.
+    const balance = await this.characters.balance(accountId, seasonId);
+    if (change.credits && balance + change.credits.amount < 0) throw new InsufficientCreditsError();
+    const stacks = { ...(this.stackMap.get(`${seasonId}:${accountId}`) ?? {}) };
+    for (const [id, delta] of Object.entries(change.stacks ?? {})) {
+      stacks[id] = (stacks[id] ?? 0) + delta;
+      if (stacks[id]! < 0) throw new InsufficientMaterialsError(id);
+    }
+    const equipped = new Set(
+      [...this.inventory.equipped.values()].flatMap((e) => Object.values(e)),
+    );
+    for (const id of change.deleteItems ?? []) {
+      if (equipped.has(id)) throw new ItemEquippedError();
+      if (!this.inventory.items.some((i) => i.id === id && i.accountId === accountId))
+        throw new ItemEquippedError('fehlt');
+    }
+    const purchaseKey =
+      change.purchase &&
+      `${seasonId}:${accountId}:${change.purchase.day}:${change.purchase.offerId}`;
+    if (purchaseKey && this.purchaseSet.has(purchaseKey)) throw new AlreadyPurchasedError();
+
+    if (change.credits) this.characters.credit(seasonId, accountId, change.credits.amount);
+    this.stackMap.set(`${seasonId}:${accountId}`, stacks);
+    for (const id of change.deleteItems ?? []) {
+      this.inventory.items.splice(
+        this.inventory.items.findIndex((i) => i.id === id),
+        1,
+      );
+    }
+    for (const u of change.updateItems ?? []) {
+      this.inventory.items.find((i) => i.id === u.id)!.data = structuredClone(u.data);
+    }
+    const addedIds = await this.inventory.addItems(accountId, seasonId, change.addItems ?? []);
+    if (purchaseKey) this.purchaseSet.add(purchaseKey);
+    return { addedIds };
+  }
+
+  async stacks(accountId: string, seasonId: string): Promise<Record<string, number>> {
+    return Object.fromEntries(
+      Object.entries(this.stackMap.get(`${seasonId}:${accountId}`) ?? {}).filter(([, q]) => q > 0),
+    );
+  }
+
+  async purchases(accountId: string, seasonId: string, day: string): Promise<string[]> {
+    const prefix = `${seasonId}:${accountId}:${day}:`;
+    return [...this.purchaseSet]
+      .filter((k) => k.startsWith(prefix))
+      .map((k) => k.slice(prefix.length));
+  }
+}
+
 export class InMemoryFights implements FightRepository {
   readonly fights: StoredFight[] = [];
 
@@ -378,6 +447,7 @@ export interface TestApp {
   characters: InMemoryCharacters;
   fights: InMemoryFights;
   inventory: InMemoryInventory;
+  economy: InMemoryEconomy;
   time: ManualTimeSource;
   dbUp: { value: boolean };
 }
@@ -391,6 +461,7 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
   const fights = new InMemoryFights(characters);
   const inventory = new InMemoryInventory();
   characters.inventory = inventory;
+  const economy = new InMemoryEconomy(characters, inventory);
   // 12.11.2026, 12:00 Uhr in Berlin
   const time = new ManualTimeSource(Date.UTC(2026, 10, 12, 11, 0));
   const dbUp = { value: true };
@@ -410,6 +481,8 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
     .useValue(fights)
     .overrideProvider(INVENTORY_REPOSITORY)
     .useValue(inventory)
+    .overrideProvider(ECONOMY_REPOSITORY)
+    .useValue(economy)
     .overrideProvider(CLOCK)
     .useValue(new GameClock({ source: time.read }))
     .overrideProvider(DB_PING)
@@ -424,7 +497,19 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
   await configureApp(app, env);
   await app.init();
   await app.getHttpAdapter().getInstance().ready();
-  return { app, accounts, sessions, discord, seasons, characters, fights, inventory, time, dbUp };
+  return {
+    app,
+    accounts,
+    sessions,
+    discord,
+    seasons,
+    characters,
+    fights,
+    inventory,
+    economy,
+    time,
+    dbUp,
+  };
 }
 
 /** Liest Set-Cookie-Header als Map name → { value, attribute-string }. */

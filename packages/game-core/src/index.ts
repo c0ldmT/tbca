@@ -60,6 +60,21 @@ export {
   type RollItemInput,
 } from './items/items.js';
 export { rollLoot, rollRarity } from './items/loot.js';
+export {
+  affixShare,
+  CraftingError,
+  effectiveItem,
+  itemValue,
+  rerollAffix,
+  rerollCost,
+  salvageYield,
+  transferAffix,
+  transferCost,
+  upgradeCost,
+  upgradeItem,
+  type MaterialCost,
+  type UpgradeCost,
+} from './items/crafting.js';
 export { BOT_NAMES, botBuild, type BotSpec } from './bots/bot-build.js';
 export { pvpReward, type PvpReward, type PvpRewardInput, type RewardLimit } from './pvp/rewards.js';
 

@@ -16,7 +16,8 @@ import type { InventoryView, ItemView } from '@tbca/shared';
 import type { CharacterRecord, CharacterRepository } from '../character/types.js';
 import { ApiError } from '../common/api-error.js';
 import { SeasonService, type CurrentSeason } from '../game/season.js';
-import { CHARACTER_REPOSITORY, INVENTORY_REPOSITORY } from '../tokens.js';
+import { CHARACTER_REPOSITORY, ECONOMY_REPOSITORY, INVENTORY_REPOSITORY } from '../tokens.js';
+import type { EconomyRepository } from '../economy/types.js';
 import type { InventoryRepository } from './types.js';
 
 /** Startausrüstung: klassentypische Waffe und Weste, Stern 1, Item-Level 1. */
@@ -36,6 +37,7 @@ export class InventoryService {
     @Inject(INVENTORY_REPOSITORY) private readonly items: InventoryRepository,
     @Inject(CHARACTER_REPOSITORY) private readonly characters: CharacterRepository,
     @Inject(SeasonService) private readonly seasons: SeasonService,
+    @Inject(ECONOMY_REPOSITORY) private readonly economy: EconomyRepository,
   ) {}
 
   /** Gibt neuen (oder älteren, noch leeren) Charakteren ihre Startausrüstung und legt sie an. */
@@ -134,9 +136,10 @@ export class InventoryService {
   }
 
   private async view(season: CurrentSeason, me: CharacterRecord): Promise<InventoryView> {
-    const [items, equipped] = await Promise.all([
+    const [items, equipped, stacks] = await Promise.all([
       this.items.listItems(me.accountId, season.id),
       this.items.equipmentOf(me.id),
+      this.economy.stacks(me.accountId, season.id),
     ]);
     const slotOf = new Map(Object.entries(equipped).map(([slot, id]) => [id, slot as EquipSlot]));
     return {
@@ -148,6 +151,7 @@ export class InventoryService {
         equippedIn: slotOf.get(i.id) ?? null,
       })),
       equipment: equipped,
+      stacks,
       slotsByCategory: Object.fromEntries(
         season.game.items.templates.map((t) => [t.category, [...slotsFor(t.category)]]),
       ) as InventoryView['slotsByCategory'],

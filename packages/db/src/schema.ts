@@ -501,3 +501,42 @@ export const equipment = pgTable(
   },
   (t) => [primaryKey({ columns: [t.characterId, t.slot] })],
 );
+
+// --- Materialien, Verbrauchsgüter, Shop --------------------------------------
+
+/** Stapel von Materialien und Verbrauchsgütern je Account und Season; nie negativ. */
+export const materialStack = pgTable(
+  'material_stack',
+  {
+    seasonId: uuid('season_id')
+      .notNull()
+      .references(() => season.id, { onDelete: 'cascade' }),
+    accountId: uuid('account_id')
+      .notNull()
+      .references(() => account.id, { onDelete: 'cascade' }),
+    /** z. B. scrap, circuits, quantum_cores, backup_chip, heal_injector */
+    stackId: text('stack_id').notNull(),
+    quantity: integer('quantity').notNull().default(0),
+  },
+  (t) => [
+    primaryKey({ columns: [t.seasonId, t.accountId, t.stackId] }),
+    check('material_stack_quantity_check', sql`${t.quantity} >= 0`),
+  ],
+);
+
+/** Gekaufte Angebote der täglichen Rotation; jedes nur einmal pro Tag. */
+export const shopPurchase = pgTable(
+  'shop_purchase',
+  {
+    seasonId: uuid('season_id')
+      .notNull()
+      .references(() => season.id, { onDelete: 'cascade' }),
+    accountId: uuid('account_id')
+      .notNull()
+      .references(() => account.id, { onDelete: 'cascade' }),
+    day: text('day').notNull(),
+    offerId: text('offer_id').notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [primaryKey({ columns: [t.seasonId, t.accountId, t.day, t.offerId] })],
+);

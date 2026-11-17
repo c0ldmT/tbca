@@ -1,6 +1,7 @@
 import type { Attribute, GameConfig, Modifiers } from '../content/types.js';
 import { roundDiv, type Fixed } from '../math/fixed.js';
 import { Xoshiro128ss, type Seed } from '../random/prng.js';
+import { effectiveItem } from './crafting.js';
 import type { EquipSlot, ItemCategory, ItemData, ItemStat, ItemTemplate } from './types.js';
 
 /**
@@ -191,7 +192,8 @@ export function equipmentBonus(config: GameConfig, equipment: Equipment): Equipm
       damageDealt += value * 10; // 0,1 % je Punkt
     else bonus.stats[stat] += value;
   };
-  for (const item of Object.values(equipment)) {
+  for (const raw of Object.values(equipment)) {
+    const item = effectiveItem(config, raw);
     for (const [stat, value] of Object.entries(item.base) as [
       ItemStat | 'weaponDamage',
       number,
@@ -202,11 +204,11 @@ export function equipmentBonus(config: GameConfig, equipment: Equipment): Equipm
   }
   if (damageDealt !== 0) bonus.modifiers = { damageDealt };
 
-  const main = equipment.main_hand;
+  const main = equipment.main_hand && effectiveItem(config, equipment.main_hand);
   if (main) {
     const weapon = findTemplate(config, main.templateId).weapon;
     if (weapon) {
-      const off = equipment.off_hand;
+      const off = equipment.off_hand && effectiveItem(config, equipment.off_hand);
       const offDamage =
         off?.category === 'weapon_1h'
           ? roundDiv((off.base.weaponDamage ?? 0) * config.items.offHandDamagePermille, 1000)

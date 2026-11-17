@@ -6,7 +6,9 @@ import { randomUUID } from 'node:crypto';
 
 import {
   account,
+  creditBalance,
   createDb,
+  InsufficientMaterialsError,
   identity,
   runMigrations,
   seedDevelopment,
@@ -28,6 +30,8 @@ import { DrizzleCharacterRepository } from '../src/character/drizzle-character.r
 import { CharacterExistsError, NameTakenError } from '../src/character/types.js';
 import { DrizzleFightRepository } from '../src/fight/drizzle-fight.repository.js';
 import { DrizzleInventoryRepository } from '../src/inventory/drizzle-inventory.repository.js';
+import { DrizzleEconomyRepository } from '../src/economy/drizzle-economy.repository.js';
+import { AlreadyPurchasedError, ItemEquippedError } from '../src/economy/types.js';
 import { DrizzleSeasonRepository } from '../src/game/season.js';
 
 const url = process.env['TBCA_TEST_DATABASE_URL'];
@@ -273,5 +277,69 @@ describe.skipIf(!url)('Drizzle-Repositories (Integration)', () => {
     expect(await inv.equipmentOf(c.id)).toEqual({ off_hand: p, main_hand: r });
     await inv.setEquipment(c.id, { off_hand: null });
     expect((await chars.findById(c.id))!.equipment).toEqual({ main_hand: rifle });
+  });
+
+  it('bucht Credits, Materialien und Items gemeinsam oder gar nicht', async () => {
+    const current = (await new DrizzleSeasonRepository(conn.db).findCurrent())!;
+    const seasonId = current.id;
+    const [acc] = await conn.db.insert(account).values({}).returning();
+    const accountId = acc!.id;
+    const chars = new DrizzleCharacterRepository(conn.db);
+    const c = await chars.create({
+      accountId,
+      seasonId,
+      name: `Eco${Date.now() % 100000}`,
+      classId: 'gunner',
+      level: 1,
+      xp: 0,
+      allocated: { str: 0, dex: 0, int: 0, con: 0 },
+      loadouts: {},
+    });
+    const eco = new DrizzleEconomyRepository(conn.db);
+    const inv = new DrizzleInventoryRepository(conn.db);
+    const data = rollItem(DEFAULT_GAME_CONFIG, {
+      templateId: 'vest',
+      itemLevel: 5,
+      rarity: 4,
+      seed: 9,
+    });
+
+    const { addedIds } = await eco.commit({
+      seasonId,
+      accountId,
+      credits: { amount: 100, kind: 'test', system: 'source:admin' },
+      stacks: { scrap: 3 },
+      addItems: [{ data, source: 'test' }],
+    });
+    expect(await eco.stacks(accountId, seasonId)).toEqual({ scrap: 3 });
+
+    // Zu wenig Material: auch die Credits bleiben unangetastet.
+    await expect(
+      eco.commit({
+        seasonId,
+        accountId,
+        credits: { amount: -50, kind: 'upgrade', system: 'sink:crafting' },
+        stacks: { scrap: -5 },
+      }),
+    ).rejects.toBeInstanceOf(InsufficientMaterialsError);
+    expect(await creditBalance(conn.db, seasonId, accountId)).toBe(100);
+
+    await inv.setEquipment(c.id, { torso: addedIds[0]! });
+    await expect(
+      eco.commit({ seasonId, accountId, deleteItems: [addedIds[0]!] }),
+    ).rejects.toBeInstanceOf(ItemEquippedError);
+    await inv.setEquipment(c.id, { torso: null });
+    await eco.commit({ seasonId, accountId, deleteItems: [addedIds[0]!], stacks: { scrap: 1 } });
+    expect(await inv.countItems(accountId, seasonId)).toBe(0);
+
+    await eco.commit({
+      seasonId,
+      accountId,
+      purchase: { day: '2026-11-16', offerId: 'rotation-0' },
+    });
+    await expect(
+      eco.commit({ seasonId, accountId, purchase: { day: '2026-11-16', offerId: 'rotation-0' } }),
+    ).rejects.toBeInstanceOf(AlreadyPurchasedError);
+    expect(await eco.purchases(accountId, seasonId, '2026-11-16')).toEqual(['rotation-0']);
   });
 });

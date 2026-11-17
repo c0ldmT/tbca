@@ -94,4 +94,61 @@ export interface ItemData {
   readonly budget: number;
   readonly base: Readonly<Partial<Record<ItemStat | 'weaponDamage', number>>>;
   readonly affixes: readonly { readonly stat: ItemStat; readonly value: number }[];
+  /** Aufwertungsstufe +0 bis +10; jede Stufe gibt +3 % auf alle Werte (Abschnitt 7). */
+  readonly upgrade?: number;
+}
+
+/** Materialien sind Items in Stapeln, keine zweite Währung (Abschnitt 12). */
+export const MATERIALS = ['scrap', 'circuits', 'quantum_cores'] as const;
+export type MaterialId = (typeof MATERIALS)[number];
+
+/** Verbrauchsgüter, z. B. für den Dungeon. */
+export const CONSUMABLES = ['backup_chip', 'heal_injector'] as const;
+export type ConsumableId = (typeof CONSUMABLES)[number];
+
+export type StackId = MaterialId | ConsumableId;
+
+export interface CraftingRules {
+  /** Zerlegen: Materialien je Tier-Band; Menge = base + Item-Level / perLevels. */
+  readonly salvage: readonly {
+    readonly minTier: number;
+    readonly material: MaterialId;
+    readonly base: number;
+    readonly perLevels: number;
+  }[];
+  readonly upgrade: {
+    readonly maxLevel: number;
+    /** Wertzuwachs je Stufe in Promille. */
+    readonly bonusPerLevelPermille: number;
+    /** Erfolgschance je Zielstufe (Index 0 = +1) in Promille; scheitert es, sinkt die Stufe um 1. */
+    readonly successPermille: readonly number[];
+    readonly credits: {
+      readonly base: number;
+      readonly perItemLevel: number;
+      readonly perUpgrade: number;
+    };
+    /** Material je Zielstufe (Index 0 = +1) und Menge = 1 + Zielstufe / 2. */
+    readonly material: readonly MaterialId[];
+  };
+  readonly transfer: {
+    /** Erfolgschance je Anzahl vorhandener Affixe am Ziel (Promille). */
+    readonly successPermille: readonly number[];
+    readonly credits: { readonly base: number; readonly perItemLevel: number };
+  };
+  readonly reroll: {
+    readonly credits: { readonly base: number; readonly perItemLevel: number };
+    readonly material: MaterialId;
+    readonly materialAmount: number;
+  };
+}
+
+export interface ShopRules {
+  readonly consumables: readonly { readonly id: ConsumableId; readonly price: number }[];
+  /** Tägliche Rotation: Anzahl Ausrüstungsangebote je Spieler, höchste Rarität. */
+  readonly rotationSize: number;
+  readonly rotationMaxRarity: number;
+  /** Preis eines Items = Budget · priceCreditsPerBudget. */
+  readonly priceCreditsPerBudget: number;
+  /** Verkauf an den Shop bringt diesen Anteil des Werts (Promille). */
+  readonly sellPermille: number;
 }

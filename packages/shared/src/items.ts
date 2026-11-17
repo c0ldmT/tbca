@@ -16,6 +16,8 @@ export interface InventoryView {
   items: ItemView[];
   /** Item-ID je belegtem Platz. */
   equipment: Partial<Record<EquipSlot, string>>;
+  /** Materialien und Verbrauchsgüter. */
+  stacks: Record<string, number>;
   /** Welche Plätze je Kategorie erlaubt sind. */
   slotsByCategory: Record<ItemCategory, EquipSlot[]>;
 }

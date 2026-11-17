@@ -25,3 +25,4 @@ export {
   type SystemAccount,
   type Transfer,
 } from './ledger.js';
+export { changeStacks, InsufficientMaterialsError, stacksOf } from './stacks.js';

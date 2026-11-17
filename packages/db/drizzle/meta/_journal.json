@@ -43,6 +43,13 @@
       "when": 1794396569217,
       "tag": "0005_items",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794400195470,
+      "tag": "0006_crafting_shop",
+      "breakpoints": true
     }
   ]
 }

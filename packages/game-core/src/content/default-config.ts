@@ -441,4 +441,48 @@ export const DEFAULT_GAME_CONFIG: GameConfig = {
       { from: 16, to: 16, weight: 1 },
     ],
   },
+  crafting: {
+    salvage: [
+      { minTier: 1, material: 'scrap', base: 1, perLevels: 10 },
+      { minTier: 3, material: 'circuits', base: 1, perLevels: 25 },
+      { minTier: 5, material: 'quantum_cores', base: 1, perLevels: 50 },
+    ],
+    upgrade: {
+      maxLevel: 10,
+      bonusPerLevelPermille: 30,
+      successPermille: [1000, 1000, 1000, 1000, 1000, 700, 600, 500, 400, 300],
+      credits: { base: 20, perItemLevel: 2, perUpgrade: 15 },
+      material: [
+        'scrap',
+        'scrap',
+        'scrap',
+        'circuits',
+        'circuits',
+        'circuits',
+        'circuits',
+        'quantum_cores',
+        'quantum_cores',
+        'quantum_cores',
+      ],
+    },
+    transfer: {
+      successPermille: [900, 700, 500, 300],
+      credits: { base: 100, perItemLevel: 5 },
+    },
+    reroll: {
+      credits: { base: 150, perItemLevel: 8 },
+      material: 'circuits',
+      materialAmount: 3,
+    },
+  },
+  shop: {
+    consumables: [
+      { id: 'heal_injector', price: 40 },
+      { id: 'backup_chip', price: 400 },
+    ],
+    rotationSize: 4,
+    rotationMaxRarity: 6,
+    priceCreditsPerBudget: 5,
+    sellPermille: 200,
+  },
 };

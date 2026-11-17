@@ -8,7 +8,13 @@ export type Executor = Pick<Database, 'select' | 'insert' | 'update' | 'execute'
 
 /** Systemkonten als Gegenbuchung: Quellen (Belohnungen) und Senken (Gebühren). */
 export type SystemAccount =
-  'source:pvp' | 'source:admin' | 'sink:respec' | 'sink:rename' | 'sink:shop';
+  | 'source:pvp'
+  | 'source:admin'
+  | 'source:shop'
+  | 'sink:respec'
+  | 'sink:rename'
+  | 'sink:shop'
+  | 'sink:crafting';
 
 export type LedgerLine =
   | { readonly accountId: string; readonly amount: number }

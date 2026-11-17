@@ -44,6 +44,14 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
   lässt sich Test-Beute würfeln.
 - Website: Ausrüstung und Inventar auf der Charakterseite mit Sternen in Tierfarbe, Basiswerten,
   Affixen und Vorschau der Kampfwerte inklusive Ausrüstung.
+- Crafting: Zerlegen in Materialien (Schrott, Schaltkreise, Quantenkerne) nach Tier und Level,
+  Aufwerten +0 bis +10 (+3 % je Stufe, ab +6 mit Fehlschlag-Chance, Items werden nie zerstört),
+  Affix-Übertragung mit sinkender Erfolgschance und Neu würfeln eines Affixes.
+- Shop: Verbrauchsgüter (Heil-Injektor, Backup-Chip), tägliche Ausrüstungs-Rotation je Spieler auf
+  dem eigenen Level und Verkauf an den Shop für 20 % des Werts. Credits, Materialien und Items werden
+  gemeinsam gebucht – alles oder nichts (Migration `0006_crafting_shop`).
+- Website: Werkbank auf der Charakterseite mit Kosten und Chancen vorab, Materialanzeige und
+  Shop-Seite.
 - Website: Arena mit Gegnersuche und letzten Kämpfen, HUD-Replay mit Lebens- und Energiebalken,
   Schadenszahlen, Status, Glitch bei Crits, Geschwindigkeit und Textlog; Replays per Link teilbar.
 
