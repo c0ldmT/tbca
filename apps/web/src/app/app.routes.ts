@@ -14,6 +14,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/pvp/pvp.page').then((m) => m.PvpPage),
   },
   {
+    path: 'shop',
+    loadComponent: () => import('./pages/shop/shop.page').then((m) => m.ShopPage),
+  },
+  {
     path: 'replay/:id',
     loadComponent: () => import('./pages/replay/replay.page').then((m) => m.ReplayPage),
   },

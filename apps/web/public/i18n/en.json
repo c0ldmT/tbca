@@ -7,7 +7,8 @@
     "privacy": "Privacy",
     "home": "Home",
     "character": "Character",
-    "arena": "Arena"
+    "arena": "Arena",
+    "shop": "Shop"
   },
   "auth": {
     "login": "Sign in with Discord",
@@ -278,7 +279,18 @@
     "two_handed_blocks_off_hand": "A two-handed weapon blocks the off hand.",
     "test_season_only": "Only available in test seasons.",
     "invalid_slot": "Unknown equipment slot.",
-    "http_403": "That's not allowed."
+    "http_403": "That's not allowed.",
+    "insufficient_materials": "You're missing materials for that.",
+    "item_equipped": "Unequip the item first.",
+    "already_purchased": "You already bought this offer today.",
+    "offer_not_found": "This offer doesn't exist (anymore).",
+    "max_upgrade": "Maximum level reached.",
+    "affix_missing": "This affix isn't there.",
+    "affix_present": "The target already has this affix.",
+    "affix_not_allowed": "This affix doesn't fit the target.",
+    "too_many_affixes": "The target has too many affixes.",
+    "same_item": "Target and donor must be different items.",
+    "http_409": "That's not possible right now."
   },
   "pvp": {
     "title": "Arena",
@@ -349,7 +361,8 @@
     "equip": "Equip",
     "equipTo": "{{ slot }}",
     "testLoot": "Roll test loot",
-    "testLootHint": "Test seasons only: a random item at your level, up to 12 stars. In real seasons, items only come from playing."
+    "testLootHint": "Test seasons only: a random item at your level, up to 12 stars. In real seasons, items only come from playing.",
+    "materialAmount": "{{ amount }} × {{ name }}"
   },
   "slots": {
     "head": "Head",
@@ -390,5 +403,55 @@
     "initiative": "Initiative",
     "energyRegen": "Energy per turn",
     "damageDealt": "Damage"
+  },
+  "shop": {
+    "title": "Shop",
+    "intro": "Credits for consumables and gear. The gear selection changes daily.",
+    "consumables": "Consumables",
+    "rotation": "Today's gear",
+    "rotationHint": "At your level, up to 6 stars. Each offer once per day.",
+    "buyFor": "Buy: {{ price }} credits",
+    "sold": "Bought",
+    "loading": "Loading shop …"
+  },
+  "consumables": {
+    "backup_chip": "Backup chip",
+    "heal_injector": "Heal injector"
+  },
+  "consumableInfo": {
+    "backup_chip": "Saves all loot of a dungeon run on defeat and is consumed. At most one per run.",
+    "heal_injector": "Heals between dungeon floors. Up to three in the loadout."
+  },
+  "materials": {
+    "scrap": "Scrap",
+    "circuits": "Circuits",
+    "quantum_cores": "Quantum cores"
+  },
+  "workbench": {
+    "open": "Workbench",
+    "title": "Workbench",
+    "close": "Close workbench",
+    "upgrade": "Upgrade",
+    "upgradeInfo": "{{ credits }} credits and {{ materials }}, success chance {{ chance }}%. On failure the level drops by 1; the item is never destroyed.",
+    "maxUpgrade": "Maximum level reached.",
+    "upgradeTo": "To +{{ level }}",
+    "reroll": "Reroll affix",
+    "rerollInfo": "{{ credits }} credits and {{ materials }}: new affix with a new value.",
+    "transfer": "Transfer affix",
+    "transferInfo": "{{ credits }} credits, success chance {{ chance }}%. The donor is consumed either way.",
+    "transferFull": "This item already has the maximum number of affixes.",
+    "noDonors": "No other item has a matching affix.",
+    "transferFrom": "{{ stat }} +{{ value }} from {{ item }}",
+    "salvage": "Salvage",
+    "sell": "Sell",
+    "sellInfo": "The shop pays {{ credits }} credits.",
+    "equippedHint": "Equipped items can't be salvaged, sold or used as donors.",
+    "upgraded": "Upgraded to +{{ level }}.",
+    "upgradeFailed": "Upgrade failed, now +{{ level }}.",
+    "rerolled": "Affix rerolled.",
+    "transferred": "Affix transferred.",
+    "transferFailed": "Transfer failed, the donor is consumed.",
+    "salvaged": "Item salvaged.",
+    "sold": "Sold for {{ credits }} credits."
   }
 }

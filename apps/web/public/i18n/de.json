@@ -7,7 +7,8 @@
     "privacy": "Datenschutz",
     "home": "Startseite",
     "character": "Charakter",
-    "arena": "Arena"
+    "arena": "Arena",
+    "shop": "Shop"
   },
   "auth": {
     "login": "Mit Discord anmelden",
@@ -278,7 +279,18 @@
     "two_handed_blocks_off_hand": "Ein Zweihänder blockiert die Nebenhand.",
     "test_season_only": "Nur in Test-Seasons verfügbar.",
     "invalid_slot": "Unbekannter Ausrüstungsplatz.",
-    "http_403": "Das ist nicht erlaubt."
+    "http_403": "Das ist nicht erlaubt.",
+    "insufficient_materials": "Dafür fehlt dir Material.",
+    "item_equipped": "Lege das Item zuerst ab.",
+    "already_purchased": "Dieses Angebot hast du heute schon gekauft.",
+    "offer_not_found": "Dieses Angebot gibt es nicht (mehr).",
+    "max_upgrade": "Höchste Stufe erreicht.",
+    "affix_missing": "Dieser Affix ist nicht vorhanden.",
+    "affix_present": "Das Ziel hat diesen Affix schon.",
+    "affix_not_allowed": "Dieser Affix passt nicht zum Ziel.",
+    "too_many_affixes": "Das Ziel hat zu viele Affixe.",
+    "same_item": "Ziel und Spender müssen verschiedene Items sein.",
+    "http_409": "Das geht gerade nicht."
   },
   "pvp": {
     "title": "Arena",
@@ -349,7 +361,8 @@
     "equip": "Anlegen",
     "equipTo": "{{ slot }}",
     "testLoot": "Test-Beute würfeln",
-    "testLootHint": "Nur in Test-Seasons: ein zufälliges Item auf deinem Level, bis Stern 12. In echten Seasons gibt es Items nur durch Spielen."
+    "testLootHint": "Nur in Test-Seasons: ein zufälliges Item auf deinem Level, bis Stern 12. In echten Seasons gibt es Items nur durch Spielen.",
+    "materialAmount": "{{ amount }} × {{ name }}"
   },
   "slots": {
     "head": "Kopf",
@@ -390,5 +403,55 @@
     "initiative": "Initiative",
     "energyRegen": "Energie pro Zug",
     "damageDealt": "Schaden"
+  },
+  "shop": {
+    "title": "Shop",
+    "intro": "Credits gegen Verbrauchsgüter und Ausrüstung. Die Auswahl an Ausrüstung wechselt täglich.",
+    "consumables": "Verbrauchsgüter",
+    "rotation": "Heutige Ausrüstung",
+    "rotationHint": "Auf deinem Level, bis Stern 6. Jedes Angebot einmal pro Tag.",
+    "buyFor": "Kaufen: {{ price }} Credits",
+    "sold": "Gekauft",
+    "loading": "Lade Shop …"
+  },
+  "consumables": {
+    "backup_chip": "Backup-Chip",
+    "heal_injector": "Heil-Injektor"
+  },
+  "consumableInfo": {
+    "backup_chip": "Rettet bei einer Niederlage im Dungeon den gesamten Loot des Runs; wird dabei verbraucht. Höchstens einer pro Run.",
+    "heal_injector": "Heilt im Dungeon zwischen den Etagen. Bis zu drei im Loadout."
+  },
+  "materials": {
+    "scrap": "Schrott",
+    "circuits": "Schaltkreise",
+    "quantum_cores": "Quantenkerne"
+  },
+  "workbench": {
+    "open": "Werkbank",
+    "title": "Werkbank",
+    "close": "Werkbank schließen",
+    "upgrade": "Aufwerten",
+    "upgradeInfo": "{{ credits }} Credits und {{ materials }}, Erfolgschance {{ chance }} %. Scheitert es, sinkt die Stufe um 1; das Item bleibt erhalten.",
+    "maxUpgrade": "Höchste Stufe erreicht.",
+    "upgradeTo": "Auf +{{ level }}",
+    "reroll": "Affix neu würfeln",
+    "rerollInfo": "{{ credits }} Credits und {{ materials }}: neuer Affix mit neuem Wert.",
+    "transfer": "Affix übertragen",
+    "transferInfo": "{{ credits }} Credits, Erfolgschance {{ chance }} %. Der Spender wird in jedem Fall geopfert.",
+    "transferFull": "Dieses Item hat bereits die Höchstzahl an Affixen.",
+    "noDonors": "Kein anderes Item hat einen passenden Affix.",
+    "transferFrom": "{{ stat }} +{{ value }} aus {{ item }}",
+    "salvage": "Zerlegen",
+    "sell": "Verkaufen",
+    "sellInfo": "Der Shop zahlt {{ credits }} Credits.",
+    "equippedHint": "Ausgerüstete Items lassen sich nicht zerlegen, verkaufen oder als Spender nutzen.",
+    "upgraded": "Aufgewertet auf +{{ level }}.",
+    "upgradeFailed": "Aufwertung gescheitert, jetzt +{{ level }}.",
+    "rerolled": "Affix neu gewürfelt.",
+    "transferred": "Affix übertragen.",
+    "transferFailed": "Übertragung gescheitert, der Spender ist verbraucht.",
+    "salvaged": "Item zerlegt.",
+    "sold": "Verkauft für {{ credits }} Credits."
   }
 }

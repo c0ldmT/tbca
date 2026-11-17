@@ -1,6 +1,8 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { TranslocoDirective } from '@jsverse/transloco';
-import { rarityTier, type ItemData, type ItemStat } from '@tbca/game-core';
+import { effectiveItem, rarityTier, type ItemData, type ItemStat } from '@tbca/game-core';
+
+import { GameConfigService } from '../../core/game-config.service';
 
 /** Item mit Sternen in Tierfarbe (9 Silhouetten, darüber Overflow), Basiswerten und Affixen. */
 @Component({
@@ -9,7 +11,12 @@ import { rarityTier, type ItemData, type ItemStat } from '@tbca/game-core';
   template: `
     <div class="item" *transloco="let t" [attr.data-tier]="tier()">
       <div class="item__head">
-        <span class="item__name">{{ t('items.' + item().templateId) }}</span>
+        <span class="item__name">
+          {{ t('items.' + item().templateId) }}
+          @if (item().upgrade) {
+            <span class="item__upgrade">+{{ item().upgrade }}</span>
+          }
+        </span>
         <span class="item__level">{{ t('inventory.itemLevel', { level: item().itemLevel }) }}</span>
       </div>
       <span class="stars" [attr.aria-label]="t('inventory.rarity', { rarity: item().rarity })">
@@ -24,7 +31,7 @@ import { rarityTier, type ItemData, type ItemStat } from '@tbca/game-core';
         @for (s of baseStats(); track s.stat) {
           <li>{{ statLabel(s.stat, t) }} {{ format(s.stat, s.value) }}</li>
         }
-        @for (a of item().affixes; track a.stat) {
+        @for (a of shown().affixes; track a.stat) {
           <li class="item__affix">{{ statLabel(a.stat, t) }} +{{ format(a.stat, a.value) }}</li>
         }
       </ul>
@@ -96,13 +103,25 @@ import { rarityTier, type ItemData, type ItemStat } from '@tbca/game-core';
       list-style: none;
       font: var(--tbca-text-sm) / 1.5 var(--tbca-font-mono);
     }
+    .item__upgrade {
+      font-family: var(--tbca-font-mono);
+      color: var(--tbca-neon-yellow);
+    }
     .item__affix {
       color: var(--tbca-neon-cyan);
     }
   `,
 })
 export class ItemCard {
+  private readonly gameConfig = inject(GameConfigService);
+
   readonly item = input.required<ItemData>();
+
+  /** Werte inklusive Aufwertung (+3 % je Stufe). */
+  protected readonly shown = computed(() => {
+    const config = this.gameConfig.current()?.game;
+    return config ? effectiveItem(config, this.item()) : this.item();
+  });
 
   protected readonly tier = computed(() => Math.min(6, rarityTier(this.item().rarity)));
   protected readonly stars = computed(() =>
@@ -110,7 +129,7 @@ export class ItemCard {
   );
   protected readonly overflow = computed(() => Math.max(0, this.item().rarity - 9));
   protected readonly baseStats = computed(() =>
-    Object.entries(this.item().base).map(([stat, value]) => ({ stat, value: value ?? 0 })),
+    Object.entries(this.shown().base).map(([stat, value]) => ({ stat, value: value ?? 0 })),
   );
 
   protected statLabel(stat: string, t: (key: string) => string): string {

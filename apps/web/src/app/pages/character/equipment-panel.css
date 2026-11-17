@@ -32,8 +32,28 @@ h3 {
   font-size: var(--tbca-text-sm);
 }
 
-.slot__action {
-  justify-self: start;
+.slot__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tbca-space-2);
+}
+
+.materials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tbca-space-4);
+  font: var(--tbca-text-sm) var(--tbca-font-mono);
+  color: var(--tbca-text-muted);
+}
+
+.notice {
+  border-left: 3px solid var(--tbca-neon-cyan);
+  padding: var(--tbca-space-2) var(--tbca-space-4);
+  background: var(--tbca-surface-2);
+}
+
+[aria-pressed='true'] {
+  border: 1px solid var(--tbca-neon-cyan);
 }
 
 .backpack-head {

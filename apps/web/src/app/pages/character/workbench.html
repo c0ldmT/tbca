@@ -1,0 +1,152 @@
+<section class="bench" *transloco="let t" aria-labelledby="bench-title">
+  <header class="bench__head">
+    <h3 id="bench-title">{{ t('workbench.title') }}</h3>
+    <button
+      type="button"
+      class="tbca-icon-button"
+      [attr.aria-label]="t('workbench.close')"
+      (click)="closed.emit()"
+    >
+      ×
+    </button>
+  </header>
+  <tbca-item-card [item]="item()" />
+
+  @if (error()) {
+    <p class="tbca-error" role="alert">{{ t('errors.' + error()) }}</p>
+  }
+
+  <div class="action">
+    <div>
+      <p class="action__name">{{ t('workbench.upgrade') }}</p>
+      @if (upgrade(); as u) {
+        <p class="tbca-hint">
+          {{
+            t('workbench.upgradeInfo', {
+              credits: u.credits,
+              materials: materialsText(u.materials, t),
+              chance: u.successPermille / 10,
+            })
+          }}
+        </p>
+      } @else {
+        <p class="tbca-hint">{{ t('workbench.maxUpgrade') }}</p>
+      }
+    </div>
+    <button
+      type="button"
+      class="tbca-button"
+      [disabled]="busy() || !upgrade()"
+      (click)="doUpgrade()"
+    >
+      {{ t('workbench.upgradeTo', { level: (item().upgrade ?? 0) + 1 }) }}
+    </button>
+  </div>
+
+  @if (item().affixes.length > 0) {
+    <div class="action action--stack">
+      <p class="action__name">{{ t('workbench.reroll') }}</p>
+      <p class="tbca-hint">
+        {{
+          t('workbench.rerollInfo', {
+            credits: reroll().credits,
+            materials: materialsText(reroll().materials, t),
+          })
+        }}
+      </p>
+      <div class="chips">
+        @for (a of item().affixes; track a.stat) {
+          <button
+            type="button"
+            class="tbca-button tbca-button--ghost"
+            [disabled]="busy()"
+            (click)="doReroll(a.stat)"
+          >
+            {{
+              t(
+                ['str', 'dex', 'int', 'con'].includes(a.stat)
+                  ? 'attributes.' + a.stat
+                  : 'itemStats.' + a.stat
+              )
+            }}
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+  <div class="action action--stack">
+    <p class="action__name">{{ t('workbench.transfer') }}</p>
+    @if (transfer().successPermille === 0) {
+      <p class="tbca-hint">{{ t('workbench.transferFull') }}</p>
+    } @else if (donors().length === 0) {
+      <p class="tbca-hint">{{ t('workbench.noDonors') }}</p>
+    } @else {
+      <p class="tbca-hint">
+        {{
+          t('workbench.transferInfo', {
+            credits: transfer().credits,
+            chance: transfer().successPermille / 10,
+          })
+        }}
+      </p>
+      <ul class="donors">
+        @for (d of donors(); track d.donor.id + d.stat) {
+          <li>
+            <button
+              type="button"
+              class="tbca-button tbca-button--ghost"
+              [disabled]="busy()"
+              (click)="doTransfer(d.donor.id, d.stat)"
+            >
+              {{
+                t('workbench.transferFrom', {
+                  stat: t(
+                    ['str', 'dex', 'int', 'con'].includes(d.stat)
+                      ? 'attributes.' + d.stat
+                      : 'itemStats.' + d.stat
+                  ),
+                  value: d.value,
+                  item: t('items.' + d.donor.templateId),
+                })
+              }}
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+
+  <div class="action">
+    <div>
+      <p class="action__name">{{ t('workbench.salvage') }}</p>
+      <p class="tbca-hint">{{ materialsText(salvage(), t) }}</p>
+    </div>
+    <button
+      type="button"
+      class="tbca-button tbca-button--ghost"
+      [disabled]="busy() || equipped()"
+      (click)="doSalvage()"
+    >
+      {{ t('workbench.salvage') }}
+    </button>
+  </div>
+
+  <div class="action">
+    <div>
+      <p class="action__name">{{ t('workbench.sell') }}</p>
+      <p class="tbca-hint">{{ t('workbench.sellInfo', { credits: sellPrice() }) }}</p>
+    </div>
+    <button
+      type="button"
+      class="tbca-button tbca-button--ghost"
+      [disabled]="busy() || equipped()"
+      (click)="doSell()"
+    >
+      {{ t('workbench.sell') }}
+    </button>
+  </div>
+  @if (equipped()) {
+    <p class="tbca-hint">{{ t('workbench.equippedHint') }}</p>
+  }
+</section>

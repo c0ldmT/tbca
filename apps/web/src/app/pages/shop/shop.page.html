@@ -1,0 +1,79 @@
+<ng-container *transloco="let t">
+  <header class="head">
+    <h1>{{ t('shop.title') }}</h1>
+    <p class="tbca-hint">{{ t('shop.intro') }}</p>
+  </header>
+
+  @if (auth.state() === null) {
+    <section class="tbca-panel">
+      <a class="tbca-button" [href]="auth.loginUrl()">{{ t('auth.login') }}</a>
+    </section>
+  } @else if (characters.state() === null) {
+    <section class="tbca-panel">
+      <p>{{ t('pvp.characterFirst') }}</p>
+      <a class="tbca-button" routerLink="/character">{{ t('character.create.title') }}</a>
+    </section>
+  } @else if (shop(); as s) {
+    <p class="wallet" aria-live="polite">
+      <span class="wallet__credits">{{ t('character.credits', { credits: s.credits }) }}</span>
+      @for (c of consumables; track c) {
+        <span>{{
+          t('inventory.materialAmount', { amount: s.stacks[c] ?? 0, name: t('consumables.' + c) })
+        }}</span>
+      }
+    </p>
+    @if (error()) {
+      <p class="tbca-error" role="alert">{{ t('errors.' + error()) }}</p>
+    }
+
+    <section class="tbca-panel" aria-labelledby="consumables-title">
+      <h2 id="consumables-title">{{ t('shop.consumables') }}</h2>
+      <ul class="offers">
+        @for (o of s.consumables; track o.offerId) {
+          <li class="offer">
+            <div>
+              <p class="offer__name">{{ t('consumables.' + o.consumable) }}</p>
+              <p class="tbca-hint">{{ t('consumableInfo.' + o.consumable) }}</p>
+            </div>
+            <button
+              type="button"
+              class="tbca-button"
+              [disabled]="busy() || s.credits < o.price"
+              (click)="buy(o.offerId)"
+            >
+              {{ t('shop.buyFor', { price: o.price }) }}
+            </button>
+          </li>
+        }
+      </ul>
+    </section>
+
+    <section class="tbca-panel" aria-labelledby="rotation-title">
+      <h2 id="rotation-title">{{ t('shop.rotation') }}</h2>
+      <p class="tbca-hint">{{ t('shop.rotationHint') }}</p>
+      <ul class="rotation">
+        @for (o of s.rotation; track o.offerId) {
+          <li class="rotation__item">
+            <tbca-item-card [item]="o.item" />
+            @if (o.sold) {
+              <span class="tbca-hint">{{ t('shop.sold') }}</span>
+            } @else {
+              <button
+                type="button"
+                class="tbca-button tbca-button--ghost"
+                [disabled]="busy() || s.credits < o.price"
+                (click)="buy(o.offerId)"
+              >
+                {{ t('shop.buyFor', { price: o.price }) }}
+              </button>
+            }
+          </li>
+        }
+      </ul>
+    </section>
+  } @else if (error()) {
+    <p class="tbca-error" role="alert">{{ t('errors.' + error()) }}</p>
+  } @else {
+    <p class="tbca-hint">{{ t('shop.loading') }}</p>
+  }
+</ng-container>
