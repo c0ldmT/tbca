@@ -4,17 +4,19 @@ import type { Database } from './client.js';
 import { creditEntry, creditTransaction, wallet } from './schema.js';
 
 /** Datenbank oder laufende Transaktion. */
-export type Executor = Pick<Database, 'select' | 'insert' | 'update' | 'execute'>;
+export type Executor = Pick<Database, 'select' | 'insert' | 'update' | 'delete' | 'execute'>;
 
 /** Systemkonten als Gegenbuchung: Quellen (Belohnungen) und Senken (Gebühren). */
 export type SystemAccount =
   | 'source:pvp'
   | 'source:admin'
   | 'source:shop'
+  | 'source:dungeon'
   | 'sink:respec'
   | 'sink:rename'
   | 'sink:shop'
-  | 'sink:crafting';
+  | 'sink:crafting'
+  | 'sink:dungeon';
 
 export type LedgerLine =
   | { readonly accountId: string; readonly amount: number }

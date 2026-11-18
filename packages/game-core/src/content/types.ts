@@ -1,3 +1,4 @@
+import type { DungeonRules } from '../dungeon/dungeon.js';
 import type { CraftingRules, ItemRules, ShopRules } from '../items/types.js';
 import type { Fixed } from '../math/fixed.js';
 
@@ -204,6 +205,7 @@ export interface GameConfig {
   readonly loot: LootRules;
   readonly crafting: CraftingRules;
   readonly shop: ShopRules;
+  readonly dungeon: DungeonRules;
 }
 
 export interface LootRules {

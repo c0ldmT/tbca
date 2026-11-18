@@ -10,6 +10,7 @@
 import type {
   BattleInput,
   BattleRules,
+  CombatantSnapshot,
   EquipSlot,
   GameConfig,
   ItemData,
@@ -316,7 +317,7 @@ export const loadout = pgTable(
 /** Binärdaten (z. B. das gzip-komprimierte Event-Log). */
 const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () => 'bytea' });
 
-export const fightKind = pgEnum('fight_kind', ['pvp_rated', 'pvp_friendly', 'training']);
+export const fightKind = pgEnum('fight_kind', ['pvp_rated', 'pvp_friendly', 'training', 'dungeon']);
 export const fightEndReason = pgEnum('fight_end_reason', ['knockout', 'timeout']);
 
 /**
@@ -539,4 +540,63 @@ export const shopPurchase = pgTable(
     createdAt: createdAt(),
   },
   (t) => [primaryKey({ columns: [t.seasonId, t.accountId, t.day, t.offerId] })],
+);
+
+// --- Dungeon (Abschnitt 8) ---------------------------------------------------
+
+export const dungeonRunStatus = pgEnum('dungeon_run_status', [
+  'active',
+  'left',
+  'timed_out',
+  'defeated',
+  'saved',
+]);
+
+/** Run-Loot bleibt vorgemerkt, bis der Charakter den Dungeon verlässt. */
+export interface DungeonLoot {
+  items: ItemData[];
+  credits: number;
+}
+
+/**
+ * Ein Dungeon-Run. Die Momentaufnahme des Charakters wird beim Start eingefroren; HP und Energie
+ * werden zwischen den Etagen fortgeschrieben.
+ */
+export const dungeonRun = pgTable(
+  'dungeon_run',
+  {
+    id: id(),
+    seasonId: uuid('season_id')
+      .notNull()
+      .references(() => season.id, { onDelete: 'cascade' }),
+    accountId: uuid('account_id')
+      .notNull()
+      .references(() => account.id, { onDelete: 'cascade' }),
+    characterId: uuid('character_id')
+      .notNull()
+      .references(() => character.id, { onDelete: 'cascade' }),
+    status: dungeonRunStatus('status').notNull().default('active'),
+    /** Zuletzt gewonnene Etage (0 = noch keine). */
+    floor: integer('floor').notNull().default(0),
+    seed: text('seed').notNull(),
+    snapshot: jsonb('snapshot').$type<CombatantSnapshot>().notNull(),
+    hp: integer('hp').notNull(),
+    energy: integer('energy').notNull(),
+    injectors: integer('injectors').notNull().default(0),
+    backupChip: boolean('backup_chip').notNull().default(false),
+    loot: jsonb('loot').$type<DungeonLoot>().notNull(),
+    xpGained: integer('xp_gained').notNull().default(0),
+    lastFightId: uuid('last_fight_id'),
+    rewardDay: text('reward_day').notNull(),
+    /** Spielzeit der letzten Aktion, für die automatische Entscheidung nach 10 Minuten. */
+    lastActionAt: timestamp('last_action_at', { withTimezone: true }).notNull(),
+    createdAt: createdAt(),
+    endedAt: timestamp('ended_at', { withTimezone: true }),
+  },
+  (t) => [
+    index('dungeon_run_character_idx').on(t.characterId, t.rewardDay),
+    uniqueIndex('dungeon_run_single_active_idx')
+      .on(t.characterId)
+      .where(sql`${t.status} = 'active'`),
+  ],
 );

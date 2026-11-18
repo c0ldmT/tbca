@@ -582,7 +582,9 @@ export function simulateBattle(input: BattleInput): BattleResult {
     reason,
     rounds: battle.round,
     ticks: battle.tick,
-    survivors: fighters.filter((f) => f.hp > 0).map((f) => ({ id: f.s.id, hp: f.hp })),
+    survivors: fighters
+      .filter((f) => f.hp > 0)
+      .map((f) => ({ id: f.s.id, hp: f.hp, energy: f.energy })),
     events,
     logHash: hashHex(JSON.stringify(events)),
   };
@@ -693,9 +695,9 @@ function createFighters(teams: BattleInput['teams']): Fighter[] {
         team,
         s,
         abilities: new Map(s.abilities.map((a) => [a.id, a])),
-        hp: s.stats.maxHp,
+        hp: s.state?.hp ?? s.stats.maxHp,
         bar: 0,
-        energy: Math.min(s.stats.energyStart, s.stats.energyMax),
+        energy: Math.min(s.state?.energy ?? s.stats.energyStart, s.stats.energyMax),
         cooldowns: new Map(),
         statuses: [],
       });
@@ -726,6 +728,10 @@ function validateSnapshot(c: CombatantSnapshot): void {
   requireInt(st.energyMax, 0, `${p} energyMax`);
   requireInt(st.energyStart, 0, `${p} energyStart`);
   requireInt(st.energyRegen, 0, `${p} energyRegen`);
+  if (c.state) {
+    requireInt(c.state.hp, 1, `${p} state.hp`, st.maxHp);
+    requireInt(c.state.energy, 0, `${p} state.energy`, st.energyMax);
+  }
   requireInt(c.attack.base, 0, `${p} attack.base`);
   requireInt(c.attack.attribute, 0, `${p} attack.attribute`);
   requireInt(c.attack.scaling, 0, `${p} attack.scaling`);

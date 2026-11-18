@@ -7,6 +7,7 @@ import { ClockModule } from './clock/clock.module.js';
 import { ConfigModule } from './config/config.module.js';
 import type { Env } from './config/env.js';
 import { DbModule } from './db/db.module.js';
+import { DungeonModule } from './dungeon/dungeon.module.js';
 import { EconomyModule } from './economy/economy.module.js';
 import { FightModule } from './fight/fight.module.js';
 import { GameModule } from './game/game.module.js';
@@ -30,6 +31,7 @@ export class AppModule {
         FightModule,
         InventoryModule,
         EconomyModule,
+        DungeonModule,
       ],
     };
   }

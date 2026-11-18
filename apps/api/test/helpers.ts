@@ -42,6 +42,7 @@ import type {
   StoredFight,
 } from '../src/fight/types.js';
 import type { InventoryRepository, StoredItem } from '../src/inventory/types.js';
+import type { DungeonRepository, DungeonRun, DungeonTx } from '../src/dungeon/types.js';
 import {
   AlreadyPurchasedError,
   ItemEquippedError,
@@ -57,6 +58,7 @@ import {
   FIGHT_REPOSITORY,
   INVENTORY_REPOSITORY,
   ECONOMY_REPOSITORY,
+  DUNGEON_REPOSITORY,
   DISCORD_OAUTH,
   SEASON_REPOSITORY,
   SESSION_STORE,
@@ -383,6 +385,49 @@ export class InMemoryEconomy implements EconomyRepository {
   }
 }
 
+export class InMemoryDungeon implements DungeonRepository {
+  readonly runs: DungeonRun[] = [];
+
+  constructor(
+    private readonly fights: InMemoryFights,
+    private readonly economy: InMemoryEconomy,
+    private readonly characters: InMemoryCharacters,
+  ) {}
+
+  async locked<T>(_characterId: string, fn: (tx: DungeonTx) => Promise<T>): Promise<T> {
+    return fn({
+      activeRun: async (id) =>
+        this.runs.find((r) => r.characterId === id && r.status === 'active') ?? null,
+      runsOnDay: async (id, day) =>
+        this.runs.filter((r) => r.characterId === id && r.rewardDay === day).length,
+      saveRun: async (run) => {
+        if (!run.id) {
+          const created = { ...structuredClone(run), id: randomUUID() };
+          this.runs.push(created);
+          return created;
+        }
+        const index = this.runs.findIndex((r) => r.id === run.id);
+        this.runs[index] = structuredClone(run);
+        return run;
+      },
+      insertFight: (f) => this.fights.locked('', (tx) => tx.insert(f)),
+      economy: async (change) => {
+        await this.economy.commit(change);
+      },
+      setProgress: async (id, xp, level) => {
+        Object.assign(
+          this.characters.records.find((r) => r.id === id)!,
+          { xp, level },
+        );
+      },
+    });
+  }
+
+  async latestRun(characterId: string): Promise<DungeonRun | null> {
+    return [...this.runs].reverse().find((r) => r.characterId === characterId) ?? null;
+  }
+}
+
 export class InMemoryFights implements FightRepository {
   readonly fights: StoredFight[] = [];
 
@@ -448,6 +493,7 @@ export interface TestApp {
   fights: InMemoryFights;
   inventory: InMemoryInventory;
   economy: InMemoryEconomy;
+  dungeon: InMemoryDungeon;
   time: ManualTimeSource;
   dbUp: { value: boolean };
 }
@@ -462,6 +508,7 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
   const inventory = new InMemoryInventory();
   characters.inventory = inventory;
   const economy = new InMemoryEconomy(characters, inventory);
+  const dungeon = new InMemoryDungeon(fights, economy, characters);
   // 12.11.2026, 12:00 Uhr in Berlin
   const time = new ManualTimeSource(Date.UTC(2026, 10, 12, 11, 0));
   const dbUp = { value: true };
@@ -483,6 +530,8 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
     .useValue(inventory)
     .overrideProvider(ECONOMY_REPOSITORY)
     .useValue(economy)
+    .overrideProvider(DUNGEON_REPOSITORY)
+    .useValue(dungeon)
     .overrideProvider(CLOCK)
     .useValue(new GameClock({ source: time.read }))
     .overrideProvider(DB_PING)
@@ -507,6 +556,7 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
     fights,
     inventory,
     economy,
+    dungeon,
     time,
     dbUp,
   };

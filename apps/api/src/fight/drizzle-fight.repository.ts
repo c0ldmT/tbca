@@ -30,6 +30,29 @@ async function countRewards(db: Executor, characterId: string, day: string): Pro
   return { today, byOpponent };
 }
 
+/** Speichert einen Kampf mit Teilnehmern; innerhalb einer Transaktion aufrufen. */
+export async function insertFight(tx: Executor, f: NewFight): Promise<string> {
+  const [row] = await tx
+    .insert(fight)
+    .values({
+      seasonId: f.seasonId,
+      kind: f.kind,
+      engineVersion: f.result.engineVersion,
+      configVersion: f.configVersion,
+      seed: f.seed,
+      input: f.input,
+      events: gzipSync(JSON.stringify(f.result.events)),
+      logHash: f.result.logHash,
+      winnerTeam: f.result.winner,
+      reason: f.result.reason,
+      rounds: f.result.rounds,
+      rewardDay: f.rewardDay,
+    })
+    .returning({ id: fight.id });
+  await tx.insert(fightParticipant).values(f.participants.map((p) => ({ ...p, fightId: row!.id })));
+  return row!.id;
+}
+
 export class DrizzleFightRepository implements FightRepository {
   constructor(private readonly db: Database) {}
 
@@ -39,29 +62,7 @@ export class DrizzleFightRepository implements FightRepository {
       await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${characterId}, 0))`);
       return fn({
         rewardCounts: (id, day) => countRewards(tx, id, day),
-        insert: async (f: NewFight) => {
-          const [row] = await tx
-            .insert(fight)
-            .values({
-              seasonId: f.seasonId,
-              kind: f.kind,
-              engineVersion: f.result.engineVersion,
-              configVersion: f.configVersion,
-              seed: f.seed,
-              input: f.input,
-              events: gzipSync(JSON.stringify(f.result.events)),
-              logHash: f.result.logHash,
-              winnerTeam: f.result.winner,
-              reason: f.result.reason,
-              rounds: f.result.rounds,
-              rewardDay: f.rewardDay,
-            })
-            .returning({ id: fight.id });
-          await tx
-            .insert(fightParticipant)
-            .values(f.participants.map((p) => ({ ...p, fightId: row!.id })));
-          return row!.id;
-        },
+        insert: (f: NewFight) => insertFight(tx, f),
         setProgress: async (id, xp, level) => {
           await tx.update(character).set({ xp, level }).where(eq(character.id, id));
         },

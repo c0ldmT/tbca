@@ -75,6 +75,21 @@ export {
   type MaterialCost,
   type UpgradeCost,
 } from './items/crafting.js';
+export {
+  DUNGEON_MODIFIERS,
+  dungeonFee,
+  floorReward,
+  isBossFloor,
+  maxRarityAt,
+  MONSTER_NAMES,
+  monsterLevel,
+  planFloor,
+  regenerate,
+  type DungeonModifier,
+  type DungeonRules,
+  type FloorPlan,
+  type FloorReward,
+} from './dungeon/dungeon.js';
 export { BOT_NAMES, botBuild, type BotSpec } from './bots/bot-build.js';
 export { pvpReward, type PvpReward, type PvpRewardInput, type RewardLimit } from './pvp/rewards.js';
 

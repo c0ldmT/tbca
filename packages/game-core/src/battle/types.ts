@@ -64,6 +64,11 @@ export interface CombatantSnapshot {
   /** Aktive Fähigkeiten im Loadout (vollständige Definitionen). */
   readonly abilities: readonly AbilityDef[];
   readonly tactics: readonly TacticRule[];
+  /**
+   * Zustand zu Kampfbeginn, z. B. im Dungeon zwischen Etagen. Fehlt er, startet der Kämpfer mit
+   * vollen HP und der Start-Energie.
+   */
+  readonly state?: { readonly hp: number; readonly energy: number };
 }
 
 /**
@@ -190,7 +195,11 @@ export interface BattleResult {
   readonly reason: BattleEndReason;
   readonly rounds: number;
   readonly ticks: number;
-  readonly survivors: readonly { readonly id: string; readonly hp: number }[];
+  readonly survivors: readonly {
+    readonly id: string;
+    readonly hp: number;
+    readonly energy: number;
+  }[];
   readonly events: readonly BattleEvent[];
   /** Fingerabdruck des Event-Logs, z. B. zur Prüfung gespeicherter Replays. */
   readonly logHash: string;

@@ -6,3 +6,4 @@ export * from './character.js';
 export * from './pvp.js';
 export * from './items.js';
 export * from './economy.js';
+export * from './dungeon.js';

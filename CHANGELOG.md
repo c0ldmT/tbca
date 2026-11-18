@@ -52,6 +52,16 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
   gemeinsam gebucht – alles oder nichts (Migration `0006_crafting_shop`).
 - Website: Werkbank auf der Charakterseite mit Kosten und Chancen vorab, Materialanzeige und
   Shop-Seite.
+- Dungeon: endlose Etagen (Etage 1 knapp unter dem Charakterlevel, +1 Monster-Level je Etage),
+  Boss-Etagen alle 5 Ebenen mit doppeltem, garantiert besserem Loot, Modifikatoren ab Etage 10,
+  mehr Gegner in der Tiefe, Rarität steigt mit der Tiefe. HP und Energie bleiben zwischen den
+  Etagen erhalten (+10 %), Heil-Injektoren heilen, der Backup-Chip rettet den Run-Loot bei einer
+  Niederlage. 3 Runs pro Tag gegen Eintritt; nach 10 Minuten ohne Entscheidung automatischer Ausstieg
+  mit Loot (Migration `0007_dungeon`).
+- Engine: Kämpfer können mit gespeichertem Zustand (HP, Energie) starten; Überlebende melden ihre
+  Energie. Bestehende Replays bleiben unverändert.
+- Website: Dungeon-Seite mit Vorschau der nächsten Etage, Vitalwerten, Run-Loot und Entscheidung;
+  Monsternamen im Replay übersetzt.
 - Website: Arena mit Gegnersuche und letzten Kämpfen, HUD-Replay mit Lebens- und Energiebalken,
   Schadenszahlen, Status, Glitch bei Crits, Geschwindigkeit und Textlog; Replays per Link teilbar.
 
