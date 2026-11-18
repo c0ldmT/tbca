@@ -1,0 +1,122 @@
+:host {
+  display: grid;
+  gap: var(--tbca-space-6);
+  width: min(100%, 60rem);
+  margin-inline: auto;
+  padding: var(--tbca-space-8) clamp(var(--tbca-space-4), 4vw, var(--tbca-space-12));
+}
+
+.head {
+  display: grid;
+  gap: var(--tbca-space-2);
+}
+
+h1 {
+  font-size: clamp(2rem, 7vw, 3.5rem);
+}
+
+.runs {
+  display: flex;
+  align-items: baseline;
+  gap: var(--tbca-space-3);
+}
+
+.runs__value {
+  font: 700 var(--tbca-text-2xl) / 1 var(--tbca-font-mono);
+  color: var(--tbca-neon-yellow);
+}
+
+.vitals {
+  display: grid;
+  gap: var(--tbca-space-3);
+}
+
+.vitals > div {
+  display: grid;
+  gap: var(--tbca-space-1);
+}
+
+.bar {
+  display: block;
+  height: 10px;
+  background: var(--tbca-bg-void);
+}
+
+.bar__hp,
+.bar__en {
+  display: block;
+  height: 100%;
+  background: var(--tbca-neon-cyan);
+  transition: width var(--tbca-base-ms) ease-out;
+}
+
+.bar__en {
+  background: var(--tbca-neon-yellow);
+}
+
+.next {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tbca-space-2);
+  font: 600 var(--tbca-text-lg) / 1.3 var(--tbca-font-display);
+}
+
+.next--boss {
+  color: var(--tbca-neon-magenta);
+}
+
+.modifier {
+  padding: 0 var(--tbca-space-2);
+  border: 1px solid var(--tbca-neon-magenta);
+  font: 500 var(--tbca-text-sm) / 1.6 var(--tbca-font-mono);
+  color: var(--tbca-neon-magenta);
+}
+
+.actions,
+.start {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--tbca-space-3);
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: var(--tbca-space-2);
+  min-height: var(--tbca-touch-target);
+}
+
+.chip input {
+  width: 1.25rem;
+  height: 1.25rem;
+  accent-color: var(--tbca-neon-cyan);
+}
+
+.replay-link {
+  justify-self: start;
+}
+
+.outcome[data-status='defeated'] {
+  color: var(--tbca-neon-magenta);
+}
+
+.outcome[data-status='saved'],
+.outcome[data-status='left'],
+.outcome[data-status='timed_out'] {
+  color: var(--tbca-neon-cyan);
+}
+
+.loot {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--tbca-space-3);
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+}
+
+.loot--lost {
+  opacity: 0.4;
+}

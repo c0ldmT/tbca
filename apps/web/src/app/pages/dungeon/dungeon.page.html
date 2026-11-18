@@ -1,0 +1,174 @@
+<ng-container *transloco="let t">
+  <header class="head">
+    <h1>{{ t('dungeon.title') }}</h1>
+    <p class="tbca-hint">{{ t('dungeon.intro') }}</p>
+  </header>
+
+  @if (auth.state() === null) {
+    <section class="tbca-panel">
+      <a class="tbca-button" [href]="auth.loginUrl()">{{ t('auth.login') }}</a>
+    </section>
+  } @else if (characters.state() === null) {
+    <section class="tbca-panel">
+      <p>{{ t('pvp.characterFirst') }}</p>
+      <a class="tbca-button" routerLink="/character">{{ t('character.create.title') }}</a>
+    </section>
+  } @else if (view(); as v) {
+    <p class="runs">
+      <span class="runs__value">{{ v.runsToday }}/{{ v.runsPerDay }}</span>
+      {{ t('dungeon.runsToday') }}
+    </p>
+    @if (error()) {
+      <p class="tbca-error" role="alert">{{ t('errors.' + error()) }}</p>
+    }
+
+    @if (run(); as r) {
+      @if (r.status === 'active') {
+        <section class="tbca-panel run" aria-labelledby="run-title">
+          <h2 id="run-title" [tbcaGlitch]="r.floor">
+            {{ t('dungeon.floorCleared', { floor: r.floor }) }}
+          </h2>
+          <div class="vitals">
+            <div>
+              <span class="tbca-hint">HP {{ r.hp }}/{{ r.maxHp }}</span>
+              <span class="bar" aria-hidden="true"
+                ><span class="bar__hp" [style.width.%]="percent(r.hp, r.maxHp)"></span
+              ></span>
+            </div>
+            <div>
+              <span class="tbca-hint">EN {{ r.energy }}/{{ r.maxEnergy }}</span>
+              <span class="bar" aria-hidden="true"
+                ><span class="bar__en" [style.width.%]="percent(r.energy, r.maxEnergy)"></span
+              ></span>
+            </div>
+          </div>
+          <p class="tbca-hint">
+            {{ t('dungeon.supplies', { injectors: r.injectors }) }}
+            @if (r.backupChip) {
+              {{ t('dungeon.chipActive') }}
+            }
+          </p>
+
+          @if (r.next; as n) {
+            <p class="next" [class.next--boss]="n.boss">
+              {{
+                t(n.boss ? 'dungeon.nextBoss' : 'dungeon.next', {
+                  floor: n.floor,
+                  level: n.monsterLevel,
+                })
+              }}
+              @for (m of n.modifiers; track m) {
+                <span class="modifier">{{ t('dungeon.modifier.' + m) }}</span>
+              }
+            </p>
+          }
+
+          <div class="actions">
+            <button
+              type="button"
+              class="tbca-button"
+              [disabled]="busy()"
+              (click)="action('continue')"
+            >
+              {{ t('dungeon.continue', { floor: r.floor + 1 }) }}
+            </button>
+            <button
+              type="button"
+              class="tbca-button tbca-button--ghost"
+              [disabled]="busy()"
+              (click)="action('leave')"
+            >
+              {{ t('dungeon.leave') }}
+            </button>
+            <button
+              type="button"
+              class="tbca-button tbca-button--ghost"
+              [disabled]="busy() || r.injectors === 0 || r.hp >= r.maxHp"
+              (click)="action('heal')"
+            >
+              {{ t('dungeon.heal') }}
+            </button>
+          </div>
+          @if (r.decideBy) {
+            <p class="tbca-hint">{{ t('dungeon.decideBy', { time: decideTime(r.decideBy) }) }}</p>
+          }
+          @if (r.lastFightId) {
+            <a class="replay-link" [routerLink]="['/replay', r.lastFightId]">{{
+              t('dungeon.lastFight')
+            }}</a>
+          }
+        </section>
+      } @else {
+        <section class="tbca-panel" aria-live="polite">
+          <h2 class="outcome" [attr.data-status]="r.status" [tbcaGlitch]="r.id">
+            {{ t('dungeon.outcome.' + r.status, { floor: r.floor }) }}
+          </h2>
+          @if (r.lastFightId) {
+            <a class="replay-link" [routerLink]="['/replay', r.lastFightId]">{{
+              t('dungeon.lastFight')
+            }}</a>
+          }
+        </section>
+      }
+
+      @if (r.loot.items.length > 0 || r.loot.credits > 0) {
+        <section class="tbca-panel" aria-labelledby="loot-title">
+          <h2 id="loot-title">
+            {{ t(r.status === 'defeated' ? 'dungeon.lootLost' : 'dungeon.loot') }}
+          </h2>
+          <p class="tbca-hint">
+            {{ t('dungeon.lootSummary', { credits: r.loot.credits, xp: r.xpGained }) }}
+          </p>
+          <ul class="loot" [class.loot--lost]="r.status === 'defeated'">
+            @for (item of r.loot.items; track $index) {
+              <li><tbca-item-card [item]="item" /></li>
+            }
+          </ul>
+        </section>
+      }
+    }
+
+    @if (!active()) {
+      <section class="tbca-panel" aria-labelledby="start-title">
+        <h2 id="start-title">{{ t('dungeon.newRun') }}</h2>
+        <p class="tbca-hint">{{ t('dungeon.fee', { fee: v.fee }) }}</p>
+        <div class="start">
+          <label class="tbca-label">
+            {{ t('dungeon.injectors', { owned: ownedInjectors() }) }}
+            <select class="tbca-select" (change)="injectors.set(+$any($event.target).value)">
+              @for (n of injectorOptions(); track n) {
+                <option [value]="n" [selected]="injectors() === n">{{ n }}</option>
+              }
+            </select>
+          </label>
+          <label class="chip">
+            <input
+              type="checkbox"
+              [checked]="backupChip()"
+              [disabled]="ownedChips() === 0"
+              (change)="backupChip.set($any($event.target).checked)"
+            />
+            {{ t('dungeon.useChip', { owned: ownedChips() }) }}
+          </label>
+          <button
+            type="button"
+            class="tbca-button"
+            [disabled]="busy() || v.runsToday >= v.runsPerDay"
+            (click)="start()"
+          >
+            {{ t('dungeon.start') }}
+          </button>
+        </div>
+        @if (ownedInjectors() === 0 && ownedChips() === 0) {
+          <p class="tbca-hint">
+            {{ t('dungeon.suppliesHint') }} <a routerLink="/shop">{{ t('app.shop') }}</a>
+          </p>
+        }
+      </section>
+    }
+  } @else if (error()) {
+    <p class="tbca-error" role="alert">{{ t('errors.' + error()) }}</p>
+  } @else {
+    <p class="tbca-hint">{{ t('dungeon.loading') }}</p>
+  }
+</ng-container>

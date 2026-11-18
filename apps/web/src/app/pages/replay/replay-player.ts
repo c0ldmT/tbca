@@ -9,8 +9,8 @@ import {
   untracked,
   type OnDestroy,
 } from '@angular/core';
-import { TranslocoDirective } from '@jsverse/transloco';
-import type { BattleEvent } from '@tbca/game-core';
+import { TranslocoDirective, TranslocoService } from '@jsverse/transloco';
+import { MONSTER_NAMES, type BattleEvent } from '@tbca/game-core';
 import type { FightCombatantView } from '@tbca/shared';
 
 import { LanguageService } from '../../core/language.service';
@@ -38,6 +38,7 @@ const FRAME_MS = 750;
 export class ReplayPlayer implements OnDestroy {
   private readonly language = inject(LanguageService);
   private readonly window = inject(DOCUMENT).defaultView;
+  private readonly transloco = inject(TranslocoService);
 
   readonly fight = input.required<ReplayData>();
   /** Team, das als „eigenes“ unten bzw. links erscheint. */
@@ -61,7 +62,8 @@ export class ReplayPlayer implements OnDestroy {
 
   private readonly names = computed(() => {
     const map = new Map<string, string>();
-    for (const c of this.fight().teams.flat()) map.set(c.id, c.name);
+    this.language.current(); // Monsternamen bei Sprachwechsel neu übersetzen
+    for (const c of this.fight().teams.flat()) map.set(c.id, this.displayName(c));
     return map;
   });
 
@@ -109,6 +111,13 @@ export class ReplayPlayer implements OnDestroy {
     t: (key: string, params?: Record<string, unknown>) => string,
   ): string {
     return translateLine(line, t);
+  }
+
+  /** Monster tragen einen Übersetzungsschlüssel als Namen, Charaktere ihren eigenen. */
+  protected displayName(c: { name: string; classId: string | null }): string {
+    return c.classId === null && ([...MONSTER_NAMES, 'warden'] as string[]).includes(c.name)
+      ? this.transloco.translate(`monsters.${c.name}`)
+      : c.name;
   }
 
   protected percent(value: number, max: number): number {

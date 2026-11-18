@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import type { ItemStat } from '@tbca/game-core';
-import type { CraftingResult, ShopView } from '@tbca/shared';
+import type { CraftingResult, DungeonStartRequest, DungeonView, ShopView } from '@tbca/shared';
 import { CSRF_HEADER } from '@tbca/shared/constants';
 import { firstValueFrom, type Observable } from 'rxjs';
 
@@ -39,6 +39,18 @@ export class EconomyService {
 
   sell(itemId: string) {
     return this.post<ShopView>('/api/shop/sell', { itemId });
+  }
+
+  dungeon(): Promise<DungeonView> {
+    return this.read(this.http.get<DungeonView>('/api/dungeon'));
+  }
+
+  dungeonStart(req: DungeonStartRequest) {
+    return this.post<DungeonView>('/api/dungeon/start', req);
+  }
+
+  dungeonAction(action: 'continue' | 'heal' | 'leave') {
+    return this.post<DungeonView>(`/api/dungeon/${action}`, null);
   }
 
   private post<T>(url: string, body: unknown): Promise<T> {

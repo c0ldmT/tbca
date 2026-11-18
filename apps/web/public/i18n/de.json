@@ -8,7 +8,8 @@
     "home": "Startseite",
     "character": "Charakter",
     "arena": "Arena",
-    "shop": "Shop"
+    "shop": "Shop",
+    "dungeon": "Dungeon"
   },
   "auth": {
     "login": "Mit Discord anmelden",
@@ -290,7 +291,12 @@
     "affix_not_allowed": "Dieser Affix passt nicht zum Ziel.",
     "too_many_affixes": "Das Ziel hat zu viele Affixe.",
     "same_item": "Ziel und Spender müssen verschiedene Items sein.",
-    "http_409": "Das geht gerade nicht."
+    "http_409": "Das geht gerade nicht.",
+    "run_active": "Es läuft bereits ein Run.",
+    "no_runs_left": "Für heute sind alle Runs verbraucht.",
+    "no_active_run": "Kein laufender Run.",
+    "no_injectors": "Keine Heil-Injektoren mehr.",
+    "too_many_injectors": "So viele Heil-Injektoren darfst du nicht mitnehmen."
   },
   "pvp": {
     "title": "Arena",
@@ -347,7 +353,8 @@
     "kind": {
       "pvp_rated": "Gewertete Herausforderung",
       "pvp_friendly": "Freundschaftskampf",
-      "training": "Training"
+      "training": "Training",
+      "dungeon": "Dungeon"
     }
   },
   "inventory": {
@@ -453,5 +460,50 @@
     "transferFailed": "Übertragung gescheitert, der Spender ist verbraucht.",
     "salvaged": "Item zerlegt.",
     "sold": "Verkauft für {{ credits }} Credits."
+  },
+  "dungeon": {
+    "title": "Dungeon",
+    "intro": "Endlos tief. Nach jeder Etage entscheidest du: weiter oder mit dem Loot raus. Eine Niederlage kostet den gesamten Loot des Runs – außer ein Backup-Chip rettet ihn.",
+    "runsToday": "Runs heute",
+    "floorCleared": "Etage {{ floor }} geschafft",
+    "supplies": "Heil-Injektoren: {{ injectors }}.",
+    "chipActive": "Backup-Chip aktiv.",
+    "next": "Nächste Etage {{ floor }}: Monster-Level {{ level }}",
+    "nextBoss": "Boss-Etage {{ floor }}: Monster-Level {{ level }}",
+    "modifier": {
+      "shielded": "Gepanzert",
+      "enraged": "Wütend",
+      "swift": "Flink"
+    },
+    "continue": "Weiter zu Etage {{ floor }}",
+    "leave": "Mit Loot raus",
+    "heal": "Heil-Injektor nutzen",
+    "decideBy": "Ohne Entscheidung bis {{ time }} Uhr verlässt du den Dungeon automatisch mit deinem Loot.",
+    "lastFight": "Letzten Kampf ansehen",
+    "outcome": {
+      "left": "Mit Loot raus nach Etage {{ floor }}",
+      "timed_out": "Automatisch raus nach Etage {{ floor }}",
+      "defeated": "Niederlage nach Etage {{ floor }} – Loot verloren",
+      "saved": "Niederlage nach Etage {{ floor }} – der Backup-Chip hat deinen Loot gerettet"
+    },
+    "loot": "Run-Loot",
+    "lootLost": "Verlorener Loot",
+    "lootSummary": "{{ credits }} Credits, bisher {{ xp }} XP (XP bleiben immer erhalten).",
+    "newRun": "Neuer Run",
+    "fee": "Eintritt: {{ fee }} Credits.",
+    "injectors": "Heil-Injektoren mitnehmen (du hast {{ owned }})",
+    "useChip": "Backup-Chip einsetzen (du hast {{ owned }})",
+    "start": "Run starten",
+    "suppliesHint": "Heil-Injektoren und Backup-Chips gibt es im",
+    "loading": "Lade Dungeon …"
+  },
+  "monsters": {
+    "drone": "Drohne",
+    "ganger": "Gangster",
+    "sentinel": "Wächter",
+    "hound": "Cyberhund",
+    "glitch": "Glitch",
+    "enforcer": "Vollstrecker",
+    "warden": "Aufseher"
   }
 }

@@ -8,7 +8,8 @@
     "home": "Home",
     "character": "Character",
     "arena": "Arena",
-    "shop": "Shop"
+    "shop": "Shop",
+    "dungeon": "Dungeon"
   },
   "auth": {
     "login": "Sign in with Discord",
@@ -290,7 +291,12 @@
     "affix_not_allowed": "This affix doesn't fit the target.",
     "too_many_affixes": "The target has too many affixes.",
     "same_item": "Target and donor must be different items.",
-    "http_409": "That's not possible right now."
+    "http_409": "That's not possible right now.",
+    "run_active": "A run is already in progress.",
+    "no_runs_left": "No runs left for today.",
+    "no_active_run": "No run in progress.",
+    "no_injectors": "No heal injectors left.",
+    "too_many_injectors": "You can't take that many heal injectors."
   },
   "pvp": {
     "title": "Arena",
@@ -347,7 +353,8 @@
     "kind": {
       "pvp_rated": "Rated challenge",
       "pvp_friendly": "Friendly fight",
-      "training": "Training"
+      "training": "Training",
+      "dungeon": "Dungeon"
     }
   },
   "inventory": {
@@ -453,5 +460,50 @@
     "transferFailed": "Transfer failed, the donor is consumed.",
     "salvaged": "Item salvaged.",
     "sold": "Sold for {{ credits }} credits."
+  },
+  "dungeon": {
+    "title": "Dungeon",
+    "intro": "Endlessly deep. After each floor you decide: go on or leave with the loot. A defeat costs all loot of the run – unless a backup chip saves it.",
+    "runsToday": "runs today",
+    "floorCleared": "Floor {{ floor }} cleared",
+    "supplies": "Heal injectors: {{ injectors }}.",
+    "chipActive": "Backup chip active.",
+    "next": "Next floor {{ floor }}: monster level {{ level }}",
+    "nextBoss": "Boss floor {{ floor }}: monster level {{ level }}",
+    "modifier": {
+      "shielded": "Shielded",
+      "enraged": "Enraged",
+      "swift": "Swift"
+    },
+    "continue": "On to floor {{ floor }}",
+    "leave": "Leave with loot",
+    "heal": "Use heal injector",
+    "decideBy": "Without a decision by {{ time }} you leave the dungeon automatically with your loot.",
+    "lastFight": "Watch last fight",
+    "outcome": {
+      "left": "Left with loot after floor {{ floor }}",
+      "timed_out": "Left automatically after floor {{ floor }}",
+      "defeated": "Defeated after floor {{ floor }} – loot lost",
+      "saved": "Defeated after floor {{ floor }} – the backup chip saved your loot"
+    },
+    "loot": "Run loot",
+    "lootLost": "Lost loot",
+    "lootSummary": "{{ credits }} credits, {{ xp }} XP so far (XP is always kept).",
+    "newRun": "New run",
+    "fee": "Entry: {{ fee }} credits.",
+    "injectors": "Take heal injectors (you have {{ owned }})",
+    "useChip": "Use backup chip (you have {{ owned }})",
+    "start": "Start run",
+    "suppliesHint": "Heal injectors and backup chips are sold in the",
+    "loading": "Loading dungeon …"
+  },
+  "monsters": {
+    "drone": "Drone",
+    "ganger": "Ganger",
+    "sentinel": "Sentinel",
+    "hound": "Cyberhound",
+    "glitch": "Glitch",
+    "enforcer": "Enforcer",
+    "warden": "Warden"
   }
 }

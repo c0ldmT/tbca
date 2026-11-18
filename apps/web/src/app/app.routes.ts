@@ -14,6 +14,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/pvp/pvp.page').then((m) => m.PvpPage),
   },
   {
+    path: 'dungeon',
+    loadComponent: () => import('./pages/dungeon/dungeon.page').then((m) => m.DungeonPage),
+  },
+  {
     path: 'shop',
     loadComponent: () => import('./pages/shop/shop.page').then((m) => m.ShopPage),
   },

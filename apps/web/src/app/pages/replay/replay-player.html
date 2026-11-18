@@ -19,7 +19,7 @@
             [class.unit--crit]="hit === 'crit'"
           >
             <header class="unit__head">
-              <span class="unit__name">{{ c.name }}</span>
+              <span class="unit__name">{{ displayName(c) }}</span>
               <span class="unit__meta">
                 {{ c.classId ? t('classes.' + c.classId) : '' }}
                 {{ t('character.level', { level: c.level }) }}
