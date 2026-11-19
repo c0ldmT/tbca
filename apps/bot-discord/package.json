@@ -1,0 +1,25 @@
+{
+  "name": "@tbca/bot-discord",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Discord-Bot: Slash-Commands und Aktivitäts-XP als dünner Client der API",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --conditions=@tbca/source --clear-screen=false src/main.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/main.js",
+    "register-commands": "tsx --conditions=@tbca/source src/register-commands.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tbca/game-core": "workspace:*",
+    "@tbca/shared": "workspace:*",
+    "discord.js": "14.27.0"
+  },
+  "devDependencies": {
+    "tsx": "4.23.15",
+    "vitest": "5.0.5"
+  }
+}

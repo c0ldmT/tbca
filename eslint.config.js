@@ -40,7 +40,7 @@ export default defineConfig(
   },
   {
     // Kommandozeilen-Programme dürfen auf die Konsole schreiben.
-    files: ['**/src/cli/**/*.ts'],
+    files: ['**/src/cli/**/*.ts', 'apps/bot-*/src/main.ts', 'apps/bot-*/src/register-commands.ts'],
     rules: { 'no-console': 'off' },
   },
   {
