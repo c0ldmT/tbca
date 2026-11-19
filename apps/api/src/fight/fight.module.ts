@@ -24,5 +24,6 @@ import { FightService } from './fight.service.js';
       useFactory: (conn: DbConnection) => new DrizzleCharacterRepository(conn.db),
     },
   ],
+  exports: [FightService],
 })
 export class FightModule {}

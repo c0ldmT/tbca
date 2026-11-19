@@ -62,6 +62,15 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
   Energie. Bestehende Replays bleiben unverändert.
 - Website: Dungeon-Seite mit Vorschau der nächsten Etage, Vitalwerten, Run-Loot und Entscheidung;
   Monsternamen im Replay übersetzt.
+- Discord-Bot (`apps/bot-discord`): `/tbca registrieren` (Schatten-Account, den ein späterer
+  Web-Login übernimmt), `/tbca profil`, `/tbca kampf` mit Zusammenfassung und Replay-Link,
+  `/tbca-admin einrichten` und `/tbca-admin xp-kanal` für Community-Admins.
+- Aktivitäts-XP für Discord-Nachrichten: 15–25 XP ab 5 Zeichen, nur in freigegebenen Kanälen,
+  60 s Cooldown und Wiederholungsprüfung je Identität in Valkey, Ereignis-ID gegen Doppelverarbeitung,
+  globales passives Tageslimit je Account (voll, dann 50 %, dann Schluss). Der Bot sendet nur Länge
+  und Hash, nie den Inhalt (Migration `0008_passive_xp`).
+- Interne API für Bots mit Service-Token; Community-Mitgliedschaft mit Heimat-Community entsteht
+  automatisch.
 - Website: Arena mit Gegnersuche und letzten Kämpfen, HUD-Replay mit Lebens- und Energiebalken,
   Schadenszahlen, Status, Glitch bei Crits, Geschwindigkeit und Textlog; Replays per Link teilbar.
 

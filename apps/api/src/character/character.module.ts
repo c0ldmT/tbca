@@ -19,5 +19,6 @@ import { DrizzleCharacterRepository } from './drizzle-character.repository.js';
       useFactory: (conn: DbConnection) => new DrizzleCharacterRepository(conn.db),
     },
   ],
+  exports: [CharacterService],
 })
 export class CharacterModule {}

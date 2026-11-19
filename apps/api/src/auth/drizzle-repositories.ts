@@ -12,11 +12,12 @@ import type {
 export class DrizzleAccountRepository implements AccountRepository {
   constructor(private readonly db: Database) {}
 
-  async loginWithIdentity(profile: ExternalProfile, now: Date): Promise<string> {
+  async loginWithIdentity(profile: ExternalProfile, now: Date | null): Promise<string> {
+    const seen = now ? { lastLoginAt: now } : {};
     return this.db.transaction(async (tx) => {
       const [existing] = await tx
         .update(identity)
-        .set({ displayName: profile.displayName, avatarUrl: profile.avatarUrl, lastLoginAt: now })
+        .set({ displayName: profile.displayName, avatarUrl: profile.avatarUrl, ...seen })
         .where(
           and(
             eq(identity.provider, profile.provider),
@@ -31,10 +32,10 @@ export class DrizzleAccountRepository implements AccountRepository {
       const [created] = await tx.insert(account).values({}).returning({ id: account.id });
       const [linked] = await tx
         .insert(identity)
-        .values({ ...profile, accountId: created!.id, lastLoginAt: now })
+        .values({ ...profile, accountId: created!.id, ...seen })
         .onConflictDoUpdate({
           target: [identity.provider, identity.providerUserId],
-          set: { displayName: profile.displayName, avatarUrl: profile.avatarUrl, lastLoginAt: now },
+          set: { displayName: profile.displayName, avatarUrl: profile.avatarUrl, ...seen },
         })
         .returning({ accountId: identity.accountId });
       if (linked!.accountId !== created!.id) {
@@ -42,6 +43,17 @@ export class DrizzleAccountRepository implements AccountRepository {
       }
       return linked!.accountId;
     });
+  }
+
+  async findAccountId(
+    provider: ExternalProfile['provider'],
+    providerUserId: string,
+  ): Promise<string | null> {
+    const [row] = await this.db
+      .select({ accountId: identity.accountId })
+      .from(identity)
+      .where(and(eq(identity.provider, provider), eq(identity.providerUserId, providerUserId)));
+    return row?.accountId ?? null;
   }
 
   async findProfile(accountId: string): Promise<MeProfile | null> {

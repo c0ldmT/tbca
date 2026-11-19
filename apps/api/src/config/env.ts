@@ -39,6 +39,13 @@ export const envSchema = z
     DISCORD_CLIENT_ID: z.string().optional(),
     DISCORD_CLIENT_SECRET: z.string().optional(),
     DISCORD_REDIRECT_URI: z.url().optional(),
+    /** Valkey für Cooldowns, Rate-Limits und Wiederholungsprüfung. */
+    VALKEY_URL: z.url({ protocol: /^rediss?$/ }).default('redis://localhost:6379'),
+    /** Token, mit dem Bots die interne API aufrufen; ohne Token ist sie abgeschaltet. */
+    BOT_SERVICE_TOKEN: z
+      .string()
+      .min(32, 'BOT_SERVICE_TOKEN muss mindestens 32 Zeichen haben')
+      .optional(),
   })
   .transform((env) => ({
     ...env,

@@ -43,6 +43,8 @@ import type {
 } from '../src/fight/types.js';
 import type { InventoryRepository, StoredItem } from '../src/inventory/types.js';
 import type { DungeonRepository, DungeonRun, DungeonTx } from '../src/dungeon/types.js';
+import type { DiscordRepository, GuildCommunity } from '../src/discord/types.js';
+import { MemoryRateLimiter } from '../src/limits/rate-limiter.js';
 import {
   AlreadyPurchasedError,
   ItemEquippedError,
@@ -59,6 +61,8 @@ import {
   INVENTORY_REPOSITORY,
   ECONOMY_REPOSITORY,
   DUNGEON_REPOSITORY,
+  DISCORD_REPOSITORY,
+  RATE_LIMITER,
   DISCORD_OAUTH,
   SEASON_REPOSITORY,
   SESSION_STORE,
@@ -75,6 +79,7 @@ export function testEnv(overrides: Record<string, string> = {}): Env {
     COOKIE_SECRET: 'x'.repeat(40),
     DISCORD_CLIENT_ID: 'client-id',
     DISCORD_CLIENT_SECRET: 'client-secret',
+    BOT_SERVICE_TOKEN: 'b'.repeat(40),
     ...overrides,
   });
 }
@@ -95,6 +100,16 @@ export class InMemoryAccounts implements AccountRepository {
     const id = randomUUID();
     this.accounts.set(id, { identities: [{ ...profile }] });
     return id;
+  }
+
+  async findAccountId(provider: string, providerUserId: string): Promise<string | null> {
+    for (const [id, acc] of this.accounts) {
+      if (
+        acc.identities.some((i) => i.provider === provider && i.providerUserId === providerUserId)
+      )
+        return id;
+    }
+    return null;
   }
 
   async findProfile(accountId: string): Promise<MeProfile | null> {
@@ -428,6 +443,57 @@ export class InMemoryDungeon implements DungeonRepository {
   }
 }
 
+export class InMemoryDiscord implements DiscordRepository {
+  readonly guilds = new Map<string, { communityId: string; name: string }>();
+  readonly xpChannels = new Map<string, Set<string>>();
+  readonly members = new Map<string, { communityId: string; isHome: boolean }[]>();
+  readonly ledger = new Map<string, number>();
+
+  constructor(private readonly characters: InMemoryCharacters) {}
+
+  async communityForGuild(guildId: string): Promise<GuildCommunity | null> {
+    const g = this.guilds.get(guildId);
+    return g ? { ...g, xpChannels: [...(this.xpChannels.get(guildId) ?? [])] } : null;
+  }
+
+  async ensureGuildCommunity(guildId: string, name: string): Promise<GuildCommunity> {
+    if (!this.guilds.has(guildId)) this.guilds.set(guildId, { communityId: randomUUID(), name });
+    return (await this.communityForGuild(guildId))!;
+  }
+
+  async setChannelXp(guildId: string, channelId: string, enabled: boolean): Promise<void> {
+    const set = this.xpChannels.get(guildId) ?? new Set<string>();
+    if (enabled) set.add(channelId);
+    else set.delete(channelId);
+    this.xpChannels.set(guildId, set);
+  }
+
+  async ensureMember(communityId: string, accountId: string): Promise<void> {
+    const list = this.members.get(accountId) ?? [];
+    if (!list.some((m) => m.communityId === communityId))
+      list.push({ communityId, isHome: list.length === 0 });
+    this.members.set(accountId, list);
+  }
+
+  async bookPassive(
+    input: { seasonId: string; accountId: string; characterId: string; day: string },
+    decide: (s: { rawToday: number; xp: number; level: number }) => {
+      rawToday: number;
+      awarded: number;
+      xp: number;
+      level: number;
+    },
+  ) {
+    const key = `${input.seasonId}:${input.accountId}:${input.day}`;
+    const c = this.characters.records.find((r) => r.id === input.characterId)!;
+    const result = decide({ rawToday: this.ledger.get(key) ?? 0, xp: c.xp, level: c.level });
+    const levelBefore = c.level;
+    this.ledger.set(key, result.rawToday);
+    if (result.awarded > 0) Object.assign(c, { xp: result.xp, level: result.level });
+    return { awarded: result.awarded, level: c.level, levelBefore };
+  }
+}
+
 export class InMemoryFights implements FightRepository {
   readonly fights: StoredFight[] = [];
 
@@ -494,6 +560,7 @@ export interface TestApp {
   inventory: InMemoryInventory;
   economy: InMemoryEconomy;
   dungeon: InMemoryDungeon;
+  guilds: InMemoryDiscord;
   time: ManualTimeSource;
   dbUp: { value: boolean };
 }
@@ -509,6 +576,7 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
   characters.inventory = inventory;
   const economy = new InMemoryEconomy(characters, inventory);
   const dungeon = new InMemoryDungeon(fights, economy, characters);
+  const guilds = new InMemoryDiscord(characters);
   // 12.11.2026, 12:00 Uhr in Berlin
   const time = new ManualTimeSource(Date.UTC(2026, 10, 12, 11, 0));
   const dbUp = { value: true };
@@ -532,6 +600,10 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
     .useValue(economy)
     .overrideProvider(DUNGEON_REPOSITORY)
     .useValue(dungeon)
+    .overrideProvider(DISCORD_REPOSITORY)
+    .useValue(guilds)
+    .overrideProvider(RATE_LIMITER)
+    .useValue(new MemoryRateLimiter(time.read))
     .overrideProvider(CLOCK)
     .useValue(new GameClock({ source: time.read }))
     .overrideProvider(DB_PING)
@@ -557,6 +629,7 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
     inventory,
     economy,
     dungeon,
+    guilds,
     time,
     dbUp,
   };

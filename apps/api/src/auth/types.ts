@@ -13,10 +13,16 @@ export type MeProfile = Omit<MeResponse, 'csrfToken'>;
 export interface AccountRepository {
   /**
    * Meldet eine Plattform-Identität an. Existiert sie noch nicht, entstehen Account und
-   * Identität neu; sonst werden Anzeigename, Avatar und letzter Login aktualisiert.
+   * Identität neu (Schatten-Account, wenn es über einen Chat-Command geschieht); sonst werden
+   * Anzeigename, Avatar und – bei `now` – der letzte Login aktualisiert.
    * @returns die Account-ID
    */
-  loginWithIdentity(profile: ExternalProfile, now: Date): Promise<string>;
+  loginWithIdentity(profile: ExternalProfile, now: Date | null): Promise<string>;
+  /** Account zu einer Plattform-Identität oder null. */
+  findAccountId(
+    provider: ExternalProfile['provider'],
+    providerUserId: string,
+  ): Promise<string | null>;
   findProfile(accountId: string): Promise<MeProfile | null>;
 }
 

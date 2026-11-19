@@ -507,4 +507,19 @@ export const DEFAULT_GAME_CONFIG: GameConfig = {
     ],
     decisionTimeoutMs: 10 * 60 * 1000,
   },
+  passiveXp: {
+    message: {
+      minXp: 15,
+      maxXp: 25,
+      minLength: 5,
+      cooldownMs: 60_000,
+      repeatWindowMs: 10 * 60_000,
+    },
+    // Level 10: volle XP bis 440, halbe bis 1 320 – höchstens 880 XP am Tag aus Chat.
+    dailyCap: {
+      soft: { base: 40, perLevel: 40 },
+      hard: { base: 120, perLevel: 120 },
+      overSoftPermille: 500,
+    },
+  },
 };

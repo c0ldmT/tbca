@@ -600,3 +600,27 @@ export const dungeonRun = pgTable(
       .where(sql`${t.status} = 'active'`),
   ],
 );
+
+// --- Progression (Abschnitt 11) ---------------------------------------------
+
+/**
+ * Passive Tages-XP je Account und Season über alle Communities und Plattformen. Nur Zähler,
+ * keine Nachrichteninhalte.
+ */
+export const xpLedgerDaily = pgTable(
+  'xp_ledger_daily',
+  {
+    seasonId: uuid('season_id')
+      .notNull()
+      .references(() => season.id, { onDelete: 'cascade' }),
+    accountId: uuid('account_id')
+      .notNull()
+      .references(() => account.id, { onDelete: 'cascade' }),
+    day: text('day').notNull(),
+    /** Ungedeckelte Summe (bis zur harten Schwelle). */
+    passiveRaw: integer('passive_raw').notNull().default(0),
+    passiveAwarded: integer('passive_awarded').notNull().default(0),
+    messages: integer('messages').notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.seasonId, t.accountId, t.day] })],
+);

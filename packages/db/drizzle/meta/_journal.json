@@ -57,6 +57,13 @@
       "when": 1794401666618,
       "tag": "0007_dungeon",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794402511269,
+      "tag": "0008_passive_xp",
+      "breakpoints": true
     }
   ]
 }

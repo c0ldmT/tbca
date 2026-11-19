@@ -31,6 +31,6 @@ import { SessionService } from './session.service.js';
       useFactory: (env: Env) => new DiscordOAuthClient(env),
     },
   ],
-  exports: [SessionService, SessionGuard, CsrfGuard],
+  exports: [SessionService, SessionGuard, CsrfGuard, ACCOUNT_REPOSITORY],
 })
 export class AuthModule {}

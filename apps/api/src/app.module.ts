@@ -7,6 +7,8 @@ import { ClockModule } from './clock/clock.module.js';
 import { ConfigModule } from './config/config.module.js';
 import type { Env } from './config/env.js';
 import { DbModule } from './db/db.module.js';
+import { DiscordModule } from './discord/discord.module.js';
+import { RateLimitModule } from './limits/rate-limiter.js';
 import { DungeonModule } from './dungeon/dungeon.module.js';
 import { EconomyModule } from './economy/economy.module.js';
 import { FightModule } from './fight/fight.module.js';
@@ -32,6 +34,8 @@ export class AppModule {
         InventoryModule,
         EconomyModule,
         DungeonModule,
+        RateLimitModule,
+        DiscordModule,
       ],
     };
   }

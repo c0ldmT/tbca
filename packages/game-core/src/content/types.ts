@@ -1,4 +1,5 @@
 import type { DungeonRules } from '../dungeon/dungeon.js';
+import type { PassiveXpRules } from '../progression/passive.js';
 import type { CraftingRules, ItemRules, ShopRules } from '../items/types.js';
 import type { Fixed } from '../math/fixed.js';
 
@@ -206,6 +207,7 @@ export interface GameConfig {
   readonly crafting: CraftingRules;
   readonly shop: ShopRules;
   readonly dungeon: DungeonRules;
+  readonly passiveXp: PassiveXpRules;
 }
 
 export interface LootRules {

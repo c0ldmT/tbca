@@ -33,6 +33,7 @@ import { DrizzleInventoryRepository } from '../src/inventory/drizzle-inventory.r
 import { DrizzleEconomyRepository } from '../src/economy/drizzle-economy.repository.js';
 import { AlreadyPurchasedError, ItemEquippedError } from '../src/economy/types.js';
 import { DrizzleSeasonRepository } from '../src/game/season.js';
+import { DrizzleDiscordRepository } from '../src/discord/drizzle-discord.repository.js';
 
 const url = process.env['TBCA_TEST_DATABASE_URL'];
 
@@ -341,5 +342,50 @@ describe.skipIf(!url)('Drizzle-Repositories (Integration)', () => {
       eco.commit({ seasonId, accountId, purchase: { day: '2026-11-16', offerId: 'rotation-0' } }),
     ).rejects.toBeInstanceOf(AlreadyPurchasedError);
     expect(await eco.purchases(accountId, seasonId, '2026-11-16')).toEqual(['rotation-0']);
+  });
+
+  it('verwaltet Discord-Communities, Mitgliedschaften und passive Tages-XP', async () => {
+    const repo = new DrizzleDiscordRepository(conn.db);
+    const guildId = String(Date.now());
+    const guild = await repo.ensureGuildCommunity(guildId, 'Night City');
+    expect(await repo.ensureGuildCommunity(guildId, 'Night City')).toEqual(guild);
+    await repo.setChannelXp(guildId, '777', true);
+    await repo.setChannelXp(guildId, '778', true);
+    await repo.setChannelXp(guildId, '778', false);
+    expect((await repo.communityForGuild(guildId))!.xpChannels).toEqual(['777']);
+
+    const current = (await new DrizzleSeasonRepository(conn.db).findCurrent())!;
+    const [acc] = await conn.db.insert(account).values({}).returning();
+    await repo.ensureMember(guild.communityId, acc!.id);
+    await repo.ensureMember(guild.communityId, acc!.id);
+    const chars = new DrizzleCharacterRepository(conn.db);
+    const c = await chars.create({
+      accountId: acc!.id,
+      seasonId: current.id,
+      name: `Chat${Date.now() % 100000}`,
+      classId: 'gunner',
+      level: 1,
+      xp: 0,
+      allocated: { str: 0, dex: 0, int: 0, con: 0 },
+      loadouts: {},
+    });
+    const input = {
+      seasonId: current.id,
+      accountId: acc!.id,
+      characterId: c.id,
+      day: '2026-11-19',
+    };
+    const first = await repo.bookPassive(input, (s) => ({
+      rawToday: s.rawToday + 20,
+      awarded: 20,
+      xp: s.xp + 20,
+      level: s.level,
+    }));
+    expect(first).toEqual({ awarded: 20, level: 1, levelBefore: 1 });
+    await repo.bookPassive(input, (s) => {
+      expect(s).toEqual({ rawToday: 20, xp: 20, level: 1 });
+      return { rawToday: 200, awarded: 120, xp: 140, level: 2 };
+    });
+    expect((await chars.findById(c.id))!.xp).toBe(140);
   });
 });

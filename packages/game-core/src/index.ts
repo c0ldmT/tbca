@@ -90,6 +90,12 @@ export {
   type FloorPlan,
   type FloorReward,
 } from './dungeon/dungeon.js';
+export {
+  applyPassiveCap,
+  messageXp,
+  type PassiveCapResult,
+  type PassiveXpRules,
+} from './progression/passive.js';
 export { BOT_NAMES, botBuild, type BotSpec } from './bots/bot-build.js';
 export { pvpReward, type PvpReward, type PvpRewardInput, type RewardLimit } from './pvp/rewards.js';
 
