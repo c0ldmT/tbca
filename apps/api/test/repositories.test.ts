@@ -34,6 +34,8 @@ import { DrizzleEconomyRepository } from '../src/economy/drizzle-economy.reposit
 import { AlreadyPurchasedError, ItemEquippedError } from '../src/economy/types.js';
 import { DrizzleSeasonRepository } from '../src/game/season.js';
 import { DrizzleDiscordRepository } from '../src/discord/drizzle-discord.repository.js';
+import { DrizzleTeamRepository } from '../src/team/drizzle-team.repository.js';
+import { TeamConflictError } from '../src/team/types.js';
 
 const url = process.env['TBCA_TEST_DATABASE_URL'];
 
@@ -387,5 +389,56 @@ describe.skipIf(!url)('Drizzle-Repositories (Integration)', () => {
       return { rawToday: 200, awarded: 120, xp: 140, level: 2 };
     });
     expect((await chars.findById(c.id))!.xp).toBe(140);
+  });
+
+  it('verwaltet Teams mit eindeutigen Namen und einem Team je Community', async () => {
+    const repo = new DrizzleTeamRepository(conn.db);
+    const guild = await new DrizzleDiscordRepository(conn.db).ensureGuildCommunity(
+      `${Date.now()}9`,
+      'Teamtest',
+    );
+    const [a] = await conn.db.insert(account).values({}).returning();
+    const [b] = await conn.db.insert(account).values({}).returning();
+    await repo.joinCommunity(guild.communityId, a!.id);
+    await repo.joinCommunity(guild.communityId, b!.id);
+    expect(await repo.isCommunityMember(guild.communityId, a!.id)).toBe(true);
+
+    const suffix = String(Date.now() % 100000);
+    const t1 = await repo.create({
+      communityId: guild.communityId,
+      name: `Wolves${suffix}`,
+      tag: `W${suffix.slice(-3)}`,
+      logo: 'wolf',
+      captainAccountId: a!.id,
+      joinCode: `J${suffix}`,
+      focus: 'threat',
+      lineup2: [],
+      lineup3: [],
+    });
+    expect(t1).toMatchObject({ members: [a!.id], communityName: 'Teamtest' });
+    await expect(
+      repo.create({
+        communityId: guild.communityId,
+        name: `wolves${suffix}`,
+        tag: 'ZZZ',
+        logo: 'eye',
+        captainAccountId: b!.id,
+        joinCode: `K${suffix}`,
+        focus: 'threat',
+        lineup2: [],
+        lineup3: [],
+      }),
+    ).rejects.toEqual(new TeamConflictError('team_name_taken'));
+    await repo.addMember(t1, b!.id);
+    await expect(repo.addMember(t1, b!.id)).rejects.toBeInstanceOf(TeamConflictError);
+    await repo.update(t1.id, { focus: 'healer', lineup2: [a!.id, b!.id] });
+    expect(await repo.findByCode(`j${suffix}`)).toMatchObject({
+      focus: 'healer',
+      members: [a!.id, b!.id],
+    });
+    expect((await repo.search(`wolves${suffix}`, 5)).map((t) => t.id)).toEqual([t1.id]);
+    await repo.removeMember(t1.id, b!.id);
+    await repo.remove(t1.id);
+    expect(await repo.find(t1.id)).toBeNull();
   });
 });

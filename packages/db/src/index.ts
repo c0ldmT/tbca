@@ -14,6 +14,7 @@ export {
   DEV_COMMUNITY_SLUG,
   DEV_SEASON_SLUG,
   seedBots,
+  seedBotTeams,
   seedDevelopment,
 } from './seed.js';
 export {

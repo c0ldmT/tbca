@@ -64,6 +64,13 @@
       "when": 1794402511269,
       "tag": "0008_passive_xp",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794406655510,
+      "tag": "0009_teams",
+      "breakpoints": true
     }
   ]
 }

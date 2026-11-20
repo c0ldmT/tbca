@@ -71,6 +71,14 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
   und Hash, nie den Inhalt (Migration `0008_passive_xp`).
 - Interne API für Bots mit Service-Token; Community-Mitgliedschaft mit Heimat-Community entsteht
   automatisch.
+- Teams: feste Gruppen mit Name, Kürzel und Logo, bis zu 6 Mitglieder, gebunden an eine Community
+  (je Community ein Team pro Account); Beitritt per Code, Kapitän mit Übergabe beim Austritt.
+  Team-Herausforderungen 2v2 und 3v3 gegen die Standard-Aufstellung des Gegners, mit Team-Taktik
+  (Fokusziel) und denselben Belohnungsregeln wie im Einzel für jedes Mitglied der Aufstellung
+  (Migration `0009_teams`). Communities lassen sich auf der Website beitreten.
+- Dev-Daten: zwei Bot-Teams mit je vier Bots (Beitrittscodes `BOTCHW`, `BOTNEON`).
+- Website: Teams-Seite mit Gründen, Beitreten, Aufstellung, Fokusziel und Herausforderung; Replays
+  zeigen die Belohnungen aller Team-Mitglieder.
 - Website: Arena mit Gegnersuche und letzten Kämpfen, HUD-Replay mit Lebens- und Energiebalken,
   Schadenszahlen, Status, Glitch bei Crits, Geschwindigkeit und Textlog; Replays per Link teilbar.
 
@@ -96,6 +104,8 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
   Glitch-Effekt und einem Testkampf, den die Engine direkt im Browser berechnet.
 
 ### Behoben
+
+- XP-Kanäle: Ein Kanal, der den Server wechselt, wird der neuen Community zugeordnet.
 
 - Ältere Season-Konfigurationen werden mit den Startwerten ergänzt; sonst brach ein Kampf mit
   einer Konfiguration aus Phase 0 ab (fehlender `triangleBonus`).

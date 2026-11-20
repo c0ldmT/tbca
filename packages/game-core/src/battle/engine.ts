@@ -182,7 +182,7 @@ class Battle {
         return sel === 'self' ? [actor] : pick(allies, byLowestHp);
       }
       case 'enemy': {
-        switch (selector ?? 'threat') {
+        switch (selector ?? actor.s.focus ?? 'threat') {
           case 'lowest_hp':
             return pick(enemies, byLowestHp);
           case 'highest_hp':

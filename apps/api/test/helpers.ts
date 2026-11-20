@@ -44,6 +44,7 @@ import type {
 import type { InventoryRepository, StoredItem } from '../src/inventory/types.js';
 import type { DungeonRepository, DungeonRun, DungeonTx } from '../src/dungeon/types.js';
 import type { DiscordRepository, GuildCommunity } from '../src/discord/types.js';
+import { TeamConflictError, type TeamRecord, type TeamRepository } from '../src/team/types.js';
 import { MemoryRateLimiter } from '../src/limits/rate-limiter.js';
 import {
   AlreadyPurchasedError,
@@ -63,6 +64,7 @@ import {
   DUNGEON_REPOSITORY,
   DISCORD_REPOSITORY,
   RATE_LIMITER,
+  TEAM_REPOSITORY,
   DISCORD_OAUTH,
   SEASON_REPOSITORY,
   SESSION_STORE,
@@ -494,10 +496,114 @@ export class InMemoryDiscord implements DiscordRepository {
   }
 }
 
+export class InMemoryTeams implements TeamRepository {
+  readonly communityList: { id: string; slug: string; name: string }[] = [
+    { id: '01933b5e-0000-7000-8000-00000000c001', slug: 'dev', name: 'Dev Community' },
+  ];
+  readonly memberships = new Map<string, Set<string>>();
+  readonly teams: TeamRecord[] = [];
+
+  async communities(accountId: string) {
+    const mine = this.memberships.get(accountId) ?? new Set();
+    const first = [...mine][0];
+    return this.communityList.map((c) => ({ ...c, member: mine.has(c.id), home: c.id === first }));
+  }
+
+  async joinCommunity(communityId: string, accountId: string) {
+    const set = this.memberships.get(accountId) ?? new Set<string>();
+    set.add(communityId);
+    this.memberships.set(accountId, set);
+  }
+
+  async isCommunityMember(communityId: string, accountId: string) {
+    return this.memberships.get(accountId)?.has(communityId) ?? false;
+  }
+
+  async teamsOf(accountId: string) {
+    return structuredClone(this.teams.filter((t) => t.members.includes(accountId)));
+  }
+
+  async find(id: string) {
+    const t = this.teams.find((x) => x.id === id);
+    return t ? structuredClone(t) : null;
+  }
+
+  async findByCode(code: string) {
+    const t = this.teams.find((x) => x.joinCode.toUpperCase() === code.toUpperCase());
+    return t ? structuredClone(t) : null;
+  }
+
+  async search(query: string, limit: number) {
+    const q = query.toLowerCase();
+    return structuredClone(
+      this.teams
+        .filter((t) => t.name.toLowerCase().includes(q) || t.tag.toLowerCase().includes(q))
+        .slice(0, limit),
+    );
+  }
+
+  async create(record: Omit<TeamRecord, 'id' | 'members' | 'communityName'>) {
+    if (this.teams.some((t) => t.name.toLowerCase() === record.name.toLowerCase()))
+      throw new TeamConflictError('team_name_taken');
+    if (this.teams.some((t) => t.tag.toLowerCase() === record.tag.toLowerCase()))
+      throw new TeamConflictError('team_tag_taken');
+    if (
+      this.teams.some(
+        (t) => t.communityId === record.communityId && t.members.includes(record.captainAccountId!),
+      )
+    ) {
+      throw new TeamConflictError('already_in_team');
+    }
+    const t: TeamRecord = {
+      ...record,
+      id: randomUUID(),
+      communityName: this.communityList.find((c) => c.id === record.communityId)?.name ?? '',
+      members: record.captainAccountId ? [record.captainAccountId] : [],
+    };
+    this.teams.push(t);
+    return structuredClone(t);
+  }
+
+  async addMember(record: TeamRecord, accountId: string) {
+    if (
+      this.teams.some((t) => t.communityId === record.communityId && t.members.includes(accountId))
+    ) {
+      throw new TeamConflictError('already_in_team');
+    }
+    this.teams.find((t) => t.id === record.id)!.members.push(accountId);
+  }
+
+  async removeMember(teamId: string, accountId: string) {
+    const t = this.teams.find((x) => x.id === teamId)!;
+    t.members = t.members.filter((m) => m !== accountId);
+  }
+
+  async update(
+    teamId: string,
+    patch: Partial<Pick<TeamRecord, 'captainAccountId' | 'focus' | 'lineup2' | 'lineup3'>>,
+  ) {
+    Object.assign(
+      this.teams.find((x) => x.id === teamId)!,
+      structuredClone(patch),
+    );
+  }
+
+  async remove(teamId: string) {
+    this.teams.splice(
+      this.teams.findIndex((t) => t.id === teamId),
+      1,
+    );
+  }
+}
+
 export class InMemoryFights implements FightRepository {
   readonly fights: StoredFight[] = [];
 
   constructor(private readonly characters: InMemoryCharacters) {}
+
+  async lockedMany<T>(_ids: readonly string[], fn: (tx: FightTx) => Promise<T>): Promise<T> {
+    return this.locked('', fn);
+  }
 
   async locked<T>(_characterId: string, fn: (tx: FightTx) => Promise<T>): Promise<T> {
     return fn({
@@ -529,9 +635,8 @@ export class InMemoryFights implements FightRepository {
       for (const p of f.participants) {
         if (p.characterId !== characterId || !p.rewarded) continue;
         today++;
-        if (p.opponentCharacterId) {
-          byOpponent.set(p.opponentCharacterId, (byOpponent.get(p.opponentCharacterId) ?? 0) + 1);
-        }
+        const key = p.opponentTeamId ?? p.opponentCharacterId;
+        if (key) byOpponent.set(key, (byOpponent.get(key) ?? 0) + 1);
       }
     }
     return { today, byOpponent };
@@ -561,6 +666,7 @@ export interface TestApp {
   economy: InMemoryEconomy;
   dungeon: InMemoryDungeon;
   guilds: InMemoryDiscord;
+  teams: InMemoryTeams;
   time: ManualTimeSource;
   dbUp: { value: boolean };
 }
@@ -577,6 +683,7 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
   const economy = new InMemoryEconomy(characters, inventory);
   const dungeon = new InMemoryDungeon(fights, economy, characters);
   const guilds = new InMemoryDiscord(characters);
+  const teams = new InMemoryTeams();
   // 12.11.2026, 12:00 Uhr in Berlin
   const time = new ManualTimeSource(Date.UTC(2026, 10, 12, 11, 0));
   const dbUp = { value: true };
@@ -602,6 +709,8 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
     .useValue(dungeon)
     .overrideProvider(DISCORD_REPOSITORY)
     .useValue(guilds)
+    .overrideProvider(TEAM_REPOSITORY)
+    .useValue(teams)
     .overrideProvider(RATE_LIMITER)
     .useValue(new MemoryRateLimiter(time.read))
     .overrideProvider(CLOCK)
@@ -630,6 +739,7 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
     economy,
     dungeon,
     guilds,
+    teams,
     time,
     dbUp,
   };

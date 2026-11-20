@@ -9,6 +9,7 @@ import type { Env } from './config/env.js';
 import { DbModule } from './db/db.module.js';
 import { DiscordModule } from './discord/discord.module.js';
 import { RateLimitModule } from './limits/rate-limiter.js';
+import { TeamModule } from './team/team.module.js';
 import { DungeonModule } from './dungeon/dungeon.module.js';
 import { EconomyModule } from './economy/economy.module.js';
 import { FightModule } from './fight/fight.module.js';
@@ -36,6 +37,7 @@ export class AppModule {
         DungeonModule,
         RateLimitModule,
         DiscordModule,
+        TeamModule,
       ],
     };
   }

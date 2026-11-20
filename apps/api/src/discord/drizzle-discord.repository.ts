@@ -67,7 +67,8 @@ export class DrizzleDiscordRepository implements DiscordRepository {
       })
       .onConflictDoUpdate({
         target: [communityChannel.kind, communityChannel.externalId],
-        set: { xpEnabled: enabled },
+        // Kanal-IDs sind global eindeutig; ein umgezogener Server übernimmt den Eintrag.
+        set: { xpEnabled: enabled, communityId: guild.communityId, parentExternalId: guildId },
       });
   }
 

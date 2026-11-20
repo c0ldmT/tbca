@@ -11,6 +11,7 @@ import type {
   BattleInput,
   BattleRules,
   CombatantSnapshot,
+  TargetSelector,
   EquipSlot,
   GameConfig,
   ItemData,
@@ -317,7 +318,14 @@ export const loadout = pgTable(
 /** Binärdaten (z. B. das gzip-komprimierte Event-Log). */
 const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () => 'bytea' });
 
-export const fightKind = pgEnum('fight_kind', ['pvp_rated', 'pvp_friendly', 'training', 'dungeon']);
+export const fightKind = pgEnum('fight_kind', [
+  'pvp_rated',
+  'pvp_friendly',
+  'training',
+  'dungeon',
+  'team_rated',
+  'team_friendly',
+]);
 export const fightEndReason = pgEnum('fight_end_reason', ['knockout', 'timeout']);
 
 /**
@@ -371,6 +379,8 @@ export const fightParticipant = pgTable(
     creditsAwarded: integer('credits_awarded').notNull().default(0),
     /** Gegner-Charakter bei 1v1, für die Abnahme gegen denselben Gegner. */
     opponentCharacterId: uuid('opponent_character_id'),
+    /** Gegner-Team bei Team-Herausforderungen, ebenso für die Abnahme. */
+    opponentTeamId: uuid('opponent_team_id'),
   },
   (t) => [
     primaryKey({ columns: [t.fightId, t.team, t.slot] }),
@@ -623,4 +633,56 @@ export const xpLedgerDaily = pgTable(
     messages: integer('messages').notNull().default(0),
   },
   (t) => [primaryKey({ columns: [t.seasonId, t.accountId, t.day] })],
+);
+
+// --- Teams (Abschnitt 9) -------------------------------------------------------
+
+/** Feste Gruppe mit bis zu 6 Mitgliedern, gebunden an eine Community. */
+export const team = pgTable(
+  'team',
+  {
+    id: id(),
+    communityId: uuid('community_id')
+      .notNull()
+      .references(() => community.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    tag: text('tag').notNull(),
+    /** Logo aus einer festen Auswahl. */
+    logo: text('logo').notNull(),
+    captainAccountId: uuid('captain_account_id').references(() => account.id, {
+      onDelete: 'set null',
+    }),
+    /** Einladungscode zum Beitreten. */
+    joinCode: text('join_code').notNull().unique(),
+    /** Team-Taktik: Fokusziel. */
+    focus: text('focus').$type<TargetSelector>().notNull().default('threat'),
+    /** Standard-Aufstellungen (Account-IDs) für Herausforderungen gegen das Team. */
+    lineup2: jsonb('lineup2').$type<string[]>().notNull().default([]),
+    lineup3: jsonb('lineup3').$type<string[]>().notNull().default([]),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('team_name_idx').on(sql`lower(${t.name})`),
+    uniqueIndex('team_tag_idx').on(sql`lower(${t.tag})`),
+    check('team_tag_check', sql`char_length(${t.tag}) BETWEEN 2 AND 5`),
+  ],
+);
+
+export const teamMember = pgTable(
+  'team_member',
+  {
+    teamId: uuid('team_id')
+      .notNull()
+      .references(() => team.id, { onDelete: 'cascade' }),
+    accountId: uuid('account_id')
+      .notNull()
+      .references(() => account.id, { onDelete: 'cascade' }),
+    /** Kopie der Team-Community: je Community höchstens ein Team pro Account. */
+    communityId: uuid('community_id').notNull(),
+    joinedAt: timestamp('joined_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.teamId, t.accountId] }),
+    uniqueIndex('team_member_one_per_community_idx').on(t.accountId, t.communityId),
+  ],
 );

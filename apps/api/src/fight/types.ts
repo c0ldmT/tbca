@@ -1,6 +1,7 @@
 import type { BattleInput, BattleResult } from '@tbca/game-core';
 
-export type FightKind = 'pvp_rated' | 'pvp_friendly' | 'training' | 'dungeon';
+export type FightKind =
+  'pvp_rated' | 'pvp_friendly' | 'training' | 'dungeon' | 'team_rated' | 'team_friendly';
 
 export interface NewFight {
   seasonId: string;
@@ -20,6 +21,7 @@ export interface NewFight {
     xpAwarded: number;
     creditsAwarded: number;
     opponentCharacterId: string | null;
+    opponentTeamId?: string | null;
   }[];
 }
 
@@ -33,7 +35,7 @@ export interface StoredFight extends Omit<NewFight, 'result'> {
 export interface RewardCounts {
   /** Belohnte Kämpfe des Charakters am Tag. */
   today: number;
-  /** Davon gegen den jeweiligen Gegner. */
+  /** Davon gegen den jeweiligen Gegner (Charakter- bzw. Team-ID). */
   byOpponent: Map<string, number>;
 }
 
@@ -55,6 +57,8 @@ export interface FightTx {
 export interface FightRepository {
   /** Führt `fn` in einer Transaktion aus, in der parallele Kämpfe desselben Charakters warten. */
   locked<T>(characterId: string, fn: (tx: FightTx) => Promise<T>): Promise<T>;
+  /** Wie `locked`, für mehrere Charaktere (Team-Kämpfe); Sperren in fester Reihenfolge. */
+  lockedMany<T>(characterIds: readonly string[], fn: (tx: FightTx) => Promise<T>): Promise<T>;
   rewardCounts(characterId: string, day: string): Promise<RewardCounts>;
   findById(id: string): Promise<StoredFight | null>;
   listForCharacter(characterId: string, limit: number): Promise<StoredFight[]>;

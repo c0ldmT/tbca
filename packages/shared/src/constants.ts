@@ -18,3 +18,17 @@ export type GlobalRole = (typeof GLOBAL_ROLES)[number];
 
 /** Header, in dem schreibende Anfragen das CSRF-Token mitschicken. */
 export const CSRF_HEADER = 'x-csrf-token';
+
+/** Team-Logos (Auswahl), Fokusziele der Team-Taktik und Größe. */
+export const TEAM_LOGOS = [
+  'wolf',
+  'halo',
+  'skull',
+  'bolt',
+  'eye',
+  'blade',
+  'chip',
+  'crown',
+] as const;
+export const TEAM_FOCUS = ['threat', 'lowest_hp', 'highest_hp', 'healer', 'random'] as const;
+export const TEAM_MAX_MEMBERS = 6;

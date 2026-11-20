@@ -7,6 +7,7 @@ import type {
   Modifiers,
   StatusKind,
   TacticRule,
+  TargetSelector,
 } from '../content/types.js';
 import type { Fixed } from '../math/fixed.js';
 import type { Seed } from '../random/prng.js';
@@ -69,6 +70,11 @@ export interface CombatantSnapshot {
    * vollen HP und der Start-Energie.
    */
   readonly state?: { readonly hp: number; readonly energy: number };
+  /**
+   * Fokusziel der Team-Taktik: Standard-Zielwahl für Basisangriffe und Gegner-Fähigkeiten ohne
+   * eigene Zielregel. Fehlt es, gilt die höchste Bedrohung.
+   */
+  readonly focus?: TargetSelector;
 }
 
 /**

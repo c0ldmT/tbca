@@ -10,7 +10,12 @@ type Executor = Pick<Database, 'select' | 'insert' | 'update'>;
 
 async function countRewards(db: Executor, characterId: string, day: string): Promise<RewardCounts> {
   const rows = await db
-    .select({ opponent: fightParticipant.opponentCharacterId, count: sql<number>`count(*)::int` })
+    .select({
+      opponent: sql<
+        string | null
+      >`coalesce(${fightParticipant.opponentTeamId}, ${fightParticipant.opponentCharacterId})`,
+      count: sql<number>`count(*)::int`,
+    })
     .from(fightParticipant)
     .innerJoin(fight, eq(fight.id, fightParticipant.fightId))
     .where(
@@ -20,7 +25,9 @@ async function countRewards(db: Executor, characterId: string, day: string): Pro
         eq(fight.rewardDay, day),
       ),
     )
-    .groupBy(fightParticipant.opponentCharacterId);
+    .groupBy(
+      sql`coalesce(${fightParticipant.opponentTeamId}, ${fightParticipant.opponentCharacterId})`,
+    );
   const byOpponent = new Map<string, number>();
   let today = 0;
   for (const row of rows) {
@@ -57,9 +64,15 @@ export class DrizzleFightRepository implements FightRepository {
   constructor(private readonly db: Database) {}
 
   locked<T>(characterId: string, fn: (tx: FightTx) => Promise<T>): Promise<T> {
+    return this.lockedMany([characterId], fn);
+  }
+
+  lockedMany<T>(characterIds: readonly string[], fn: (tx: FightTx) => Promise<T>): Promise<T> {
     return this.db.transaction(async (tx) => {
-      // Sperre gilt bis zum Ende der Transaktion: parallele Herausforderungen zählen korrekt.
-      await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${characterId}, 0))`);
+      // Sperren gelten bis zum Ende der Transaktion; sortiert, damit sich Team-Kämpfe nicht blockieren.
+      for (const id of [...new Set(characterIds)].sort()) {
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${id}, 0))`);
+      }
       return fn({
         rewardCounts: (id, day) => countRewards(tx, id, day),
         insert: (f: NewFight) => insertFight(tx, f),

@@ -15,6 +15,9 @@ import {
   account,
   character,
   community,
+  communityMember,
+  team,
+  teamMember,
   configVersion,
   loadout,
   season,
@@ -74,7 +77,64 @@ export async function seedDevelopment(db: Database, now = new Date()): Promise<v
     .select({ id: season.id })
     .from(season)
     .where(eq(season.slug, DEV_SEASON_SLUG));
-  if (dev) await seedBots(db, dev.id);
+  if (dev) {
+    await seedBots(db, dev.id);
+    await seedBotTeams(db, dev.id);
+  }
+}
+
+/**
+ * Zwei Bot-Teams in der Dev-Community, damit sich Team-Herausforderungen allein testen lassen.
+ * Beitrittscodes BOTCHW und BOTNEON.
+ */
+export async function seedBotTeams(db: Database, seasonId: string): Promise<void> {
+  const [dev] = await db
+    .select({ id: community.id })
+    .from(community)
+    .where(eq(community.slug, DEV_COMMUNITY_SLUG));
+  if (!dev) return;
+  const bots = await db
+    .select({ accountId: character.accountId, name: character.name, level: character.level })
+    .from(character)
+    .innerJoin(account, eq(account.id, character.accountId))
+    .where(and(eq(character.seasonId, seasonId), eq(account.isBot, true)));
+  const plans = [
+    { name: 'Chrome Wolves', tag: 'CHW', logo: 'wolf', levels: [1, 3] },
+    { name: 'Neon Saints', tag: 'NEON', logo: 'halo', levels: [6, 10] },
+  ];
+  for (const plan of plans) {
+    const [exists] = await db
+      .select({ id: team.id })
+      .from(team)
+      .where(sql`lower(${team.tag}) = lower(${plan.tag})`);
+    if (exists) continue;
+    // Vier Bots je Team: so bleiben zwei Plätze, um selbst beizutreten.
+    const members = bots.filter((b) => plan.levels.includes(b.level)).slice(0, 4);
+    await db.transaction(async (tx) => {
+      const [row] = await tx
+        .insert(team)
+        .values({
+          communityId: dev.id,
+          name: plan.name,
+          tag: plan.tag,
+          logo: plan.logo,
+          captainAccountId: members[0]?.accountId ?? null,
+          joinCode: `BOT${plan.tag}`,
+          lineup2: members.slice(0, 2).map((m) => m.accountId),
+          lineup3: members.slice(0, 3).map((m) => m.accountId),
+        })
+        .returning({ id: team.id });
+      for (const m of members) {
+        await tx
+          .insert(communityMember)
+          .values({ communityId: dev.id, accountId: m.accountId, isHome: true })
+          .onConflictDoNothing();
+        await tx
+          .insert(teamMember)
+          .values({ teamId: row!.id, accountId: m.accountId, communityId: dev.id });
+      }
+    });
+  }
 }
 
 /** Stufen der Bot-Gegner: je Klasse eine Bandbreite für frühe Level. */

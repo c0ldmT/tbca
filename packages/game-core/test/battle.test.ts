@@ -189,3 +189,20 @@ describe('simulateBattle – Ablauf', () => {
     ).toThrow(/initiative/);
   });
 });
+
+describe('simulateBattle – Team-Fokus', () => {
+  it('lenkt Angriffe ohne eigene Zielregel auf das Fokusziel', () => {
+    const plain = (id: string) =>
+      hero(id, 'gunner', 10, { loadout: { abilities: [], tactics: [] } });
+    const focused = [
+      tweak(plain('a1'), { focus: 'healer' }),
+      tweak(plain('a2'), { focus: 'healer' }),
+    ];
+    const enemies = [hero('tank', 'bruiser'), hero('medic', 'medtech')];
+    const { events } = simulateBattle(input([focused, enemies], 'focus'));
+    const firstHits = events
+      .filter((e) => e.type === 'damage' && e.source.startsWith('a'))
+      .slice(0, 4);
+    expect(firstHits.every((e) => e.type === 'damage' && e.target === 'medic')).toBe(true);
+  });
+});

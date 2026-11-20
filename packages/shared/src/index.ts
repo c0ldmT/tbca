@@ -8,3 +8,4 @@ export * from './items.js';
 export * from './economy.js';
 export * from './dungeon.js';
 export * from './internal.js';
+export * from './teams.js';

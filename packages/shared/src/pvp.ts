@@ -60,7 +60,7 @@ export interface FightCombatantView {
 /** GET /api/fights/:id – alles, was ein Replay braucht. */
 export interface FightView {
   id: string;
-  kind: 'pvp_rated' | 'pvp_friendly' | 'training' | 'dungeon';
+  kind: 'pvp_rated' | 'pvp_friendly' | 'training' | 'dungeon' | 'team_rated' | 'team_friendly';
   createdAt: string;
   engineVersion: number;
   configVersion: number;
@@ -77,7 +77,7 @@ export interface FightView {
 /** GET /api/fights – eigene letzte Kämpfe. */
 export interface FightSummary {
   id: string;
-  kind: 'pvp_rated' | 'pvp_friendly' | 'training' | 'dungeon';
+  kind: 'pvp_rated' | 'pvp_friendly' | 'training' | 'dungeon' | 'team_rated' | 'team_friendly';
   createdAt: string;
   won: boolean;
   draw: boolean;
