@@ -9,7 +9,8 @@
     "character": "Character",
     "arena": "Arena",
     "shop": "Shop",
-    "dungeon": "Dungeon"
+    "dungeon": "Dungeon",
+    "teams": "Teams"
   },
   "auth": {
     "login": "Sign in with Discord",
@@ -60,7 +61,8 @@
       "debuff": "Debuff",
       "shield": "Shield",
       "taunt": "Taunt"
-    }
+    },
+    "winTeam": "{{ name }} win after {{ rounds }} rounds"
   },
   "legal": {
     "imprint": {
@@ -296,7 +298,20 @@
     "no_runs_left": "No runs left for today.",
     "no_active_run": "No run in progress.",
     "no_injectors": "No heal injectors left.",
-    "too_many_injectors": "You can't take that many heal injectors."
+    "too_many_injectors": "You can't take that many heal injectors.",
+    "not_in_community": "You're not a member of this community.",
+    "team_name_taken": "This team name is taken.",
+    "team_tag_taken": "This tag is taken.",
+    "already_in_team": "You're already in a team in this community.",
+    "team_not_found": "Team not found.",
+    "team_full": "The team is full.",
+    "not_captain": "Only the captain can do that.",
+    "not_a_member": "That person isn't in the team.",
+    "invalid_lineup": "The lineup doesn't match the chosen size.",
+    "lineup_without_character": "Someone in the lineup has no character.",
+    "opponent_lineup_incomplete": "The opposing team doesn't have enough members with a character.",
+    "community_not_found": "Community not found.",
+    "invalid_tag": "Tag: 2–5 letters or digits."
   },
   "pvp": {
     "title": "Arena",
@@ -354,8 +369,11 @@
       "pvp_rated": "Rated challenge",
       "pvp_friendly": "Friendly fight",
       "training": "Training",
-      "dungeon": "Dungeon"
-    }
+      "dungeon": "Dungeon",
+      "team_rated": "Rated team challenge",
+      "team_friendly": "Friendly team fight"
+    },
+    "winnerTeam": "{{ name }} win after {{ rounds }} rounds"
   },
   "inventory": {
     "title": "Equipment",
@@ -505,5 +523,45 @@
     "glitch": "Glitch",
     "enforcer": "Enforcer",
     "warden": "Warden"
+  },
+  "teams": {
+    "title": "Teams",
+    "intro": "Fixed groups of up to 6 members in a community. 2v2 and 3v3 challenges follow the same rules as solo fights.",
+    "code": "Join code {{ code }}",
+    "noCharacter": "no character",
+    "captain": "Captain",
+    "kick": "Remove",
+    "focus": "Team tactic: focus target",
+    "leave": "Leave team",
+    "challenge": "Team challenge",
+    "ownTeam": "Own team",
+    "size": "Size",
+    "lineup": "Lineup ({{ count }} of {{ size }})",
+    "saveLineup": "Save as default lineup",
+    "search": "Search opponent team",
+    "summary": "{{ community }}, {{ members }} members, avg. level {{ level }}",
+    "new": "Found or join a team",
+    "joinCommunityFirst": "Join a community first.",
+    "community": "Community",
+    "name": "Name",
+    "tag": "Tag (2–5)",
+    "logo": "Logo",
+    "create": "Found team",
+    "joinCode": "Join code",
+    "join": "Join",
+    "communities": "Communities",
+    "home": "Home",
+    "member": "Member",
+    "joinCommunity": "Join",
+    "logos": {
+      "wolf": "Wolf",
+      "halo": "Halo",
+      "skull": "Skull",
+      "bolt": "Bolt",
+      "eye": "Eye",
+      "blade": "Blade",
+      "chip": "Chip",
+      "crown": "Crown"
+    }
   }
 }

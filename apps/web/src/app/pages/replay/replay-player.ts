@@ -76,19 +76,20 @@ export class ReplayPlayer implements OnDestroy {
           .teams[team]?.map((c) => c.name)
           .join(', ') ?? '',
       factor: (n: number) => n.toLocaleString(locale, { maximumFractionDigits: 1 }),
+      size: (team: number) => this.fight().teams[team]?.length ?? 1,
     };
   });
 
   protected readonly log = computed(() => {
     const f = this.formatters();
-    return toLogLines(this.fight().events, f.name, f.teamName, f.factor);
+    return toLogLines(this.fight().events, f.name, f.teamName, f.factor, f.size);
   });
 
   /** Beschriftung des aktuellen Abschnitts (Aktion oder Ergebnis). */
   protected readonly caption = computed<LogLine | null>(() => {
     const f = this.formatters();
     for (const e of this.frame().events) {
-      const line = toLogLine(e, f.name, f.teamName, f.factor);
+      const line = toLogLine(e, f.name, f.teamName, f.factor, f.size);
       if (line && line.tone !== 'round') return line;
     }
     return null;

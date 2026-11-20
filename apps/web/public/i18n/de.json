@@ -9,7 +9,8 @@
     "character": "Charakter",
     "arena": "Arena",
     "shop": "Shop",
-    "dungeon": "Dungeon"
+    "dungeon": "Dungeon",
+    "teams": "Teams"
   },
   "auth": {
     "login": "Mit Discord anmelden",
@@ -60,7 +61,8 @@
       "debuff": "Schwächung",
       "shield": "Schild",
       "taunt": "Provokation"
-    }
+    },
+    "winTeam": "{{ name }} gewinnen nach {{ rounds }} Runden"
   },
   "legal": {
     "imprint": {
@@ -296,7 +298,20 @@
     "no_runs_left": "Für heute sind alle Runs verbraucht.",
     "no_active_run": "Kein laufender Run.",
     "no_injectors": "Keine Heil-Injektoren mehr.",
-    "too_many_injectors": "So viele Heil-Injektoren darfst du nicht mitnehmen."
+    "too_many_injectors": "So viele Heil-Injektoren darfst du nicht mitnehmen.",
+    "not_in_community": "Du gehörst dieser Community nicht an.",
+    "team_name_taken": "Dieser Teamname ist vergeben.",
+    "team_tag_taken": "Dieses Kürzel ist vergeben.",
+    "already_in_team": "Du bist in dieser Community schon in einem Team.",
+    "team_not_found": "Team nicht gefunden.",
+    "team_full": "Das Team ist voll.",
+    "not_captain": "Nur der Kapitän darf das.",
+    "not_a_member": "Diese Person ist nicht im Team.",
+    "invalid_lineup": "Die Aufstellung passt nicht zur gewählten Größe.",
+    "lineup_without_character": "Jemand in der Aufstellung hat keinen Charakter.",
+    "opponent_lineup_incomplete": "Das Gegner-Team hat nicht genug Mitglieder mit Charakter.",
+    "community_not_found": "Community nicht gefunden.",
+    "invalid_tag": "Kürzel: 2–5 Buchstaben oder Ziffern."
   },
   "pvp": {
     "title": "Arena",
@@ -354,8 +369,11 @@
       "pvp_rated": "Gewertete Herausforderung",
       "pvp_friendly": "Freundschaftskampf",
       "training": "Training",
-      "dungeon": "Dungeon"
-    }
+      "dungeon": "Dungeon",
+      "team_rated": "Gewertete Team-Herausforderung",
+      "team_friendly": "Team-Freundschaftskampf"
+    },
+    "winnerTeam": "{{ name }} gewinnen nach {{ rounds }} Runden"
   },
   "inventory": {
     "title": "Ausrüstung",
@@ -505,5 +523,45 @@
     "glitch": "Glitch",
     "enforcer": "Vollstrecker",
     "warden": "Aufseher"
+  },
+  "teams": {
+    "title": "Teams",
+    "intro": "Feste Gruppen mit bis zu 6 Mitgliedern in einer Community. Herausforderungen 2v2 und 3v3 nach denselben Regeln wie im Einzel.",
+    "code": "Beitrittscode {{ code }}",
+    "noCharacter": "ohne Charakter",
+    "captain": "Kapitän",
+    "kick": "Entfernen",
+    "focus": "Team-Taktik: Fokusziel",
+    "leave": "Team verlassen",
+    "challenge": "Team-Herausforderung",
+    "ownTeam": "Eigenes Team",
+    "size": "Größe",
+    "lineup": "Aufstellung ({{ count }} von {{ size }})",
+    "saveLineup": "Als Standard-Aufstellung speichern",
+    "search": "Gegner-Team suchen",
+    "summary": "{{ community }}, {{ members }} Mitglieder, Ø Level {{ level }}",
+    "new": "Team gründen oder beitreten",
+    "joinCommunityFirst": "Tritt zuerst einer Community bei.",
+    "community": "Community",
+    "name": "Name",
+    "tag": "Kürzel (2–5)",
+    "logo": "Logo",
+    "create": "Team gründen",
+    "joinCode": "Beitrittscode",
+    "join": "Beitreten",
+    "communities": "Communities",
+    "home": "Heimat",
+    "member": "Mitglied",
+    "joinCommunity": "Beitreten",
+    "logos": {
+      "wolf": "Wolf",
+      "halo": "Halo",
+      "skull": "Schädel",
+      "bolt": "Blitz",
+      "eye": "Auge",
+      "blade": "Klinge",
+      "chip": "Chip",
+      "crown": "Krone"
+    }
   }
 }

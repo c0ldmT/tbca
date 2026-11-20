@@ -28,6 +28,7 @@ export function toLogLine(
   name: (id: string) => string,
   teamName: (team: number) => string,
   formatFactor: (factor: number) => string,
+  teamSize: (team: number) => number = () => 1,
 ): LogLine | null {
   switch (e.type) {
     case 'start':
@@ -91,7 +92,11 @@ export function toLogLine(
     case 'end':
       return e.winner === null
         ? { key: 'battle.draw', params: { rounds: e.round }, tone: 'end' }
-        : { key: 'battle.win', params: { name: teamName(e.winner), rounds: e.round }, tone: 'end' };
+        : {
+            key: teamSize(e.winner) > 1 ? 'battle.winTeam' : 'battle.win',
+            params: { name: teamName(e.winner), rounds: e.round },
+            tone: 'end',
+          };
   }
 }
 
@@ -100,6 +105,7 @@ export function toLogLines(
   name: (id: string) => string,
   teamName: (team: number) => string,
   formatFactor: (factor: number) => string,
+  teamSize?: (team: number) => number,
 ): LogLine[] {
-  return events.flatMap((e) => toLogLine(e, name, teamName, formatFactor) ?? []);
+  return events.flatMap((e) => toLogLine(e, name, teamName, formatFactor, teamSize) ?? []);
 }

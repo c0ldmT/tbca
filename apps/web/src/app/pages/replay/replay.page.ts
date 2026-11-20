@@ -2,7 +2,7 @@ import { DOCUMENT } from '@angular/common';
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
-import type { ChallengeResponse, FightView } from '@tbca/shared';
+import type { ChallengeResponse, FightView, TeamChallengeResponse } from '@tbca/shared';
 
 import { ApiFailure } from '../../core/api-failure';
 import { CharacterService } from '../../core/character.service';
@@ -28,7 +28,12 @@ import { ReplayPlayer } from './replay-player';
             @if (f.winner === null) {
               {{ t('replay.draw', { rounds: f.rounds }) }}
             } @else {
-              {{ t('replay.winner', { name: teamName(f, f.winner), rounds: f.rounds }) }}
+              {{
+                t((f.teams[f.winner]?.length ?? 1) > 1 ? 'replay.winnerTeam' : 'replay.winner', {
+                  name: teamName(f, f.winner),
+                  rounds: f.rounds,
+                })
+              }}
             }
           </p>
           @if (result(); as r) {
@@ -44,6 +49,23 @@ import { ReplayPlayer } from './replay-player';
             </p>
           }
         </header>
+        @if (teamResult(); as tr) {
+          <ul class="team-rewards" role="status">
+            @for (r of tr.rewards; track r.name) {
+              <li>
+                <strong>{{ r.name }}</strong>
+                @if (r.xp > 0) {
+                  {{ t('replay.reward', { xp: r.xp, credits: r.credits }) }}
+                } @else {
+                  {{ t('pvp.limit.' + r.limit) }}
+                }
+                @if (r.levelUp) {
+                  {{ t('replay.levelUp', { level: r.levelUp }) }}
+                }
+              </li>
+            }
+          </ul>
+        }
         <section class="tbca-panel">
           <tbca-replay-player [fight]="f" [ownTeam]="ownTeam()" />
         </section>
@@ -81,6 +103,12 @@ import { ReplayPlayer } from './replay-player';
       margin-left: var(--tbca-space-3);
       color: var(--tbca-neon-cyan);
     }
+    .team-rewards {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      color: var(--tbca-neon-yellow);
+    }
     .actions {
       display: flex;
       flex-wrap: wrap;
@@ -101,6 +129,7 @@ export class ReplayPage {
   protected readonly copied = signal(false);
   /** Ergebnis der eigenen Herausforderung, falls die Seite direkt danach geöffnet wurde. */
   protected readonly result = signal<ChallengeResponse | null>(null);
+  protected readonly teamResult = signal<TeamChallengeResponse | null>(null);
 
   protected readonly ownTeam = computed(() => {
     const me = this.characters.state()?.id;
@@ -110,8 +139,12 @@ export class ReplayPage {
   });
 
   constructor() {
-    const state = this.document.defaultView?.history.state as { result?: ChallengeResponse } | null;
+    const state = this.document.defaultView?.history.state as {
+      result?: ChallengeResponse;
+      teamResult?: TeamChallengeResponse;
+    } | null;
     if (state?.result) this.result.set(state.result);
+    if (state?.teamResult) this.teamResult.set(state.teamResult);
     effect(() => void this.load(this.id()));
   }
 
