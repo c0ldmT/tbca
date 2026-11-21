@@ -91,3 +91,36 @@ compose_dev() {
     --env-file "$(env_file)" \
     --file "$ROOT_DIR/infra/docker-compose.dev.yml" "$@"
 }
+
+# Compose-Aufruf für die Produktion (infra/docker-compose.prod.yml).
+compose_prod() {
+  compose --project-name tbca \
+    --env-file "$ROOT_DIR/.env.production" \
+    --file "$ROOT_DIR/infra/docker-compose.prod.yml" "$@"
+}
+
+# Standardwerte je Profil; Einträge in .env.production haben Vorrang.
+apply_profile_defaults() {
+  case "${TBCA_PROFILE:-standard}" in
+    compact)
+      : "${API_UPSTREAM:=server:3000}" "${PG_SHARED_BUFFERS:=64MB}" "${PG_EFFECTIVE_CACHE_SIZE:=256MB}"
+      : "${PG_WORK_MEM:=2MB}" "${PG_MAINTENANCE_WORK_MEM:=32MB}" "${PG_MAX_CONNECTIONS:=20}"
+      : "${VALKEY_MAXMEMORY:=32mb}" "${NODE_MAX_OLD_SPACE:=256}"
+      ;;
+    standard)
+      : "${API_UPSTREAM:=api:3000}"
+      ;;
+    *) die "Unbekanntes TBCA_PROFILE: ${TBCA_PROFILE} (standard oder compact)" ;;
+  esac
+  local name
+  for name in API_UPSTREAM PG_SHARED_BUFFERS PG_EFFECTIVE_CACHE_SIZE PG_WORK_MEM PG_MAINTENANCE_WORK_MEM \
+    PG_MAX_CONNECTIONS VALKEY_MAXMEMORY NODE_MAX_OLD_SPACE; do
+    # Leere Werte entfernen, damit die Standardwerte aus Docker Compose greifen.
+    if [[ -z "${!name:-}" ]]; then unset "$name"; else export "${name?}"; fi
+  done
+}
+
+# Kurzer Git-Stand als Image-Tag.
+git_tag() {
+  git -C "$ROOT_DIR" rev-parse --short=12 HEAD 2>/dev/null || date +%Y%m%d%H%M%S
+}

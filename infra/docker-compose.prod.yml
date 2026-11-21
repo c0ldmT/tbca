@@ -1,0 +1,142 @@
+# Produktion. Start über scripts/deploy.sh, nicht direkt.
+#
+# Profile (TBCA_PROFILE in .env.production):
+#   standard  API und Discord-Bot in eigenen Containern (VPS)
+#   compact   ein kombinierter Prozess, sparsame Datenbank (Raspberry Pi 3, 1 GB RAM)
+
+x-app: &app
+  image: ${TBCA_IMAGE_PREFIX:-tbca}/server:${TBCA_VERSION:-latest}
+  restart: unless-stopped
+  env_file: ../.env.production
+  environment:
+    NODE_ENV: production
+    API_HOST: 0.0.0.0
+    API_PORT: '3000'
+    TRUST_PROXY: 'true'
+    DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    VALKEY_URL: redis://valkey:6379
+  depends_on:
+    postgres:
+      condition: service_healthy
+    valkey:
+      condition: service_healthy
+
+x-healthcheck: &api-health
+  test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3000/api/health']
+  interval: 15s
+  timeout: 5s
+  retries: 5
+  start_period: 20s
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    # Speicher passend zum Profil (siehe .env.example).
+    command:
+      - postgres
+      - -c
+      - shared_buffers=${PG_SHARED_BUFFERS:-256MB}
+      - -c
+      - effective_cache_size=${PG_EFFECTIVE_CACHE_SIZE:-768MB}
+      - -c
+      - work_mem=${PG_WORK_MEM:-4MB}
+      - -c
+      - maintenance_work_mem=${PG_MAINTENANCE_WORK_MEM:-64MB}
+      - -c
+      - max_connections=${PG_MAX_CONNECTIONS:-50}
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  valkey:
+    image: valkey/valkey:8-alpine
+    restart: unless-stopped
+    command:
+      [
+        'valkey-server',
+        '--maxmemory',
+        '${VALKEY_MAXMEMORY:-128mb}',
+        '--maxmemory-policy',
+        'allkeys-lru',
+        '--save',
+        '',
+        '--appendonly',
+        'no',
+      ]
+    volumes:
+      - valkey-data:/data
+    healthcheck:
+      test: ['CMD', 'valkey-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  api:
+    <<: *app
+    profiles: [standard]
+    command: ['node', 'apps/api/dist/main.js']
+    healthcheck: *api-health
+
+  bot-discord:
+    <<: *app
+    profiles: [standard]
+    command: ['node', 'apps/bot-discord/dist/main.js']
+    environment:
+      NODE_ENV: production
+      API_INTERNAL_URL: http://api:3000/api
+    depends_on:
+      api:
+        condition: service_healthy
+
+  # Sparprofil: API und Bot in einem Prozess, Heap begrenzt.
+  server:
+    <<: *app
+    profiles: [compact]
+    command: ['node', '--max-old-space-size=${NODE_MAX_OLD_SPACE:-256}', 'apps/server/dist/main.js']
+    environment:
+      NODE_ENV: production
+      API_HOST: 0.0.0.0
+      API_PORT: '3000'
+      TRUST_PROXY: 'true'
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      VALKEY_URL: redis://valkey:6379
+      API_INTERNAL_URL: http://127.0.0.1:3000/api
+      DB_MAX_CONNECTIONS: '5'
+    healthcheck: *api-health
+
+  # Einmalige Aufgaben: Migrationen (scripts/deploy.sh ruft sie vor dem Start auf).
+  migrate:
+    <<: *app
+    profiles: [tools]
+    restart: 'no'
+    command: ['node', 'packages/db/dist/cli/migrate.js']
+
+  caddy:
+    image: ${TBCA_IMAGE_PREFIX:-tbca}/web:${TBCA_VERSION:-latest}
+    restart: unless-stopped
+    environment:
+      TBCA_DOMAIN: ${TBCA_DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+      API_UPSTREAM: ${API_UPSTREAM:-api:3000}
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  postgres-data:
+  valkey-data:
+  caddy-data:
+  caddy-config:

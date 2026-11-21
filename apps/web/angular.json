@@ -10,7 +10,10 @@
     "web": {
       "projectType": "application",
       "schematics": {
-        "@schematics/angular:component": { "type": "", "style": "css" }
+        "@schematics/angular:component": {
+          "type": "",
+          "style": "css"
+        }
       },
       "root": "",
       "sourceRoot": "src",
@@ -21,16 +24,39 @@
           "options": {
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
-            "assets": [{ "glob": "**/*", "input": "public" }],
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "public"
+              }
+            ],
             "styles": ["src/styles.css"]
           },
           "configurations": {
             "production": {
               "budgets": [
-                { "type": "initial", "maximumWarning": "500kB", "maximumError": "1MB" },
-                { "type": "anyComponentStyle", "maximumWarning": "6kB", "maximumError": "10kB" }
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kB",
+                  "maximumError": "1MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "6kB",
+                  "maximumError": "10kB"
+                }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "optimization": {
+                "scripts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": false
+                },
+                "fonts": {
+                  "inline": false
+                }
+              }
             },
             "development": {
               "optimization": false,
@@ -46,8 +72,12 @@
             "proxyConfig": "proxy.conf.json"
           },
           "configurations": {
-            "production": { "buildTarget": "web:build:production" },
-            "development": { "buildTarget": "web:build:development" }
+            "production": {
+              "buildTarget": "web:build:production"
+            },
+            "development": {
+              "buildTarget": "web:build:development"
+            }
           },
           "defaultConfiguration": "development"
         },

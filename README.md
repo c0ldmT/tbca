@@ -54,9 +54,17 @@ Unter Windows laufen alle Scripts in WSL2 (Ubuntu) mit Docker Desktop oder Docke
 | `scripts/test.sh`    | Prettier, ESLint, Typprüfung, Unit-Tests, `pnpm audit`              |
 | `scripts/migrate.sh` | Migrationen ausführen; `generate`, `seed`                           |
 | `scripts/bot.sh`     | Discord-Bot: `register-commands`                                    |
+| `scripts/build.sh`   | Produktions-Images bauen (`--platform`, `--save`, `--push`)         |
+| `scripts/deploy.sh`  | Ausrollen mit Backup, Migration, Healthcheck und Rollback           |
+| `scripts/backup.sh`  | Datenbank sichern, auflisten, wiederherstellen                      |
 
 Jedes Script zeigt mit `--help` seine Optionen. Die Umgebung wählt `TBCA_ENV`
 (`development` oder `production`); Variablen sind in `.env.example` dokumentiert.
+
+## Produktion
+
+Siehe [docs/deployment.md](docs/deployment.md): VPS oder Raspberry Pi 3, Profile, Updates,
+Rollback und Backups.
 
 ## Patches einspielen
 

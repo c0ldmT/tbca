@@ -65,10 +65,16 @@ else
       .readFileSync(src, "utf8")
       .replaceAll("__DB_PASSWORD__", pw)
       .replace(/__SECRET__/g, secret)
-      .replace(/^NODE_ENV=.*$/m, `NODE_ENV=${mode}`);
+      .replace(/^NODE_ENV=.*$/m, `NODE_ENV=${mode}`)
+      // Hinter Caddy kommen Anfragen über den Proxy; dort nur Container-interne Adressen.
+      .replace(/^TRUST_PROXY=.*$/m, `TRUST_PROXY=${mode === "production"}`)
+      .replace(/^POSTGRES_HOST=.*$/m, mode === "production" ? "POSTGRES_HOST=postgres" : "POSTGRES_HOST=localhost");
     fs.writeFileSync(dst, text, { mode: 0o600 });
   ' "$ROOT_DIR/.env.example" "$ENV_FILE" "$MODE"
   ok "$(basename "$ENV_FILE") angelegt – Zugangsdaten (z. B. Discord-App) bitte ergänzen"
+  if [[ "$MODE" == production ]]; then
+    warn "Für die Produktion noch TBCA_DOMAIN, ACME_EMAIL, WEB_ORIGIN (https://<domain>) und die Discord-Werte setzen."
+  fi
 fi
 
 if has_cmd docker; then

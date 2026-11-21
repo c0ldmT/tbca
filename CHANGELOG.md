@@ -79,6 +79,16 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 - Dev-Daten: zwei Bot-Teams mit je vier Bots (Beitrittscodes `BOTCHW`, `BOTNEON`).
 - Website: Teams-Seite mit Gründen, Beitreten, Aufstellung, Fokusziel und Herausforderung; Replays
   zeigen die Belohnungen aller Team-Mitglieder.
+- Betrieb: Produktions-Images (Server mit API, Bot und kombiniertem Prozess; Website mit Caddy),
+  plattformübergreifend für amd64 und arm64, nur mit Laufzeit-Abhängigkeiten und ohne Root.
+  `docker-compose.prod.yml` mit den Profilen `standard` (VPS) und `compact` (Raspberry Pi 3).
+- Caddy mit automatischem HTTPS, strenger Content-Security-Policy, HSTS und Caching-Regeln.
+- Scripts `build.sh`, `deploy.sh` (Backup, Migration, Healthcheck, automatischer Rollback) und
+  `backup.sh` (sichern, auflisten, wiederherstellen); Anleitung in `docs/deployment.md`.
+- `apps/server` startet API und Discord-Bot in einem Prozess (`TBCA_SERVICES`).
+- Rate-Limits je Session bzw. IP mit Zählern in Valkey, strenger für den Login; Healthchecks und die
+  Bot-API sind ausgenommen.
+- Website: Produktions-Build ohne Inline-Skript, damit die strenge CSP greift.
 - Website: Arena mit Gegnersuche und letzten Kämpfen, HUD-Replay mit Lebens- und Energiebalken,
   Schadenszahlen, Status, Glitch bei Crits, Geschwindigkeit und Textlog; Replays per Link teilbar.
 
