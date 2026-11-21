@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@fastify/cookie": "11.1.5",
+    "@fastify/rate-limit": "11.2.1",
     "@nestjs/common": "12.3.2",
     "@nestjs/core": "12.3.2",
     "@nestjs/platform-fastify": "12.3.2",
@@ -35,5 +36,17 @@
     "pino-pretty": "13.2.0",
     "tsx": "4.23.15",
     "vitest": "5.0.5"
+  },
+  "exports": {
+    "./app": {
+      "@tbca/source": "./src/app.ts",
+      "types": "./dist/app.d.ts",
+      "default": "./dist/app.js"
+    },
+    "./env": {
+      "@tbca/source": "./src/config/env.ts",
+      "types": "./dist/config/env.d.ts",
+      "default": "./dist/config/env.js"
+    }
   }
 }

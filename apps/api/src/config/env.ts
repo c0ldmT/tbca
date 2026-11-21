@@ -41,6 +41,10 @@ export const envSchema = z
     DISCORD_REDIRECT_URI: z.url().optional(),
     /** Valkey für Cooldowns, Rate-Limits und Wiederholungsprüfung. */
     VALKEY_URL: z.url({ protocol: /^rediss?$/ }).default('redis://localhost:6379'),
+    /** Anfragen je Minute und Client (Account bzw. IP); 0 schaltet das Limit ab. */
+    RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(0).default(300),
+    /** Strengeres Limit für Login-Routen je IP. */
+    RATE_LIMIT_AUTH_PER_MINUTE: z.coerce.number().int().min(0).default(20),
     /** Token, mit dem Bots die interne API aufrufen; ohne Token ist sie abgeschaltet. */
     BOT_SERVICE_TOKEN: z
       .string()

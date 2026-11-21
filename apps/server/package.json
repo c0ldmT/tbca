@@ -1,0 +1,20 @@
+{
+  "name": "@tbca/server",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Startet API und Bots in einem Prozess (Sparprofil, z. B. Raspberry Pi 3)",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/main.js",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@tbca/api": "workspace:*",
+    "@tbca/bot-discord": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "4.23.15"
+  }
+}

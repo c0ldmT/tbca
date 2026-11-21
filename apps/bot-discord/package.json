@@ -21,5 +21,12 @@
   "devDependencies": {
     "tsx": "4.23.15",
     "vitest": "5.0.5"
+  },
+  "exports": {
+    "./bot": {
+      "@tbca/source": "./src/bot.ts",
+      "types": "./dist/bot.d.ts",
+      "default": "./dist/bot.js"
+    }
   }
 }
