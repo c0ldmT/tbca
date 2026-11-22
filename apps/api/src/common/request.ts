@@ -5,6 +5,7 @@ export interface AuthContext {
   csrfToken: string;
   /** Das Cookie-Token, um die Session beim Logout zu widerrufen. */
   token: string;
+  globalRole: 'player' | 'superadmin';
 }
 
 declare module 'fastify' {

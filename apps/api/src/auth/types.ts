@@ -24,6 +24,10 @@ export interface AccountRepository {
     providerUserId: string,
   ): Promise<string | null>;
   findProfile(accountId: string): Promise<MeProfile | null>;
+  /** Rolle und Sperre, für Guards bei jeder Anfrage. */
+  status(
+    accountId: string,
+  ): Promise<{ globalRole: 'player' | 'superadmin'; banned: boolean } | null>;
 }
 
 export interface StoredSession {

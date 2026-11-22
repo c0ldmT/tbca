@@ -16,6 +16,6 @@ import { DrizzleSeasonRepository, SeasonService } from './season.js';
       useFactory: (conn: DbConnection) => new DrizzleSeasonRepository(conn.db),
     },
   ],
-  exports: [SeasonService],
+  exports: [SeasonService, SEASON_REPOSITORY],
 })
 export class GameModule {}

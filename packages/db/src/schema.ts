@@ -77,6 +77,12 @@ export const season = pgTable(
     isTest: boolean('is_test').notNull().default(false),
     /** Zeitfaktor des Clock-Service (nur Test-Seasons, sonst 1). */
     timeFactor: doublePrecision('time_factor').notNull().default(1),
+    /**
+     * Anker der Spieluhr: Zu `clockAnchorReal` (Echtzeit) war es `clockAnchorGame` (Spielzeit).
+     * Ohne Anker läuft die Spielzeit gleich der Echtzeit. Vorspulen verschiebt den Spielzeit-Anker.
+     */
+    clockAnchorReal: timestamp('clock_anchor_real', { withTimezone: true }),
+    clockAnchorGame: timestamp('clock_anchor_game', { withTimezone: true }),
     startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
     endsAt: timestamp('ends_at', { withTimezone: true }).notNull(),
     createdAt: createdAt(),
@@ -137,6 +143,9 @@ export const account = pgTable('account', {
   globalRole: globalRole('global_role').notNull().default('player'),
   /** Computergesteuerter Gegner ohne Identität; kann sich nicht anmelden. */
   isBot: boolean('is_bot').notNull().default(false),
+  /** Gesperrt seit; gesperrte Accounts können weder spielen noch Bots nutzen. */
+  bannedAt: timestamp('banned_at', { withTimezone: true }),
+  bannedReason: text('banned_reason'),
   /** Bevorzugte Sprache; null = Standard der Community bzw. Browser. */
   locale: locale('locale'),
   createdAt: createdAt(),
@@ -685,4 +694,21 @@ export const teamMember = pgTable(
     primaryKey({ columns: [t.teamId, t.accountId] }),
     uniqueIndex('team_member_one_per_community_idx').on(t.accountId, t.communityId),
   ],
+);
+
+// --- Admin (Abschnitt 13) -----------------------------------------------------
+
+/** Jede Admin-Aktion wird protokolliert: wer, was, an wem, mit welchen Daten. */
+export const auditLog = pgTable(
+  'audit_log',
+  {
+    id: id(),
+    actorAccountId: uuid('actor_account_id').references(() => account.id, { onDelete: 'set null' }),
+    action: text('action').notNull(),
+    targetType: text('target_type'),
+    targetId: text('target_id'),
+    data: jsonb('data').$type<Record<string, unknown>>().notNull().default({}),
+    createdAt: createdAt(),
+  },
+  (t) => [index('audit_log_created_idx').on(t.createdAt)],
 );

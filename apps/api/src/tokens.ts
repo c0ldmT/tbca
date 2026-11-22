@@ -18,3 +18,4 @@ export const DUNGEON_REPOSITORY = Symbol('DUNGEON_REPOSITORY');
 export const RATE_LIMITER = Symbol('RATE_LIMITER');
 export const DISCORD_REPOSITORY = Symbol('DISCORD_REPOSITORY');
 export const TEAM_REPOSITORY = Symbol('TEAM_REPOSITORY');
+export const ADMIN_REPOSITORY = Symbol('ADMIN_REPOSITORY');

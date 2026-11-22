@@ -54,6 +54,27 @@ export class DungeonService {
     return this.view(season, me);
   }
 
+  /**
+   * Beendet alle Runs, die länger als die Entscheidungsfrist ohne Aktion sind (Worker-Job):
+   * Der Charakter verlässt den Dungeon mit seinem Loot.
+   * @returns Anzahl beendeter Runs
+   */
+  async expireIdleRuns(): Promise<number> {
+    const season = await this.seasons.current();
+    const cutoff = new Date(this.clock.now() - season.game.dungeon.decisionTimeoutMs);
+    let expired = 0;
+    for (const { characterId, accountId } of await this.runs.idleRuns(cutoff)) {
+      const me = await this.characters.findForAccount(accountId, season.id);
+      if (!me || me.id !== characterId) continue;
+      await this.runs.locked(characterId, async (tx) => {
+        const before = await tx.activeRun(characterId);
+        await this.expireIfIdle(tx, season, me);
+        if (before && !(await tx.activeRun(characterId))) expired++;
+      });
+    }
+    return expired;
+  }
+
   async start(accountId: string, req: DungeonStartRequest): Promise<DungeonView> {
     const { season, me } = await this.mine(accountId);
     const rules = season.game.dungeon;

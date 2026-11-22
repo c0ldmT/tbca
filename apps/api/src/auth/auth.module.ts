@@ -6,7 +6,7 @@ import { ACCOUNT_REPOSITORY, DB_CONNECTION, DISCORD_OAUTH, ENV, SESSION_STORE } 
 import { AuthController } from './auth.controller.js';
 import { DiscordOAuthClient } from './discord-oauth.js';
 import { DrizzleAccountRepository, DrizzleSessionStore } from './drizzle-repositories.js';
-import { CsrfGuard, SessionGuard } from './guards.js';
+import { CsrfGuard, SessionGuard, SuperadminGuard } from './guards.js';
 import { SessionService } from './session.service.js';
 
 @Module({
@@ -15,6 +15,7 @@ import { SessionService } from './session.service.js';
     SessionService,
     SessionGuard,
     CsrfGuard,
+    SuperadminGuard,
     {
       provide: ACCOUNT_REPOSITORY,
       inject: [DB_CONNECTION],
@@ -31,6 +32,6 @@ import { SessionService } from './session.service.js';
       useFactory: (env: Env) => new DiscordOAuthClient(env),
     },
   ],
-  exports: [SessionService, SessionGuard, CsrfGuard, ACCOUNT_REPOSITORY],
+  exports: [SessionService, SessionGuard, CsrfGuard, SuperadminGuard, ACCOUNT_REPOSITORY],
 })
 export class AuthModule {}

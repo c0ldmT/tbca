@@ -45,6 +45,7 @@ import type { InventoryRepository, StoredItem } from '../src/inventory/types.js'
 import type { DungeonRepository, DungeonRun, DungeonTx } from '../src/dungeon/types.js';
 import type { DiscordRepository, GuildCommunity } from '../src/discord/types.js';
 import { TeamConflictError, type TeamRecord, type TeamRepository } from '../src/team/types.js';
+import type { AccountOverview, AdminRepository, AuditEntry } from '../src/admin/types.js';
 import { MemoryRateLimiter } from '../src/limits/rate-limiter.js';
 import {
   AlreadyPurchasedError,
@@ -65,6 +66,7 @@ import {
   DISCORD_REPOSITORY,
   RATE_LIMITER,
   TEAM_REPOSITORY,
+  ADMIN_REPOSITORY,
   DISCORD_OAUTH,
   SEASON_REPOSITORY,
   SESSION_STORE,
@@ -88,6 +90,16 @@ export function testEnv(overrides: Record<string, string> = {}): Env {
 
 export class InMemoryAccounts implements AccountRepository {
   readonly accounts = new Map<string, { identities: ExternalProfile[] }>();
+  readonly roles = new Map<string, 'player' | 'superadmin'>();
+  readonly banned = new Set<string>();
+
+  async status(accountId: string) {
+    if (!this.accounts.has(accountId)) return null;
+    return {
+      globalRole: this.roles.get(accountId) ?? ('player' as const),
+      banned: this.banned.has(accountId),
+    };
+  }
 
   async loginWithIdentity(profile: ExternalProfile): Promise<string> {
     for (const [id, acc] of this.accounts) {
@@ -192,10 +204,15 @@ export class FakeSeasons implements SeasonRepository {
     configVersion: 2,
     battle: DEFAULT_BATTLE_RULES,
     game: DEFAULT_GAME_CONFIG,
+    clock: { factor: 1, anchorReal: null, anchorGame: null },
   };
 
   async findCurrent(): Promise<CurrentSeason | null> {
     return this.current;
+  }
+
+  async setClock(_seasonId: string, clock: { factor: number; anchorReal: Date; anchorGame: Date }) {
+    this.current = { ...this.current!, clock };
   }
 }
 
@@ -440,6 +457,12 @@ export class InMemoryDungeon implements DungeonRepository {
     });
   }
 
+  async idleRuns(before: Date) {
+    return this.runs
+      .filter((r) => r.status === 'active' && r.lastActionAt < before)
+      .map(({ characterId, accountId }) => ({ characterId, accountId }));
+  }
+
   async latestRun(characterId: string): Promise<DungeonRun | null> {
     return [...this.runs].reverse().find((r) => r.characterId === characterId) ?? null;
   }
@@ -596,6 +619,76 @@ export class InMemoryTeams implements TeamRepository {
   }
 }
 
+export class InMemoryAdmin implements AdminRepository {
+  readonly entries: AuditEntry[] = [];
+
+  constructor(
+    private readonly accounts: InMemoryAccounts,
+    private readonly characters: InMemoryCharacters,
+    private readonly sessions: InMemorySessions,
+  ) {}
+
+  async audit(entry: Omit<AuditEntry, 'id' | 'createdAt'>) {
+    this.entries.unshift({ ...entry, id: randomUUID(), createdAt: new Date() });
+  }
+
+  async auditLog(limit: number) {
+    return this.entries.slice(0, limit);
+  }
+
+  async searchAccounts(seasonId: string, query: string, limit: number): Promise<AccountOverview[]> {
+    const q = query.toLowerCase();
+    return [...this.accounts.accounts.entries()]
+      .filter(([id, acc]) => {
+        const c = this.characters.records.find(
+          (r) => r.accountId === id && r.seasonId === seasonId,
+        );
+        return (
+          acc.identities.some((i) => i.displayName.toLowerCase().includes(q)) ||
+          c?.name.toLowerCase().includes(q)
+        );
+      })
+      .slice(0, limit)
+      .map(([id, acc]) => {
+        const c = this.characters.records.find(
+          (r) => r.accountId === id && r.seasonId === seasonId,
+        );
+        return {
+          accountId: id,
+          identities: acc.identities.map((i) => ({
+            provider: i.provider,
+            displayName: i.displayName,
+            providerUserId: i.providerUserId,
+          })),
+          character: c ? { id: c.id, name: c.name, level: c.level, xp: c.xp } : null,
+          globalRole: this.accounts.roles.get(id) ?? 'player',
+          isBot: false,
+          bannedAt: this.accounts.banned.has(id) ? new Date() : null,
+          bannedReason: null,
+        };
+      });
+  }
+
+  async setBan(accountId: string, reason: string | null) {
+    if (!this.accounts.accounts.has(accountId)) return false;
+    if (reason === null) this.accounts.banned.delete(accountId);
+    else this.accounts.banned.add(accountId);
+    return true;
+  }
+
+  async setProgress(characterId: string, xp: number, level: number) {
+    Object.assign(
+      this.characters.records.find((r) => r.id === characterId)!,
+      { xp, level },
+    );
+  }
+
+  async revokeSessions(accountId: string) {
+    for (const [hash, s] of this.sessions.byHash)
+      if (s.accountId === accountId) this.sessions.byHash.delete(hash);
+  }
+}
+
 export class InMemoryFights implements FightRepository {
   readonly fights: StoredFight[] = [];
 
@@ -667,6 +760,7 @@ export interface TestApp {
   dungeon: InMemoryDungeon;
   guilds: InMemoryDiscord;
   teams: InMemoryTeams;
+  admin: InMemoryAdmin;
   time: ManualTimeSource;
   dbUp: { value: boolean };
 }
@@ -684,6 +778,7 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
   const dungeon = new InMemoryDungeon(fights, economy, characters);
   const guilds = new InMemoryDiscord(characters);
   const teams = new InMemoryTeams();
+  const admin = new InMemoryAdmin(accounts, characters, sessions);
   // 12.11.2026, 12:00 Uhr in Berlin
   const time = new ManualTimeSource(Date.UTC(2026, 10, 12, 11, 0));
   const dbUp = { value: true };
@@ -711,6 +806,8 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
     .useValue(guilds)
     .overrideProvider(TEAM_REPOSITORY)
     .useValue(teams)
+    .overrideProvider(ADMIN_REPOSITORY)
+    .useValue(admin)
     .overrideProvider(RATE_LIMITER)
     .useValue(new MemoryRateLimiter(time.read))
     .overrideProvider(CLOCK)
@@ -740,6 +837,7 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
     dungeon,
     guilds,
     teams,
+    admin,
     time,
     dbUp,
   };

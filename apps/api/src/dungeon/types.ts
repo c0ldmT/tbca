@@ -41,4 +41,6 @@ export interface DungeonRepository {
   locked<T>(characterId: string, fn: (tx: DungeonTx) => Promise<T>): Promise<T>;
   /** Letzter Run des Charakters (aktiv oder beendet). */
   latestRun(characterId: string): Promise<DungeonRun | null>;
+  /** Aktive Runs ohne Aktion seit `before` (für den Worker). */
+  idleRuns(before: Date): Promise<{ characterId: string; accountId: string }[]>;
 }

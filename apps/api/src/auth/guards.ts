@@ -2,6 +2,7 @@ import { timingSafeEqual } from 'node:crypto';
 
 import {
   ForbiddenException,
+  HttpStatus,
   Inject,
   Injectable,
   UnauthorizedException,
@@ -12,9 +13,11 @@ import { CSRF_HEADER } from '@tbca/shared';
 import type { FastifyRequest } from 'fastify';
 
 import type { Env } from '../config/env.js';
-import { ENV } from '../tokens.js';
+import { ApiError } from '../common/api-error.js';
+import { ACCOUNT_REPOSITORY, ENV } from '../tokens.js';
 import { sessionCookieName } from './cookies.js';
 import { SessionService } from './session.service.js';
+import type { AccountRepository } from './types.js';
 
 /** Lässt nur Anfragen mit gültiger Session durch und setzt `request.auth`. */
 @Injectable()
@@ -22,6 +25,7 @@ export class SessionGuard implements CanActivate {
   constructor(
     @Inject(SessionService) private readonly sessions: SessionService,
     @Inject(ENV) private readonly env: Env,
+    @Inject(ACCOUNT_REPOSITORY) private readonly accounts: AccountRepository,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -29,11 +33,16 @@ export class SessionGuard implements CanActivate {
     const token = request.cookies[sessionCookieName(this.env)];
     const session = await this.sessions.resolve(token);
     if (!session || !token) throw new UnauthorizedException('Nicht angemeldet');
+    const status = await this.accounts.status(session.accountId);
+    if (!status) throw new UnauthorizedException('Nicht angemeldet');
+    if (status.banned)
+      throw new ApiError(HttpStatus.FORBIDDEN, 'account_banned', 'Dieser Account ist gesperrt');
     request.auth = {
       accountId: session.accountId,
       sessionId: session.id,
       csrfToken: session.csrfToken,
       token,
+      globalRole: status.globalRole,
     };
     return true;
   }
@@ -70,4 +79,16 @@ function safeEqual(a: string, b: string): boolean {
   const left = Buffer.from(a);
   const right = Buffer.from(b);
   return left.length === right.length && timingSafeEqual(left, right);
+}
+
+/** Nur für Superadmins; nach dem SessionGuard verwenden. */
+@Injectable()
+export class SuperadminGuard implements CanActivate {
+  canActivate(context: ExecutionContext): boolean {
+    const request = context.switchToHttp().getRequest<FastifyRequest>();
+    if (request.auth?.globalRole !== 'superadmin') {
+      throw new ApiError(HttpStatus.FORBIDDEN, 'not_admin', 'Nur für Superadmins');
+    }
+    return true;
+  }
 }

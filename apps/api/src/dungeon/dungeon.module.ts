@@ -11,14 +11,17 @@ import {
   ECONOMY_REPOSITORY,
 } from '../tokens.js';
 import { DungeonController } from './dungeon.controller.js';
+import { JobsController } from './jobs.controller.js';
+import { ServiceTokenGuard } from '../discord/service-token.guard.js';
 import { DungeonService } from './dungeon.service.js';
 import { DrizzleDungeonRepository } from './drizzle-dungeon.repository.js';
 
 @Module({
   imports: [AuthModule],
-  controllers: [DungeonController],
+  controllers: [DungeonController, JobsController],
   providers: [
     DungeonService,
+    ServiceTokenGuard,
     {
       provide: DUNGEON_REPOSITORY,
       inject: [DB_CONNECTION],

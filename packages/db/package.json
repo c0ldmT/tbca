@@ -23,7 +23,8 @@
     "generate": "drizzle-kit generate",
     "migrate": "tsx --conditions=@tbca/source src/cli/migrate.ts",
     "seed": "tsx --conditions=@tbca/source src/cli/seed.ts",
-    "studio": "drizzle-kit studio"
+    "studio": "drizzle-kit studio",
+    "grant": "tsx --conditions=@tbca/source src/cli/grant.ts"
   },
   "dependencies": {
     "@tbca/game-core": "workspace:*",

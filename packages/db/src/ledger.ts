@@ -16,7 +16,8 @@ export type SystemAccount =
   | 'sink:rename'
   | 'sink:shop'
   | 'sink:crafting'
-  | 'sink:dungeon';
+  | 'sink:dungeon'
+  | 'sink:admin';
 
 export type LedgerLine =
   | { readonly accountId: string; readonly amount: number }

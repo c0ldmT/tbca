@@ -159,7 +159,8 @@ export class DiscordService {
     if (!(await this.limiter.acquire(`event:discord:${input.eventId}`, 24 * 60 * 60 * 1000)))
       return none('duplicate');
     const accountId = await this.accounts.findAccountId('discord', input.userId);
-    if (!accountId) return none('not_registered');
+    if (!accountId || (await this.accounts.status(accountId))?.banned)
+      return none('not_registered');
     const guild = await this.discord.communityForGuild(input.guildId);
     if (!guild || !guild.xpChannels.includes(input.channelId)) return none('channel_disabled');
     const season = await this.seasons.current();

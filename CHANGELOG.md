@@ -89,6 +89,16 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 - Rate-Limits je Session bzw. IP mit Zählern in Valkey, strenger für den Login; Healthchecks und die
   Bot-API sind ausgenommen.
 - Website: Produktions-Build ohne Inline-Skript, damit die strenge CSP greift.
+- Admin-Bereich für Superadmins: Zeitsteuerung für Test-Seasons (Zeitfaktor, Vorspulen um Stunde,
+  Tag oder Woche), Spieler suchen, sperren und entsperren (Sessions enden sofort), XP und Credits mit
+  Begründung korrigieren, Audit-Log aller Admin-Aktionen (Migration `0010_admin`).
+- Spieluhr je Season in der Datenbank, damit alle Prozesse dieselbe Spielzeit sehen.
+- Gesperrte Accounts werden bei jeder Anfrage und von den Bots abgewiesen.
+- `scripts/admin.sh grant-superadmin <discord-id>` vergibt die Superadmin-Rolle.
+- Worker (`apps/worker`) mit BullMQ: beendet Dungeon-Runs ohne Entscheidung nach Ablauf der Frist
+  und räumt abgelaufene Sessions auf; die Logik bleibt über interne Endpunkte in der API. Im
+  Sparprofil läuft er im kombinierten Prozess mit.
+- Website: Admin-Seite mit Zeitsteuerung, Spieler-Werkzeugen und Audit-Log.
 - Website: Arena mit Gegnersuche und letzten Kämpfen, HUD-Replay mit Lebens- und Energiebalken,
   Schadenszahlen, Status, Glitch bei Crits, Geschwindigkeit und Textlog; Replays per Link teilbar.
 

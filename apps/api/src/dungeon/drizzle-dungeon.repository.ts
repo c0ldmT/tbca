@@ -1,5 +1,5 @@
 import { character, dungeonRun, type Database } from '@tbca/db';
-import { and, count, desc, eq, sql } from 'drizzle-orm';
+import { and, count, desc, eq, lt, sql } from 'drizzle-orm';
 
 import { commitEconomy } from '../economy/drizzle-economy.repository.js';
 import { insertFight } from '../fight/drizzle-fight.repository.js';
@@ -73,6 +73,13 @@ export class DrizzleDungeonRepository implements DungeonRepository {
         },
       });
     });
+  }
+
+  async idleRuns(before: Date) {
+    return this.db
+      .select({ characterId: dungeonRun.characterId, accountId: dungeonRun.accountId })
+      .from(dungeonRun)
+      .where(and(eq(dungeonRun.status, 'active'), lt(dungeonRun.lastActionAt, before)));
   }
 
   async latestRun(characterId: string): Promise<DungeonRun | null> {

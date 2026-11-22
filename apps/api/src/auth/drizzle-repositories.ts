@@ -56,6 +56,14 @@ export class DrizzleAccountRepository implements AccountRepository {
     return row?.accountId ?? null;
   }
 
+  async status(accountId: string) {
+    const [row] = await this.db
+      .select({ globalRole: account.globalRole, bannedAt: account.bannedAt })
+      .from(account)
+      .where(eq(account.id, accountId));
+    return row ? { globalRole: row.globalRole, banned: row.bannedAt !== null } : null;
+  }
+
   async findProfile(accountId: string): Promise<MeProfile | null> {
     const [acc] = await this.db.select().from(account).where(eq(account.id, accountId));
     if (!acc) return null;

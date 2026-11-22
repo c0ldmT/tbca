@@ -19,10 +19,16 @@ export interface CurrentSeason {
   configVersion: number;
   battle: BattleRules;
   game: GameConfig;
+  /** Spieluhr der Season (nur Test-Seasons weichen von der Echtzeit ab). */
+  clock: { factor: number; anchorReal: Date | null; anchorGame: Date | null };
 }
 
 export interface SeasonRepository {
   findCurrent(): Promise<CurrentSeason | null>;
+  setClock(
+    seasonId: string,
+    clock: { factor: number; anchorReal: Date; anchorGame: Date },
+  ): Promise<void>;
 }
 
 export class DrizzleSeasonRepository implements SeasonRepository {
@@ -37,6 +43,9 @@ export class DrizzleSeasonRepository implements SeasonRepository {
         isTest: season.isTest,
         version: configVersion.version,
         data: configVersion.data,
+        timeFactor: season.timeFactor,
+        clockAnchorReal: season.clockAnchorReal,
+        clockAnchorGame: season.clockAnchorGame,
       })
       .from(season)
       .innerJoin(
@@ -56,7 +65,23 @@ export class DrizzleSeasonRepository implements SeasonRepository {
       battle: { ...DEFAULT_BATTLE_RULES, ...row.data.battle },
       // Ältere Konfigurationen haben noch nicht alle Bereiche; fehlende kommen aus den Startwerten.
       game: { ...DEFAULT_GAME_CONFIG, ...row.data.game },
+      clock: {
+        factor: row.timeFactor,
+        anchorReal: row.clockAnchorReal,
+        anchorGame: row.clockAnchorGame,
+      },
     };
+  }
+
+  async setClock(seasonId: string, clock: { factor: number; anchorReal: Date; anchorGame: Date }) {
+    await this.db
+      .update(season)
+      .set({
+        timeFactor: clock.factor,
+        clockAnchorReal: clock.anchorReal,
+        clockAnchorGame: clock.anchorGame,
+      })
+      .where(eq(season.id, seasonId));
   }
 }
 
