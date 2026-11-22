@@ -45,6 +45,7 @@ export default defineConfig(
       'apps/bot-*/src/bot.ts',
       'apps/bot-*/src/register-commands.ts',
       'apps/server/src/**/*.ts',
+      'apps/worker/src/worker.ts',
     ],
     rules: { 'no-console': 'off' },
   },

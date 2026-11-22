@@ -28,6 +28,9 @@ Vorher den DNS-Eintrag der Domain auf den Server zeigen lassen und die Ports 80 
 In der **Produktions**-App im Discord-Developer-Portal die Redirect-URL
 `https://<domain>/api/auth/discord/callback` eintragen.
 
+Danach dich selbst zum Superadmin machen (einmal auf der Website angemeldet, Discord-ID im
+Entwicklermodus kopieren): `TBCA_ENV=production scripts/admin.sh grant-superadmin <discord-id>`.
+
 ## Raspberry Pi 3
 
 Der Pi braucht ein 64-Bit-Betriebssystem (Raspberry Pi OS Lite 64-bit) und etwas Swap

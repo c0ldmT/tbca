@@ -21,6 +21,9 @@
         <a class="nav-link" routerLink="/character" routerLinkActive="nav-link--active">
           {{ t('app.character') }}
         </a>
+        @if (auth.user()?.account?.globalRole === 'superadmin') {
+          <a class="nav-link" routerLink="/admin" routerLinkActive="nav-link--active">Admin</a>
+        }
       }
       <div class="lang" role="group" [attr.aria-label]="t('app.language')">
         @for (locale of language.locales; track locale) {

@@ -311,7 +311,13 @@
     "lineup_without_character": "Jemand in der Aufstellung hat keinen Charakter.",
     "opponent_lineup_incomplete": "Das Gegner-Team hat nicht genug Mitglieder mit Charakter.",
     "community_not_found": "Community nicht gefunden.",
-    "invalid_tag": "Kürzel: 2–5 Buchstaben oder Ziffern."
+    "invalid_tag": "Kürzel: 2–5 Buchstaben oder Ziffern.",
+    "not_admin": "Nur für Superadmins.",
+    "account_banned": "Dieser Account ist gesperrt.",
+    "self_ban": "Du kannst dich nicht selbst sperren.",
+    "account_not_found": "Account nicht gefunden.",
+    "http_429": "Zu viele Anfragen. Bitte warte kurz.",
+    "rate_limited": "Zu viele Anfragen. Bitte warte kurz."
   },
   "pvp": {
     "title": "Arena",
@@ -562,6 +568,49 @@
       "blade": "Klinge",
       "chip": "Chip",
       "crown": "Krone"
+    }
+  },
+  "admin": {
+    "title": "Admin",
+    "time": {
+      "title": "Zeitsteuerung",
+      "season": "Season",
+      "test": "(Test-Season)",
+      "game": "Spielzeit",
+      "real": "Echtzeit",
+      "factor": "Zeitfaktor",
+      "setFactor": "Zeitfaktor setzen",
+      "advance": {
+        "hour": "+1 Stunde",
+        "day": "+1 Tag",
+        "week": "+7 Tage"
+      },
+      "hint": "Vorspulen verschiebt die Spielzeit für Tageslimits, Cooldowns und Fristen. Der Worker arbeitet fällige Aufgaben (z. B. Dungeon-Ausstiege) innerhalb einer Minute ab.",
+      "realSeason": "Echte Seasons laufen immer in Echtzeit.",
+      "saved": "Zeitfaktor gespeichert.",
+      "advanced": "Zeit vorgespult."
+    },
+    "players": {
+      "title": "Spieler",
+      "search": "Name, Charakter oder Discord-ID",
+      "find": "Suchen",
+      "banned": "gesperrt: {{ reason }}",
+      "amount": "Betrag (±)",
+      "reason": "Begründung",
+      "xp": "XP korrigieren",
+      "credits": "Credits buchen",
+      "ban": "Sperren",
+      "unban": "Entsperren"
+    },
+    "done": {
+      "ban": "Account gesperrt, Sessions beendet.",
+      "unban": "Sperre aufgehoben.",
+      "xp": "XP korrigiert.",
+      "credits": "Credits gebucht."
+    },
+    "audit": {
+      "title": "Audit-Log",
+      "empty": "Noch keine Einträge."
     }
   }
 }

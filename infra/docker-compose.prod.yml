@@ -97,7 +97,19 @@ services:
       api:
         condition: service_healthy
 
-  # Sparprofil: API und Bot in einem Prozess, Heap begrenzt.
+  worker:
+    <<: *app
+    profiles: [standard]
+    command: ['node', 'apps/worker/dist/main.js']
+    environment:
+      NODE_ENV: production
+      VALKEY_URL: redis://valkey:6379
+      API_INTERNAL_URL: http://api:3000/api
+    depends_on:
+      api:
+        condition: service_healthy
+
+  # Sparprofil: API, Bot und Worker in einem Prozess, Heap begrenzt.
   server:
     <<: *app
     profiles: [compact]

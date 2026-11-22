@@ -1,0 +1,192 @@
+<ng-container *transloco="let t">
+  <header class="head">
+    <h1>{{ t('admin.title') }}</h1>
+  </header>
+
+  @if (!isAdmin()) {
+    <p class="tbca-error" role="alert">{{ t('errors.not_admin') }}</p>
+  } @else {
+    @if (error()) {
+      <p class="tbca-error" role="alert">{{ t('errors.' + error()) }}</p>
+    }
+    @if (notice()) {
+      <p class="notice" role="status">{{ t(notice()!) }}</p>
+    }
+
+    @if (time(); as tm) {
+      <section class="tbca-panel" aria-labelledby="time-title">
+        <h2 id="time-title">{{ t('admin.time.title') }}</h2>
+        <dl class="facts">
+          <div>
+            <dt>{{ t('admin.time.season') }}</dt>
+            <dd>{{ tm.season.name }} {{ tm.season.isTest ? t('admin.time.test') : '' }}</dd>
+          </div>
+          <div>
+            <dt>{{ t('admin.time.game') }}</dt>
+            <dd>{{ formatDate(tm.gameNow) }}</dd>
+          </div>
+          <div>
+            <dt>{{ t('admin.time.real') }}</dt>
+            <dd>{{ formatDate(tm.realNow) }}</dd>
+          </div>
+          <div>
+            <dt>{{ t('admin.time.factor') }}</dt>
+            <dd>×{{ tm.factor }}</dd>
+          </div>
+        </dl>
+        @if (tm.season.isTest) {
+          <div class="row">
+            <label class="tbca-label">
+              {{ t('admin.time.factor') }}
+              <input
+                class="tbca-input narrow"
+                type="number"
+                min="1"
+                max="1000"
+                [value]="factor()"
+                (input)="factor.set(+$any($event.target).value)"
+              />
+            </label>
+            <button type="button" class="tbca-button" [disabled]="busy()" (click)="setFactor()">
+              {{ t('admin.time.setFactor') }}
+            </button>
+          </div>
+          <div class="row">
+            @for (s of steps; track s.key) {
+              <button
+                type="button"
+                class="tbca-button tbca-button--ghost"
+                [disabled]="busy()"
+                (click)="advance(s.ms)"
+              >
+                {{ t('admin.time.advance.' + s.key) }}
+              </button>
+            }
+          </div>
+          <p class="tbca-hint">{{ t('admin.time.hint') }}</p>
+        } @else {
+          <p class="tbca-hint">{{ t('admin.time.realSeason') }}</p>
+        }
+      </section>
+    }
+
+    <section class="tbca-panel" aria-labelledby="players-title">
+      <h2 id="players-title">{{ t('admin.players.title') }}</h2>
+      <form class="row" (submit)="$event.preventDefault(); search()">
+        <label class="tbca-label">
+          {{ t('admin.players.search') }}
+          <input
+            class="tbca-input"
+            type="search"
+            [value]="query()"
+            (input)="query.set($any($event.target).value)"
+          />
+        </label>
+        <button class="tbca-button tbca-button--ghost" type="submit" [disabled]="busy()">
+          {{ t('admin.players.find') }}
+        </button>
+      </form>
+      <ul class="accounts">
+        @for (a of accounts(); track a.accountId) {
+          <li class="account" [class.account--banned]="a.bannedAt">
+            <div class="account__who">
+              <strong>{{ a.character?.name ?? t('teams.noCharacter') }}</strong>
+              <span class="tbca-hint">
+                @for (i of a.identities; track i.provider) {
+                  {{ i.provider }}: {{ i.displayName }} ({{ i.providerUserId }})
+                }
+                @if (a.character; as c) {
+                  · {{ t('character.level', { level: c.level }) }}, {{ c.xp }} XP
+                }
+                @if (a.globalRole === 'superadmin') {
+                  · Superadmin
+                }
+                @if (a.bannedAt) {
+                  · {{ t('admin.players.banned', { reason: a.bannedReason ?? '' }) }}
+                }
+              </span>
+            </div>
+            <div class="row">
+              <label class="tbca-label">
+                {{ t('admin.players.amount') }}
+                <input
+                  class="tbca-input narrow"
+                  type="number"
+                  [value]="form(a.accountId).amount"
+                  (input)="patch(a.accountId, { amount: $any($event.target).value })"
+                />
+              </label>
+              <label class="tbca-label grow">
+                {{ t('admin.players.reason') }}
+                <input
+                  class="tbca-input"
+                  maxlength="200"
+                  [value]="form(a.accountId).reason"
+                  (input)="patch(a.accountId, { reason: $any($event.target).value })"
+                />
+              </label>
+            </div>
+            <div class="row">
+              <button
+                type="button"
+                class="tbca-button tbca-button--ghost"
+                [disabled]="
+                  busy() || !form(a.accountId).amount || form(a.accountId).reason.length < 3
+                "
+                (click)="act(a, 'xp')"
+              >
+                {{ t('admin.players.xp') }}
+              </button>
+              <button
+                type="button"
+                class="tbca-button tbca-button--ghost"
+                [disabled]="
+                  busy() || !form(a.accountId).amount || form(a.accountId).reason.length < 3
+                "
+                (click)="act(a, 'credits')"
+              >
+                {{ t('admin.players.credits') }}
+              </button>
+              @if (a.bannedAt) {
+                <button
+                  type="button"
+                  class="tbca-button tbca-button--ghost"
+                  [disabled]="busy()"
+                  (click)="act(a, 'unban')"
+                >
+                  {{ t('admin.players.unban') }}
+                </button>
+              } @else {
+                <button
+                  type="button"
+                  class="tbca-button danger"
+                  [disabled]="busy() || form(a.accountId).reason.length < 3"
+                  (click)="act(a, 'ban')"
+                >
+                  {{ t('admin.players.ban') }}
+                </button>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    </section>
+
+    <section class="tbca-panel" aria-labelledby="audit-title">
+      <h2 id="audit-title">{{ t('admin.audit.title') }}</h2>
+      <ol class="audit">
+        @for (e of audit(); track e.id) {
+          <li>
+            <span class="audit__time">{{ formatDate(e.createdAt) }}</span>
+            <strong>{{ e.action }}</strong>
+            <span class="tbca-hint"
+              >{{ e.targetType }} {{ e.targetId }} · {{ dataText(e.data) }}</span
+            >
+          </li>
+        } @empty {
+          <li class="tbca-hint">{{ t('admin.audit.empty') }}</li>
+        }
+      </ol>
+    </section>
+  }
+</ng-container>

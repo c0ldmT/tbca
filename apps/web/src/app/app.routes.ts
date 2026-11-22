@@ -14,6 +14,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/pvp/pvp.page').then((m) => m.PvpPage),
   },
   {
+    path: 'admin',
+    loadComponent: () => import('./pages/admin/admin.page').then((m) => m.AdminPage),
+  },
+  {
     path: 'teams',
     loadComponent: () => import('./pages/teams/teams.page').then((m) => m.TeamsPage),
   },

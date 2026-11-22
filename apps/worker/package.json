@@ -1,0 +1,30 @@
+{
+  "name": "@tbca/worker",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Hintergrund-Jobs mit BullMQ: Dungeon-Ausstieg, Aufräumen, später Spieltage und Simulationen",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    "./worker": {
+      "@tbca/source": "./src/worker.ts",
+      "types": "./dist/worker.d.ts",
+      "default": "./dist/worker.js"
+    }
+  },
+  "scripts": {
+    "dev": "tsx watch --conditions=@tbca/source --clear-screen=false src/main.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/main.js",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "bullmq": "6.5.0",
+    "iovalkey": "0.4.0"
+  },
+  "devDependencies": {
+    "tsx": "4.23.15",
+    "vitest": "5.0.5"
+  }
+}

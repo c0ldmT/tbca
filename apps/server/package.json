@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "@tbca/api": "workspace:*",
-    "@tbca/bot-discord": "workspace:*"
+    "@tbca/bot-discord": "workspace:*",
+    "@tbca/worker": "workspace:*"
   },
   "devDependencies": {
     "tsx": "4.23.15"
