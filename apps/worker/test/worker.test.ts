@@ -65,7 +65,7 @@ describe.skipIf(!url)('Worker (Integration mit Valkey)', () => {
       fetchFn,
     });
     try {
-      await vi.waitFor(() => expect(calls.length).toBeGreaterThanOrEqual(2), { timeout: 5000 });
+      await vi.waitFor(() => expect(calls.length).toBeGreaterThanOrEqual(3), { timeout: 5000 });
       expect(calls).toContain('http://api/internal/jobs/expire-dungeon-runs');
       expect(calls).toContain('http://api/internal/jobs/cleanup-sessions');
     } finally {

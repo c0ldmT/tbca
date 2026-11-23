@@ -3,6 +3,7 @@ import { LoggerModule } from 'nestjs-pino';
 
 import { AdminModule } from './admin/admin.module.js';
 import { AuthModule } from './auth/auth.module.js';
+import { BotsModule } from './bots/bots.module.js';
 import { CharacterModule } from './character/character.module.js';
 import { ClockModule } from './clock/clock.module.js';
 import { ConfigModule } from './config/config.module.js';
@@ -40,6 +41,7 @@ export class AppModule {
         DiscordModule,
         TeamModule,
         AdminModule,
+        BotsModule,
       ],
     };
   }

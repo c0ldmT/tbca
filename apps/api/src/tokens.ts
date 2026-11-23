@@ -19,3 +19,5 @@ export const RATE_LIMITER = Symbol('RATE_LIMITER');
 export const DISCORD_REPOSITORY = Symbol('DISCORD_REPOSITORY');
 export const TEAM_REPOSITORY = Symbol('TEAM_REPOSITORY');
 export const ADMIN_REPOSITORY = Symbol('ADMIN_REPOSITORY');
+export const CONFIG_REPOSITORY = Symbol('CONFIG_REPOSITORY');
+export const BOT_REPOSITORY = Symbol('BOT_REPOSITORY');

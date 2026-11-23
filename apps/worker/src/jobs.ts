@@ -13,6 +13,8 @@ export interface JobDefinition {
 export const JOBS: readonly JobDefinition[] = [
   { name: 'expire-dungeon-runs', everyMs: 60_000, path: 'expire-dungeon-runs' },
   { name: 'cleanup-sessions', everyMs: 60 * 60_000, path: 'cleanup-sessions' },
+  // Bot-Spieler handeln nur in Test-Seasons; in echten Seasons antwortet die API mit „übersprungen“.
+  { name: 'bot-agents', everyMs: 5 * 60_000, path: 'bot-agents' },
 ];
 
 /** Führt einen Job aus, indem er den internen Endpunkt der API aufruft. */

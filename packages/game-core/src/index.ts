@@ -29,6 +29,7 @@ export {
 
 export * from './content/types.js';
 export { DEFAULT_GAME_CONFIG } from './content/default-config.js';
+export { validateGameConfig } from './content/validate.js';
 
 export {
   availableAbilities,
@@ -54,10 +55,12 @@ export {
   rarityTier,
   rollItem,
   slotsFor,
+  templatePreview,
   validateEquipment,
   type Equipment,
   type EquipmentBonus,
   type RollItemInput,
+  type TemplatePreview,
 } from './items/items.js';
 export { rollLoot, rollRarity } from './items/loot.js';
 export {

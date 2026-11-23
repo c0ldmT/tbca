@@ -137,6 +137,10 @@ export async function seedBotTeams(db: Database, seasonId: string): Promise<void
   }
 }
 
+/** Agententypen der Bot-Spieler (Abschnitt 14); reihum vergeben. */
+export const BOT_AGENTS = ['casual', 'active', 'farmer', 'climber', 'class_switcher'] as const;
+export type BotAgent = (typeof BOT_AGENTS)[number];
+
 /** Stufen der Bot-Gegner: je Klasse eine Bandbreite für frühe Level. */
 export const BOT_LEVELS = [1, 3, 6, 10] as const;
 

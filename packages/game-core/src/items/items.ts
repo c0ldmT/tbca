@@ -218,3 +218,59 @@ export function equipmentBonus(config: GameConfig, equipment: Equipment): Equipm
   }
   return bonus;
 }
+
+export interface TemplatePreview {
+  budget: number;
+  /** Basiswerte (fest, ohne Zufall). */
+  base: Partial<Record<ItemStat | 'weaponDamage', number>>;
+  affixCount: readonly [number, number];
+  /** Wertebereich je möglichem Affix (70–100 % des Anteils). */
+  affixRanges: { stat: ItemStat; min: number; max: number }[];
+}
+
+/**
+ * Vorschau einer Vorlage für den Item-Editor: Budget, feste Basiswerte und die möglichen
+ * Affix-Bereiche bei gegebenem Item-Level und Rarität – dieselbe Rechnung wie rollItem.
+ */
+export function templatePreview(
+  config: GameConfig,
+  template: ItemTemplate,
+  itemLevel: number,
+  rarity: number,
+): TemplatePreview {
+  const rules = config.items;
+  const budget = roundDiv(
+    rules.categoryBudget[template.category] * itemLevel * rarityFactor(rarity),
+    10_000,
+  );
+  const baseBudget = roundDiv(budget * rules.baseSharePermille[template.category], 1000);
+  const weights = Object.entries(template.base) as [ItemStat | 'weaponDamage', number][];
+  const totalWeight = weights.reduce((sum, [, w]) => sum + w, 0);
+  const base: Partial<Record<ItemStat | 'weaponDamage', number>> = {};
+  for (const [stat, weight] of weights) {
+    const share = totalWeight > 0 ? Math.floor((baseBudget * weight) / totalWeight) : 0;
+    const value = Math.floor(share / rules.statCost[stat]);
+    base[stat] = stat === 'weaponDamage' ? rules.weaponDamageFloor + value : value;
+  }
+  const tier = rarityTier(rarity);
+  const [min, max] = rules.affixCount[Math.min(tier, rules.affixCount.length) - 1]!;
+  const affixOnly = rules.baseSharePermille[template.category] === 0;
+  const share = Math.floor((budget - baseBudget) / Math.max(1, max));
+  const cap = template.affixPool.length;
+  return {
+    budget,
+    base,
+    affixCount: [
+      Math.min(cap, Math.max(affixOnly ? 1 : 0, min)),
+      Math.min(cap, Math.max(affixOnly ? 1 : 0, max)),
+    ],
+    affixRanges: template.affixPool.map((stat) => ({
+      stat,
+      min: Math.max(
+        1,
+        Math.floor((share * rules.affixRollMinPermille) / 1000 / rules.statCost[stat]),
+      ),
+      max: Math.max(1, Math.floor(share / rules.statCost[stat])),
+    })),
+  };
+}

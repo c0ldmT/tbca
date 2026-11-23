@@ -11,6 +11,7 @@ import {
   rollItem,
   rollLoot,
   slotsFor,
+  templatePreview,
   validateEquipment,
   Xoshiro128ss,
   rollRarity,
@@ -153,5 +154,23 @@ describe('Loot', () => {
     const a = rollLoot(config, { itemLevel: 12, maxRarity: 9, seed: 'drop' });
     expect(a).toEqual(rollLoot(config, { itemLevel: 12, maxRarity: 9, seed: 'drop' }));
     expect(a.itemLevel).toBe(12);
+  });
+});
+
+describe('templatePreview', () => {
+  it('zeigt dieselben Basiswerte wie rollItem und Affix-Bereiche, die gewürfelte Werte enthalten', () => {
+    const vest = config.items.templates.find((x) => x.id === 'vest')!;
+    const preview = templatePreview(config, vest, 30, 8);
+    expect(preview.budget).toBe(itemBudget(config, 'torso', 30, 8));
+    expect(preview.affixCount).toEqual([2, 3]);
+    for (let i = 0; i < 50; i++) {
+      const item = rollItem(config, { templateId: 'vest', itemLevel: 30, rarity: 8, seed: i });
+      expect(item.base).toEqual(preview.base);
+      for (const a of item.affixes) {
+        const range = preview.affixRanges.find((r) => r.stat === a.stat)!;
+        expect(a.value).toBeGreaterThanOrEqual(range.min);
+        expect(a.value).toBeLessThanOrEqual(range.max);
+      }
+    }
   });
 });

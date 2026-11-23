@@ -146,6 +146,8 @@ export const account = pgTable('account', {
   /** Gesperrt seit; gesperrte Accounts können weder spielen noch Bots nutzen. */
   bannedAt: timestamp('banned_at', { withTimezone: true }),
   bannedReason: text('banned_reason'),
+  /** Verhalten eines Bot-Spielers (Abschnitt 14), z. B. casual, active, farmer. */
+  botAgent: text('bot_agent'),
   /** Bevorzugte Sprache; null = Standard der Community bzw. Browser. */
   locale: locale('locale'),
   createdAt: createdAt(),

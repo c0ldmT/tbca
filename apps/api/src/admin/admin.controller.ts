@@ -5,6 +5,7 @@ import {
   HttpCode,
   Inject,
   Param,
+  ParseIntPipe,
   ParseUUIDPipe,
   Post,
   Put,
@@ -12,17 +13,28 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { adminAmountSchema, adminBanSchema, adminTimeSchema } from '@tbca/shared';
+import {
+  adminAmountSchema,
+  adminBanSchema,
+  adminConfigDraftSchema,
+  adminConfigUpdateSchema,
+  adminTimeSchema,
+} from '@tbca/shared';
+import type { SeasonConfigData } from '@tbca/db';
 import type { FastifyRequest } from 'fastify';
 
 import { CsrfGuard, SessionGuard, SuperadminGuard } from '../auth/guards.js';
 import { parseBody } from '../common/api-error.js';
 import { AdminService } from './admin.service.js';
+import { ConfigService } from './config.service.js';
 
 @Controller('admin')
 @UseGuards(SessionGuard, CsrfGuard, SuperadminGuard)
 export class AdminController {
-  constructor(@Inject(AdminService) private readonly admin: AdminService) {}
+  constructor(
+    @Inject(AdminService) private readonly admin: AdminService,
+    @Inject(ConfigService) private readonly configs: ConfigService,
+  ) {}
 
   @Get('time')
   time() {
@@ -74,5 +86,43 @@ export class AdminController {
   @Get('audit')
   audit() {
     return this.admin.auditLog();
+  }
+
+  @Get('config')
+  configList() {
+    return this.configs.list();
+  }
+
+  @Get('config/:version')
+  config(@Param('version', ParseIntPipe) version: number) {
+    return this.configs.get(version);
+  }
+
+  @Post('config/drafts')
+  @HttpCode(201)
+  draft(@Req() req: FastifyRequest, @Body() body: unknown) {
+    const { from, notes } = parseBody(adminConfigDraftSchema, body);
+    return this.configs.createDraft(req.auth!.accountId, from, notes);
+  }
+
+  @Put('config/:version')
+  updateConfig(
+    @Req() req: FastifyRequest,
+    @Param('version', ParseIntPipe) version: number,
+    @Body() body: unknown,
+  ) {
+    const { data, notes } = parseBody(adminConfigUpdateSchema, body);
+    return this.configs.update(
+      req.auth!.accountId,
+      version,
+      data as unknown as SeasonConfigData,
+      notes,
+    );
+  }
+
+  @Post('config/:version/publish')
+  @HttpCode(200)
+  publish(@Req() req: FastifyRequest, @Param('version', ParseIntPipe) version: number) {
+    return this.configs.publish(req.auth!.accountId, version);
   }
 }

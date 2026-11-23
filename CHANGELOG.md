@@ -99,6 +99,15 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
   und räumt abgelaufene Sessions auf; die Logik bleibt über interne Endpunkte in der API. Im
   Sparprofil läuft er im kombinierten Prozess mit.
 - Website: Admin-Seite mit Zeitsteuerung, Spieler-Werkzeugen und Audit-Log.
+- Versionierte Season-Konfiguration: Entwürfe anlegen, bearbeiten und veröffentlichen; der Server
+  prüft jede Konfiguration (Struktur und ein Probedurchlauf mit Charakteren, Items und Dungeon) und
+  meldet Probleme verständlich. Veröffentlichen wirkt sofort und steht im Audit-Log.
+- Item-Editor mit Live-Vorschau von Power-Budget, Basiswerten und Affix-Bereichen je Item-Level und
+  Rarität sowie erweiterter JSON-Bearbeitung der gesamten Konfiguration.
+- Bot-Spieler mit Agententypen (Gelegenheitsspieler, Aktiver, Farmer, Bergsteiger, Klassenwechsler):
+  Sie kämpfen, laufen Dungeons, wechseln Klassen und verteilen Punkte über dieselben Regeln wie echte
+  Spieler; nur in Test-Seasons, alle 5 Minuten über den Worker oder sofort im Admin-Bereich
+  (Migration `0011_bot_agents`).
 - Website: Arena mit Gegnersuche und letzten Kämpfen, HUD-Replay mit Lebens- und Energiebalken,
   Schadenszahlen, Status, Glitch bei Crits, Geschwindigkeit und Textlog; Replays per Link teilbar.
 

@@ -38,5 +38,6 @@ import { DrizzleDungeonRepository } from './drizzle-dungeon.repository.js';
       useFactory: (conn: DbConnection) => new DrizzleCharacterRepository(conn.db),
     },
   ],
+  exports: [DungeonService],
 })
 export class DungeonModule {}

@@ -7,11 +7,14 @@ import { DrizzleEconomyRepository } from '../economy/drizzle-economy.repository.
 import {
   ADMIN_REPOSITORY,
   CHARACTER_REPOSITORY,
+  CONFIG_REPOSITORY,
   DB_CONNECTION,
   ECONOMY_REPOSITORY,
 } from '../tokens.js';
 import { AdminController } from './admin.controller.js';
 import { AdminService } from './admin.service.js';
+import { DrizzleConfigRepository } from './config.repository.js';
+import { ConfigService } from './config.service.js';
 import { DrizzleAdminRepository } from './drizzle-admin.repository.js';
 
 @Module({
@@ -19,6 +22,12 @@ import { DrizzleAdminRepository } from './drizzle-admin.repository.js';
   controllers: [AdminController],
   providers: [
     AdminService,
+    ConfigService,
+    {
+      provide: CONFIG_REPOSITORY,
+      inject: [DB_CONNECTION],
+      useFactory: (c: DbConnection) => new DrizzleConfigRepository(c.db),
+    },
     {
       provide: ADMIN_REPOSITORY,
       inject: [DB_CONNECTION],

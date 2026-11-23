@@ -46,6 +46,9 @@ import type { DungeonRepository, DungeonRun, DungeonTx } from '../src/dungeon/ty
 import type { DiscordRepository, GuildCommunity } from '../src/discord/types.js';
 import { TeamConflictError, type TeamRecord, type TeamRepository } from '../src/team/types.js';
 import type { AccountOverview, AdminRepository, AuditEntry } from '../src/admin/types.js';
+import type { ConfigRepository, ConfigVersionInfo } from '../src/admin/config.repository.js';
+import type { BotInfo, BotRepository } from '../src/bots/bot.repository.js';
+import type { BotAgent, SeasonConfigData } from '@tbca/db';
 import { MemoryRateLimiter } from '../src/limits/rate-limiter.js';
 import {
   AlreadyPurchasedError,
@@ -67,6 +70,8 @@ import {
   RATE_LIMITER,
   TEAM_REPOSITORY,
   ADMIN_REPOSITORY,
+  CONFIG_REPOSITORY,
+  BOT_REPOSITORY,
   DISCORD_OAUTH,
   SEASON_REPOSITORY,
   SESSION_STORE,
@@ -689,6 +694,86 @@ export class InMemoryAdmin implements AdminRepository {
   }
 }
 
+export class InMemoryConfigs implements ConfigRepository {
+  readonly versions: (ConfigVersionInfo & { seasonId: string; data: SeasonConfigData })[] = [];
+
+  constructor(seasonId: string) {
+    this.versions.push({
+      seasonId,
+      version: 2,
+      status: 'published',
+      notes: null,
+      createdAt: new Date(),
+      publishedAt: new Date(),
+      data: { battle: DEFAULT_BATTLE_RULES, game: DEFAULT_GAME_CONFIG },
+    });
+  }
+
+  async list(seasonId: string) {
+    return this.versions
+      .filter((v) => v.seasonId === seasonId)
+      .sort((a, b) => b.version - a.version);
+  }
+  async get(seasonId: string, version: number) {
+    return structuredClone(
+      this.versions.find((v) => v.seasonId === seasonId && v.version === version) ?? null,
+    );
+  }
+  async createDraft(seasonId: string, data: SeasonConfigData, notes: string | null) {
+    const version = Math.max(...this.versions.map((v) => v.version)) + 1;
+    this.versions.push({
+      seasonId,
+      version,
+      status: 'draft',
+      notes,
+      createdAt: new Date(),
+      publishedAt: null,
+      data: structuredClone(data),
+    });
+    return version;
+  }
+  async updateDraft(
+    seasonId: string,
+    version: number,
+    data: SeasonConfigData,
+    notes: string | null,
+  ) {
+    Object.assign(
+      this.versions.find((v) => v.seasonId === seasonId && v.version === version)!,
+      { data: structuredClone(data), notes },
+    );
+  }
+  async publish(seasonId: string, version: number) {
+    for (const v of this.versions)
+      if (v.seasonId === seasonId && v.status === 'published') v.status = 'archived';
+    Object.assign(
+      this.versions.find((v) => v.version === version)!,
+      { status: 'published', publishedAt: new Date() },
+    );
+  }
+}
+
+export class InMemoryBots implements BotRepository {
+  readonly agents = new Map<string, BotAgent | null>();
+
+  constructor(private readonly characters: InMemoryCharacters) {}
+
+  async list(seasonId: string): Promise<BotInfo[]> {
+    return this.characters.records
+      .filter((c) => c.seasonId === seasonId && c.isBot)
+      .map((c) => ({
+        accountId: c.accountId,
+        agent: this.agents.get(c.accountId) ?? null,
+        character: { id: c.id, name: c.name, level: c.level, classId: c.classId },
+      }));
+  }
+  async setAgent(accountId: string, agent: BotAgent | null) {
+    if (!this.characters.records.some((c) => c.accountId === accountId && c.isBot)) return false;
+    this.agents.set(accountId, agent);
+    return true;
+  }
+}
+
 export class InMemoryFights implements FightRepository {
   readonly fights: StoredFight[] = [];
 
@@ -761,6 +846,8 @@ export interface TestApp {
   guilds: InMemoryDiscord;
   teams: InMemoryTeams;
   admin: InMemoryAdmin;
+  configs: InMemoryConfigs;
+  bots: InMemoryBots;
   time: ManualTimeSource;
   dbUp: { value: boolean };
 }
@@ -779,6 +866,8 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
   const guilds = new InMemoryDiscord(characters);
   const teams = new InMemoryTeams();
   const admin = new InMemoryAdmin(accounts, characters, sessions);
+  const configs = new InMemoryConfigs(seasons.current!.id);
+  const bots = new InMemoryBots(characters);
   // 12.11.2026, 12:00 Uhr in Berlin
   const time = new ManualTimeSource(Date.UTC(2026, 10, 12, 11, 0));
   const dbUp = { value: true };
@@ -808,6 +897,10 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
     .useValue(teams)
     .overrideProvider(ADMIN_REPOSITORY)
     .useValue(admin)
+    .overrideProvider(CONFIG_REPOSITORY)
+    .useValue(configs)
+    .overrideProvider(BOT_REPOSITORY)
+    .useValue(bots)
     .overrideProvider(RATE_LIMITER)
     .useValue(new MemoryRateLimiter(time.read))
     .overrideProvider(CLOCK)
@@ -838,6 +931,8 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
     guilds,
     teams,
     admin,
+    configs,
+    bots,
     time,
     dbUp,
   };

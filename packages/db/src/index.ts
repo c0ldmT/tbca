@@ -9,7 +9,9 @@ export {
 } from './client.js';
 export { MIGRATIONS_FOLDER, runMigrations } from './migrate.js';
 export {
+  BOT_AGENTS,
   BOT_LEVELS,
+  type BotAgent,
   CONFIG_SCHEMA_VERSION,
   DEV_COMMUNITY_SLUG,
   DEV_SEASON_SLUG,
