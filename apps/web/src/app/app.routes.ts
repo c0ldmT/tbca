@@ -14,6 +14,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/pvp/pvp.page').then((m) => m.PvpPage),
   },
   {
+    path: 'admin/items',
+    loadComponent: () => import('./pages/admin/item-editor.page').then((m) => m.ItemEditorPage),
+  },
+  {
     path: 'admin',
     loadComponent: () => import('./pages/admin/admin.page').then((m) => m.AdminPage),
   },

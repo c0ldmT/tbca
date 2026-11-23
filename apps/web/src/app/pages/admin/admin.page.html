@@ -70,6 +70,61 @@
       </section>
     }
 
+    <section class="tbca-panel" aria-labelledby="config-title">
+      <h2 id="config-title">{{ t('admin.config.title') }}</h2>
+      <p class="tbca-hint">{{ t('admin.config.intro') }}</p>
+      <a class="tbca-button tbca-button--ghost" routerLink="/admin/items">{{
+        t('admin.config.open')
+      }}</a>
+    </section>
+
+    <section class="tbca-panel" aria-labelledby="bots-title">
+      <h2 id="bots-title">{{ t('admin.bots.title') }}</h2>
+      <p class="tbca-hint">{{ t('admin.bots.intro') }}</p>
+      <div class="row">
+        <button type="button" class="tbca-button" [disabled]="busy()" (click)="runBots()">
+          {{ t('admin.bots.run') }}
+        </button>
+        @if (botRun(); as r) {
+          <span class="tbca-hint" role="status">
+            @if (r.skipped) {
+              {{ t('admin.bots.skipped') }}
+            } @else {
+              {{ t('admin.bots.result', { acted: r.acted, actions: r.actions }) }}
+              {{ errorsText(r.errors) }}
+            }
+          </span>
+        }
+      </div>
+      <ul class="bots">
+        @for (b of bots(); track b.accountId) {
+          <li>
+            <span>
+              {{ b.character?.name ?? '–' }}
+              @if (b.character; as c) {
+                <span class="tbca-hint"
+                  >{{ t('classes.' + c.classId) }},
+                  {{ t('character.level', { level: c.level }) }}</span
+                >
+              }
+            </span>
+            <select
+              class="tbca-select"
+              [attr.aria-label]="t('admin.bots.agent')"
+              (change)="setAgent(b, $any($event.target).value)"
+            >
+              <option value="" [selected]="!b.agent">{{ t('admin.bots.agents.none') }}</option>
+              @for (a of agents; track a) {
+                <option [value]="a" [selected]="b.agent === a">
+                  {{ t('admin.bots.agents.' + a) }}
+                </option>
+              }
+            </select>
+          </li>
+        }
+      </ul>
+    </section>
+
     <section class="tbca-panel" aria-labelledby="players-title">
       <h2 id="players-title">{{ t('admin.players.title') }}</h2>
       <form class="row" (submit)="$event.preventDefault(); search()">

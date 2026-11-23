@@ -2,7 +2,11 @@ import { HttpErrorResponse } from '@angular/common/http';
 
 /** Fehlercode der API (z. B. name_taken), für die Übersetzung unter errors.<code>. */
 export class ApiFailure extends Error {
-  constructor(readonly code: string) {
+  constructor(
+    readonly code: string,
+    /** Zusätzliche Felder der Fehlerantwort, z. B. `problems` bei ungültiger Konfiguration. */
+    readonly details: Record<string, unknown> = {},
+  ) {
     super(code);
   }
 }
@@ -11,8 +15,9 @@ export class ApiFailure extends Error {
 export function toFailure(error: unknown): ApiFailure {
   if (error instanceof ApiFailure) return error;
   if (error instanceof HttpErrorResponse) {
-    const code = (error.error as { code?: unknown } | null)?.code;
-    return new ApiFailure(typeof code === 'string' ? code : `http_${error.status}`);
+    const body = (error.error ?? {}) as Record<string, unknown>;
+    const code = body['code'];
+    return new ApiFailure(typeof code === 'string' ? code : `http_${error.status}`, body);
   }
   return new ApiFailure('unknown');
 }

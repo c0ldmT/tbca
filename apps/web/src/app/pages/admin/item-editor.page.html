@@ -1,0 +1,247 @@
+<ng-container *transloco="let t">
+  <header class="head">
+    <a routerLink="/admin" class="back">← {{ t('admin.title') }}</a>
+    <h1>{{ t('admin.items.title') }}</h1>
+    @if (draft(); as d) {
+      <p class="tbca-hint">
+        {{ t('admin.items.version', { version: d.version }) }} ·
+        {{ t('admin.items.status.' + d.status) }}
+        @if (dirty()) {
+          · {{ t('admin.items.unsaved') }}
+        }
+      </p>
+    }
+  </header>
+
+  @if (error()) {
+    <p class="tbca-error" role="alert">{{ t('errors.' + error()) }}</p>
+  }
+  @if (problems().length) {
+    <ul class="problems" role="alert">
+      @for (p of problems(); track p) {
+        <li>{{ p }}</li>
+      }
+    </ul>
+  }
+  @if (notice()) {
+    <p class="notice" role="status">{{ t(notice()!) }}</p>
+  }
+
+  @if (draft(); as d) {
+    <div class="toolbar">
+      @if (!editable()) {
+        <button type="button" class="tbca-button" [disabled]="busy()" (click)="createDraft()">
+          {{ t('admin.items.newDraft') }}
+        </button>
+      } @else {
+        <button
+          type="button"
+          class="tbca-button tbca-button--ghost"
+          [disabled]="busy() || !dirty()"
+          (click)="save()"
+        >
+          {{ t('admin.items.save') }}
+        </button>
+        <button type="button" class="tbca-button" [disabled]="busy()" (click)="publish()">
+          {{ t('admin.items.publish') }}
+        </button>
+      }
+    </div>
+
+    <div class="layout">
+      <nav class="tbca-panel list" [attr.aria-label]="t('admin.items.templates')">
+        <ul>
+          @for (tpl of templates(); track tpl.id) {
+            <li>
+              <button
+                type="button"
+                class="pick"
+                [attr.aria-current]="tpl.id === selectedId() ? 'true' : null"
+                (click)="selectedId.set(tpl.id)"
+              >
+                <span>{{ tpl.id }}</span>
+                <span class="tbca-hint">{{ tpl.category }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+        @if (editable()) {
+          <button type="button" class="tbca-button tbca-button--ghost" (click)="addTemplate()">
+            {{ t('admin.items.add') }}
+          </button>
+        }
+      </nav>
+
+      @if (selected(); as tpl) {
+        <section class="tbca-panel editor" [attr.aria-label]="tpl.id">
+          <fieldset [disabled]="!editable()">
+            <div class="row">
+              <label class="tbca-label">
+                ID
+                <input
+                  class="tbca-input"
+                  [value]="tpl.id"
+                  (change)="update({ id: $any($event.target).value })"
+                />
+              </label>
+              <label class="tbca-label">
+                {{ t('admin.items.category') }}
+                <select class="tbca-select" (change)="setCategory($any($event.target).value)">
+                  @for (c of categories; track c) {
+                    <option [value]="c" [selected]="tpl.category === c">{{ c }}</option>
+                  }
+                </select>
+              </label>
+            </div>
+            @if (tpl.weapon; as w) {
+              <div class="row">
+                <label class="tbca-label">
+                  {{ t('admin.items.damageKind') }}
+                  <select
+                    class="tbca-select"
+                    (change)="setWeapon({ kind: $any($event.target).value })"
+                  >
+                    <option value="physical" [selected]="w.kind === 'physical'">physical</option>
+                    <option value="tech" [selected]="w.kind === 'tech'">tech</option>
+                  </select>
+                </label>
+                <label class="tbca-label">
+                  {{ t('admin.items.scalesWith') }}
+                  <select
+                    class="tbca-select"
+                    (change)="setWeapon({ scalesWith: $any($event.target).value })"
+                  >
+                    @for (a of attributes; track a) {
+                      <option [value]="a" [selected]="w.scalesWith === a">
+                        {{ t('attributes.' + a) }}
+                      </option>
+                    }
+                  </select>
+                </label>
+                <label class="tbca-label">
+                  {{ t('admin.items.scaling') }}
+                  <input
+                    class="tbca-input narrow"
+                    type="number"
+                    min="0"
+                    step="500"
+                    [value]="w.scaling"
+                    (change)="setWeapon({ scaling: +$any($event.target).value })"
+                  />
+                </label>
+              </div>
+            }
+            <h3>{{ t('admin.items.baseWeights') }}</h3>
+            <div class="weights">
+              @for (k of baseKeys; track k) {
+                <label class="tbca-label">
+                  {{ k }}
+                  <input
+                    class="tbca-input"
+                    type="number"
+                    min="0"
+                    [value]="weightOf(k)"
+                    (change)="setWeight(k, $any($event.target).value)"
+                  />
+                </label>
+              }
+            </div>
+            <h3>{{ t('admin.items.affixPool') }}</h3>
+            <div class="chips">
+              @for (s of stats; track s) {
+                <label class="chip">
+                  <input
+                    type="checkbox"
+                    [checked]="tpl.affixPool.includes(s)"
+                    (change)="toggleAffix(s)"
+                  />
+                  {{ s }}
+                </label>
+              }
+            </div>
+            @if (editable()) {
+              <button
+                type="button"
+                class="tbca-button tbca-button--ghost danger"
+                (click)="removeTemplate()"
+              >
+                {{ t('admin.items.remove') }}
+              </button>
+            }
+          </fieldset>
+        </section>
+
+        <section
+          class="tbca-panel preview"
+          aria-labelledby="preview-title"
+          [attr.data-tier]="tier()"
+        >
+          <h2 id="preview-title">{{ t('admin.items.preview') }}</h2>
+          <div class="row">
+            <label class="tbca-label">
+              {{ t('admin.items.itemLevel', { level: level() }) }}
+              <input
+                type="range"
+                min="1"
+                max="100"
+                [value]="level()"
+                (input)="level.set(+$any($event.target).value)"
+              />
+            </label>
+            <label class="tbca-label">
+              {{ t('admin.items.rarity', { rarity: rarity() }) }}
+              <input
+                type="range"
+                min="1"
+                max="20"
+                [value]="rarity()"
+                (input)="rarity.set(+$any($event.target).value)"
+              />
+            </label>
+          </div>
+          @if (preview(); as p) {
+            <p class="budget">{{ t('admin.items.budget', { budget: p.budget }) }}</p>
+            <dl class="values">
+              @for (e of p.base | keyvalue; track e.key) {
+                <div>
+                  <dt>{{ e.key }}</dt>
+                  <dd>{{ e.value }}</dd>
+                </div>
+              }
+            </dl>
+            <p class="tbca-hint">
+              {{ t('admin.items.affixCount', { min: p.affixCount[0], max: p.affixCount[1] }) }}
+            </p>
+            <dl class="values">
+              @for (r of p.affixRanges; track r.stat) {
+                <div>
+                  <dt>{{ r.stat }}</dt>
+                  <dd>{{ r.min }}–{{ r.max }}</dd>
+                </div>
+              }
+            </dl>
+          } @else {
+            <p class="tbca-hint">{{ t('admin.items.noPreview') }}</p>
+          }
+        </section>
+      }
+    </div>
+
+    <details class="tbca-panel">
+      <summary>{{ t('admin.items.json') }}</summary>
+      <p class="tbca-hint">{{ t('admin.items.jsonHint') }}</p>
+      <textarea
+        class="json"
+        spellcheck="false"
+        [disabled]="!editable()"
+        [value]="json()"
+        (input)="json.set($any($event.target).value)"
+      ></textarea>
+      @if (editable()) {
+        <button type="button" class="tbca-button tbca-button--ghost" (click)="applyJson()">
+          {{ t('admin.items.applyJson') }}
+        </button>
+      }
+    </details>
+  }
+</ng-container>

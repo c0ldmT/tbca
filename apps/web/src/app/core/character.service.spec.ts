@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 
 import { AuthService } from './auth.service';
-import { ApiFailure, CharacterService } from './character.service';
+import { CharacterService } from './character.service';
 
 describe('CharacterService', () => {
   let service: CharacterService;
@@ -39,6 +39,6 @@ describe('CharacterService', () => {
     expect(req.request.headers.get('x-csrf-token')).toBe('csrf-token-0123456789');
     expect(req.request.body).toEqual({ name: 'Kira', classId: 'gunner' });
     req.flush({ code: 'name_taken' }, { status: 409, statusText: 'Conflict' });
-    await expect(done).rejects.toEqual(new ApiFailure('name_taken'));
+    await expect(done).rejects.toMatchObject({ code: 'name_taken' });
   });
 });

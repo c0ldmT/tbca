@@ -317,7 +317,11 @@
     "self_ban": "Du kannst dich nicht selbst sperren.",
     "account_not_found": "Account nicht gefunden.",
     "http_429": "Zu viele Anfragen. Bitte warte kurz.",
-    "rate_limited": "Zu viele Anfragen. Bitte warte kurz."
+    "rate_limited": "Zu viele Anfragen. Bitte warte kurz.",
+    "invalid_config": "Die Konfiguration ist ungültig:",
+    "config_not_draft": "Nur Entwürfe lassen sich bearbeiten.",
+    "config_not_found": "Version nicht gefunden.",
+    "bot_not_found": "Bot nicht gefunden."
   },
   "pvp": {
     "title": "Arena",
@@ -611,6 +615,60 @@
     "audit": {
       "title": "Audit-Log",
       "empty": "Noch keine Einträge."
+    },
+    "config": {
+      "title": "Konfiguration und Items",
+      "intro": "Item-Vorlagen und alle Spielwerte als versionierte Entwürfe bearbeiten und veröffentlichen.",
+      "open": "Item-Editor öffnen"
+    },
+    "bots": {
+      "title": "Bot-Spieler",
+      "intro": "Bots mit Agententyp handeln in Test-Seasons alle 5 Minuten selbst (über den Worker) – mit denselben Regeln wie echte Spieler.",
+      "run": "Jetzt handeln lassen",
+      "skipped": "Übersprungen: Bots handeln nur in Test-Seasons.",
+      "result": "{{ acted }} Bots, {{ actions }} Aktionen.",
+      "agent": "Agententyp",
+      "agents": {
+        "none": "inaktiv",
+        "casual": "Gelegenheitsspieler",
+        "active": "Aktiver",
+        "farmer": "Farmer",
+        "climber": "Bergsteiger",
+        "class_switcher": "Klassenwechsler"
+      }
+    },
+    "items": {
+      "title": "Item-Editor",
+      "version": "Version {{ version }}",
+      "status": {
+        "draft": "Entwurf",
+        "published": "veröffentlicht",
+        "archived": "archiviert"
+      },
+      "unsaved": "ungespeicherte Änderungen",
+      "newDraft": "Entwurf aus veröffentlichter Version anlegen",
+      "save": "Entwurf speichern",
+      "publish": "Veröffentlichen",
+      "templates": "Vorlagen",
+      "add": "Vorlage hinzufügen",
+      "remove": "Vorlage entfernen",
+      "category": "Kategorie",
+      "damageKind": "Schadensart",
+      "scalesWith": "Skaliert mit",
+      "scaling": "Skalierung (10 000 = ×1)",
+      "baseWeights": "Basiswerte (Gewichte)",
+      "affixPool": "Mögliche Affixe",
+      "preview": "Vorschau",
+      "itemLevel": "Item-Level {{ level }}",
+      "rarity": "Rarität {{ rarity }}",
+      "budget": "Power-Budget {{ budget }}",
+      "affixCount": "{{ min }}–{{ max }} Affixe, Werte je Affix:",
+      "noPreview": "Keine Vorschau möglich – Werte prüfen.",
+      "json": "Erweitert: gesamte Konfiguration als JSON",
+      "jsonHint": "Für Werte ohne eigenen Editor (Klassen, Fähigkeiten, Dungeon, Shop …). Der Server prüft beim Speichern alles.",
+      "applyJson": "JSON übernehmen",
+      "saved": "Entwurf gespeichert und geprüft.",
+      "published": "Veröffentlicht – gilt ab sofort für neue Kämpfe und Items."
     }
   }
 }

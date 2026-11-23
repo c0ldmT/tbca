@@ -317,7 +317,11 @@
     "self_ban": "You can't ban yourself.",
     "account_not_found": "Account not found.",
     "http_429": "Too many requests. Please wait a moment.",
-    "rate_limited": "Too many requests. Please wait a moment."
+    "rate_limited": "Too many requests. Please wait a moment.",
+    "invalid_config": "The configuration is invalid:",
+    "config_not_draft": "Only drafts can be edited.",
+    "config_not_found": "Version not found.",
+    "bot_not_found": "Bot not found."
   },
   "pvp": {
     "title": "Arena",
@@ -611,6 +615,60 @@
     "audit": {
       "title": "Audit log",
       "empty": "No entries yet."
+    },
+    "config": {
+      "title": "Configuration and items",
+      "intro": "Edit item templates and all game values as versioned drafts and publish them.",
+      "open": "Open item editor"
+    },
+    "bots": {
+      "title": "Bot players",
+      "intro": "Bots with an agent type act on their own every 5 minutes in test seasons (via the worker) – with the same rules as real players.",
+      "run": "Let them act now",
+      "skipped": "Skipped: bots only act in test seasons.",
+      "result": "{{ acted }} bots, {{ actions }} actions.",
+      "agent": "Agent type",
+      "agents": {
+        "none": "inactive",
+        "casual": "Casual",
+        "active": "Active",
+        "farmer": "Farmer",
+        "climber": "Climber",
+        "class_switcher": "Class switcher"
+      }
+    },
+    "items": {
+      "title": "Item editor",
+      "version": "Version {{ version }}",
+      "status": {
+        "draft": "draft",
+        "published": "published",
+        "archived": "archived"
+      },
+      "unsaved": "unsaved changes",
+      "newDraft": "Create draft from published version",
+      "save": "Save draft",
+      "publish": "Publish",
+      "templates": "Templates",
+      "add": "Add template",
+      "remove": "Remove template",
+      "category": "Category",
+      "damageKind": "Damage type",
+      "scalesWith": "Scales with",
+      "scaling": "Scaling (10,000 = ×1)",
+      "baseWeights": "Base values (weights)",
+      "affixPool": "Possible affixes",
+      "preview": "Preview",
+      "itemLevel": "Item level {{ level }}",
+      "rarity": "Rarity {{ rarity }}",
+      "budget": "Power budget {{ budget }}",
+      "affixCount": "{{ min }}–{{ max }} affixes, values per affix:",
+      "noPreview": "No preview possible – check the values.",
+      "json": "Advanced: whole configuration as JSON",
+      "jsonHint": "For values without their own editor (classes, abilities, dungeon, shop …). The server validates everything when saving.",
+      "applyJson": "Apply JSON",
+      "saved": "Draft saved and validated.",
+      "published": "Published – applies to new fights and items right away."
     }
   }
 }

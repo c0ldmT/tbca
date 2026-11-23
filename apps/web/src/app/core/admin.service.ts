@@ -1,6 +1,14 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import type { AdminAccountView, AdminAuditView, AdminTimeView } from '@tbca/shared';
+import type {
+  AdminAccountView,
+  AdminAuditView,
+  AdminBotView,
+  AdminConfigList,
+  AdminConfigVersion,
+  AdminTimeView,
+  BotRunResult,
+} from '@tbca/shared';
 import { CSRF_HEADER } from '@tbca/shared/constants';
 import { firstValueFrom, type Observable } from 'rxjs';
 
@@ -32,6 +40,30 @@ export class AdminService {
   }
   credits(id: string, amount: number, reason: string) {
     return this.write<void>('POST', `/api/admin/accounts/${id}/credits`, { amount, reason });
+  }
+  bots() {
+    return this.read(this.http.get<AdminBotView[]>('/api/admin/bots'));
+  }
+  setBotAgent(id: string, agent: string | null) {
+    return this.write<AdminBotView[]>('PUT', `/api/admin/bots/${id}`, { agent });
+  }
+  runBots() {
+    return this.write<BotRunResult>('POST', '/api/admin/bots/run', null);
+  }
+  configs() {
+    return this.read(this.http.get<AdminConfigList>('/api/admin/config'));
+  }
+  config(version: number) {
+    return this.read(this.http.get<AdminConfigVersion>(`/api/admin/config/${version}`));
+  }
+  createDraft(from: number | null, notes: string | null) {
+    return this.write<AdminConfigVersion>('POST', '/api/admin/config/drafts', { from, notes });
+  }
+  saveConfig(version: number, data: AdminConfigVersion['data'], notes: string | null) {
+    return this.write<AdminConfigVersion>('PUT', `/api/admin/config/${version}`, { data, notes });
+  }
+  publishConfig(version: number) {
+    return this.write<AdminConfigList>('POST', `/api/admin/config/${version}/publish`, null);
   }
   audit() {
     return this.read(this.http.get<AdminAuditView[]>('/api/admin/audit'));

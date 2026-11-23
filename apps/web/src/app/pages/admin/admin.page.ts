@@ -1,6 +1,13 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
-import type { AdminAccountView, AdminAuditView, AdminTimeView } from '@tbca/shared';
+import type {
+  AdminAccountView,
+  AdminAuditView,
+  AdminBotView,
+  AdminTimeView,
+  BotRunResult,
+} from '@tbca/shared';
 
 import { AdminService } from '../../core/admin.service';
 import { ApiFailure } from '../../core/api-failure';
@@ -11,7 +18,7 @@ const HOUR = 3_600_000;
 /** Admin-Bereich für Superadmins: Zeitsteuerung, Spieler, Audit-Log. */
 @Component({
   selector: 'tbca-admin-page',
-  imports: [TranslocoDirective],
+  imports: [TranslocoDirective, RouterLink],
   templateUrl: './admin.page.html',
   styleUrl: './admin.page.css',
 })
@@ -27,6 +34,9 @@ export class AdminPage {
   protected readonly time = signal<AdminTimeView | null>(null);
   protected readonly accounts = signal<AdminAccountView[]>([]);
   protected readonly audit = signal<AdminAuditView[]>([]);
+  protected readonly bots = signal<AdminBotView[]>([]);
+  protected readonly botRun = signal<BotRunResult | null>(null);
+  protected readonly agents = ['casual', 'active', 'farmer', 'climber', 'class_switcher'] as const;
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly notice = signal<string | null>(null);
@@ -47,8 +57,13 @@ export class AdminPage {
     await this.run(async () => {
       if (this.auth.state() === undefined) await this.auth.refresh();
       if (!this.isAdmin()) return;
-      const [time, audit] = await Promise.all([this.api.time(), this.api.audit()]);
+      const [time, audit, bots] = await Promise.all([
+        this.api.time(),
+        this.api.audit(),
+        this.api.bots(),
+      ]);
       this.time.set(time);
+      this.bots.set(bots);
       this.factor.set(time.factor);
       this.audit.set(audit);
     });
@@ -68,6 +83,25 @@ export class AdminPage {
       this.notice.set('admin.time.advanced');
       this.audit.set(await this.api.audit());
     });
+  }
+
+  protected setAgent(bot: AdminBotView, agent: string): Promise<void> {
+    return this.run(async () =>
+      this.bots.set(await this.api.setBotAgent(bot.accountId, agent || null)),
+    );
+  }
+
+  protected runBots(): Promise<void> {
+    return this.run(async () => {
+      this.botRun.set(await this.api.runBots());
+      this.bots.set(await this.api.bots());
+    });
+  }
+
+  protected errorsText(errors: Record<string, number>): string {
+    return Object.entries(errors)
+      .map(([k, v]) => `${k} ×${v}`)
+      .join(', ');
   }
 
   protected search(): Promise<void> {

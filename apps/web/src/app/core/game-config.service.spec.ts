@@ -2,7 +2,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
-import { ApiFailure } from './api-failure';
 import { GameConfigService } from './game-config.service';
 
 describe('GameConfigService', () => {
@@ -24,7 +23,7 @@ describe('GameConfigService', () => {
     http
       .expectOne('/api/game/config')
       .flush({ code: 'no_active_season' }, { status: 503, statusText: 'Service Unavailable' });
-    await expect(first).rejects.toEqual(new ApiFailure('no_active_season'));
+    await expect(first).rejects.toMatchObject({ code: 'no_active_season' });
 
     const second = service.load();
     http
@@ -38,6 +37,6 @@ describe('GameConfigService', () => {
     http
       .expectOne('/api/game/config')
       .flush('Bad Gateway', { status: 502, statusText: 'Bad Gateway' });
-    await expect(done).rejects.toEqual(new ApiFailure('http_502'));
+    await expect(done).rejects.toMatchObject({ code: 'http_502' });
   });
 });
