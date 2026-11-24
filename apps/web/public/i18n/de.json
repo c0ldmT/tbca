@@ -66,7 +66,7 @@
     "winTeam": "{{ name }} gewinnen nach {{ rounds }} Runden"
   },
   "legal": {
-    "missing": "Die Betreiberangaben fehlen noch. Der Betreiber dieser Instanz trägt sie in public/legal.json ein.",
+    "missing": "Die Betreiberangaben fehlen noch. Der Betreiber trägt sie in public/legal.json ein oder stellt dort für eine rein private Instanz \"mode\": \"private\" ein.",
     "imprint": {
       "title": "Impressum",
       "provider": "Angaben gemäß § 5 DDG",
@@ -106,7 +106,8 @@
       "s8": {
         "title": "Discord",
         "body": "Für Login und Bot nutzen wir Discord (Discord Inc., USA). Dabei gelten zusätzlich die Datenschutzbestimmungen von Discord. Gehostet wird TBCA vom Betreiber dieser Instanz."
-      }
+      },
+      "private": "Dies ist eine private Instanz für einen geschlossenen Kreis von Mitspielern. Die folgenden Abschnitte erklären trotzdem, welche Daten TBCA verarbeitet."
     }
   },
   "notFound": {

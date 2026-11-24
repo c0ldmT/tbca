@@ -6,6 +6,7 @@ import type { Locale } from '@tbca/shared/constants';
 import { AccountService } from './core/account.service';
 import { AuthService } from './core/auth.service';
 import { LanguageService } from './core/language.service';
+import { LegalService } from './core/legal.service';
 
 @Component({
   selector: 'tbca-root',
@@ -17,9 +18,11 @@ export class App {
   protected readonly auth = inject(AuthService);
   protected readonly language = inject(LanguageService);
   private readonly account = inject(AccountService);
+  protected readonly legal = inject(LegalService);
 
   constructor() {
     void this.auth.refresh();
+    void this.legal.load();
     // Die im Konto gespeicherte Sprache gilt auf jedem Gerät, sobald man angemeldet ist.
     effect(() => {
       const locale = this.auth.user()?.account.locale;

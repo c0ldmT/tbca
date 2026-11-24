@@ -6,6 +6,12 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Hinzugefügt
+
+- `legal.json` kennt den Modus `private` für Instanzen in einem geschlossenen Kreis: kein Impressum
+  (Link entfällt, `/impressum` leitet zur Datenschutzerklärung), kein Hinweis auf fehlende
+  Betreiberangaben; die Datenschutzerklärung bleibt mit einem Hinweis auf die private Instanz.
+
 ## [0.1.0] – 2026-11-24
 
 Erstes spielbares MVP (Phase 1): Discord, PvP inklusive Teams, Dungeon, Wirtschaft, Admin-Basis

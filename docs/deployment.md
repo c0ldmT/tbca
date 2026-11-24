@@ -33,7 +33,8 @@ Entwicklermodus kopieren): `TBCA_ENV=production scripts/admin.sh grant-superadmi
 
 Vor dem öffentlichen Start die Betreiberangaben in `apps/web/public/legal.json` eintragen (Name,
 Anschrift, E-Mail) – sie erscheinen in Impressum und Datenschutzerklärung und werden ins Image
-gebaut. Die Datenschutzerklärung beschreibt den Stand des Codes; bei Zweifeln rechtlich prüfen lassen.
+gebaut. Für eine Instanz nur im Freundeskreis stattdessen `"mode": "private"` setzen: Dann gibt es
+kein Impressum und keinen Hinweis auf fehlende Angaben. Die Datenschutzerklärung beschreibt den Stand des Codes; bei Zweifeln rechtlich prüfen lassen.
 
 ## Raspberry Pi 3
 

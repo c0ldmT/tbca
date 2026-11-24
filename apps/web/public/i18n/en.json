@@ -66,7 +66,7 @@
     "winTeam": "{{ name }} win after {{ rounds }} rounds"
   },
   "legal": {
-    "missing": "The operator details are still missing. The operator of this instance adds them in public/legal.json.",
+    "missing": "The operator details are still missing. The operator adds them in public/legal.json or sets \"mode\": \"private\" there for a purely private instance.",
     "imprint": {
       "title": "Imprint",
       "provider": "Information according to § 5 DDG",
@@ -106,7 +106,8 @@
       "s8": {
         "title": "Discord",
         "body": "For login and the bot we use Discord (Discord Inc., USA); Discord's privacy policy applies in addition. TBCA is hosted by the operator of this instance."
-      }
+      },
+      "private": "This is a private instance for a closed circle of players. The following sections still explain which data TBCA processes."
     }
   },
   "notFound": {

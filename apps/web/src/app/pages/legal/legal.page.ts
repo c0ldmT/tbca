@@ -1,22 +1,16 @@
-import { HttpClient } from '@angular/common/http';
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, effect, inject, input } from '@angular/core';
+import { Router } from '@angular/router';
 import { TranslocoDirective } from '@jsverse/transloco';
-import { firstValueFrom } from 'rxjs';
 
-interface Operator {
-  name: string;
-  street: string;
-  city: string;
-  email: string;
-}
+import { LegalService } from '../../core/legal.service';
 
 /** Abschnitte der Datenschutzerklärung (Übersetzungen unter legal.privacy.sN). */
 const PRIVACY_SECTIONS = ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8'] as const;
 
 /**
- * Impressum und Datenschutzerklärung. Die Angaben zum Betreiber stehen in public/legal.json,
- * damit jede Instanz sie ohne Code-Änderung pflegen kann. Die Datenschutzerklärung beschreibt,
- * was TBCA tatsächlich speichert.
+ * Impressum und Datenschutzerklärung. Betreiberangaben und Modus (öffentlich oder privat) stehen in
+ * public/legal.json, damit jede Instanz sie ohne Code-Änderung pflegen kann. Die
+ * Datenschutzerklärung beschreibt, was TBCA tatsächlich speichert.
  */
 @Component({
   selector: 'tbca-legal-page',
@@ -24,21 +18,26 @@ const PRIVACY_SECTIONS = ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8'] as con
   template: `
     <article *transloco="let t">
       <h1>{{ t('legal.' + section() + '.title') }}</h1>
-      @if (missing()) {
+      @if (legal.missing()) {
         <p class="warning" role="note">{{ t('legal.missing') }}</p>
       }
       @if (section() === 'imprint') {
         <h2>{{ t('legal.imprint.provider') }}</h2>
         <address>
-          @if (operator(); as o) {
+          @if (legal.operator(); as o) {
             {{ o.name }}<br />{{ o.street }}<br />{{ o.city }}<br />
             <a [href]="'mailto:' + o.email">{{ o.email }}</a>
           }
         </address>
         <p>{{ t('legal.imprint.body') }}</p>
       } @else {
-        @if (operator(); as o) {
-          <p>{{ t('legal.privacy.controller', { name: o.name, email: o.email }) }}</p>
+        @if (legal.isPrivate()) {
+          <p>{{ t('legal.privacy.private') }}</p>
+        }
+        @if (legal.operator(); as o) {
+          @if (o.name && o.email) {
+            <p>{{ t('legal.privacy.controller', { name: o.name, email: o.email }) }}</p>
+          }
         }
         @for (s of sections; track s) {
           <h2>{{ t('legal.privacy.' + s + '.title') }}</h2>
@@ -76,21 +75,20 @@ const PRIVACY_SECTIONS = ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8'] as con
   `,
 })
 export class LegalPage {
-  private readonly http = inject(HttpClient);
+  protected readonly legal = inject(LegalService);
+  private readonly router = inject(Router);
 
   /** Aus den Routendaten: imprint oder privacy. */
   readonly section = input.required<'imprint' | 'privacy'>();
 
   protected readonly sections = PRIVACY_SECTIONS;
-  protected readonly operator = signal<Operator | null>(null);
-  protected readonly missing = computed(() => {
-    const o = this.operator();
-    return !o || !o.name || !o.email;
-  });
 
   constructor() {
-    void firstValueFrom(this.http.get<{ operator: Operator }>('/legal.json'))
-      .then((data) => this.operator.set(data.operator))
-      .catch(() => this.operator.set(null));
+    void this.legal.load();
+    // Private Instanzen haben kein Impressum: direkt zur Datenschutzerklärung.
+    effect(() => {
+      if (this.legal.isPrivate() && this.section() === 'imprint')
+        void this.router.navigateByUrl('/datenschutz');
+    });
   }
 }

@@ -50,7 +50,9 @@
   </main>
 
   <footer class="footer">
-    <a routerLink="/impressum">{{ t('app.imprint') }}</a>
+    @if (!legal.isPrivate()) {
+      <a routerLink="/impressum">{{ t('app.imprint') }}</a>
+    }
     <a routerLink="/datenschutz">{{ t('app.privacy') }}</a>
   </footer>
 </ng-container>
