@@ -35,6 +35,7 @@ import { AlreadyPurchasedError, ItemEquippedError } from '../src/economy/types.j
 import { DrizzleSeasonRepository } from '../src/game/season.js';
 import { DrizzleDiscordRepository } from '../src/discord/drizzle-discord.repository.js';
 import { DrizzleTeamRepository } from '../src/team/drizzle-team.repository.js';
+import { DrizzleAccountDataRepository } from '../src/account/drizzle-account-data.repository.js';
 import { TeamConflictError } from '../src/team/types.js';
 
 const url = process.env['TBCA_TEST_DATABASE_URL'];
@@ -440,5 +441,94 @@ describe.skipIf(!url)('Drizzle-Repositories (Integration)', () => {
     await repo.removeMember(t1.id, b!.id);
     await repo.remove(t1.id);
     expect(await repo.find(t1.id)).toBeNull();
+  });
+
+  it('exportiert und löscht Konten vollständig, Replays anderer bleiben anonymisiert', async () => {
+    const current = (await new DrizzleSeasonRepository(conn.db).findCurrent())!;
+    const chars = new DrizzleCharacterRepository(conn.db);
+    const [a] = await conn.db.insert(account).values({}).returning();
+    const [b] = await conn.db.insert(account).values({}).returning();
+    const suffix = String(Date.now() % 100000);
+    const mk = (acc: string, name: string) =>
+      chars.create({
+        accountId: acc,
+        seasonId: current.id,
+        name,
+        classId: 'gunner',
+        level: 1,
+        xp: 0,
+        allocated: { str: 0, dex: 0, int: 0, con: 0 },
+        loadouts: { gunner: defaultLoadout(DEFAULT_GAME_CONFIG, 'gunner', 1) },
+      });
+    const ca = await mk(a!.id, `Del${suffix}`);
+    const cb = await mk(b!.id, `Keep${suffix}`);
+    const snap = (c: typeof ca) =>
+      deriveSnapshot(DEFAULT_GAME_CONFIG, {
+        id: c.id,
+        name: c.name,
+        level: 1,
+        classId: 'gunner',
+        allocated: c.allocated,
+        loadout: defaultLoadout(DEFAULT_GAME_CONFIG, 'gunner', 1),
+      });
+    const teams = [[snap(ca)], [snap(cb)]];
+    const result = simulateBattle({
+      engineVersion: ENGINE_VERSION,
+      configVersion: 1,
+      seed: 'del',
+      teams,
+    });
+    const fights = new DrizzleFightRepository(conn.db);
+    const fightId = await fights.locked(ca.id, (tx) =>
+      tx.insert({
+        seasonId: current.id,
+        kind: 'pvp_friendly',
+        seed: 'del',
+        configVersion: 1,
+        input: { teams },
+        result,
+        rewardDay: '2026-11-24',
+        participants: [
+          {
+            team: 0,
+            slot: 0,
+            characterId: ca.id,
+            initiator: true,
+            won: result.winner === 0,
+            rewarded: false,
+            xpAwarded: 0,
+            creditsAwarded: 0,
+            opponentCharacterId: cb.id,
+          },
+          {
+            team: 1,
+            slot: 0,
+            characterId: cb.id,
+            initiator: false,
+            won: result.winner === 1,
+            rewarded: false,
+            xpAwarded: 0,
+            creditsAwarded: 0,
+            opponentCharacterId: ca.id,
+          },
+        ],
+      }),
+    );
+
+    const repo = new DrizzleAccountDataRepository(conn.db);
+    const data = await repo.export(a!.id);
+    expect((data['characters'] as { name: string }[])[0]!.name).toBe(`Del${suffix}`);
+    expect((data['fights'] as unknown[]).length).toBe(1);
+
+    await repo.delete(a!.id, 'Gelöschter Spieler');
+    expect(await chars.findById(ca.id)).toBeNull();
+    const stored = (await fights.findById(fightId))!;
+    expect(
+      stored.input.teams
+        .flat()
+        .map((c) => c.name)
+        .sort(),
+    ).toEqual(['Gelöschter Spieler', `Keep${suffix}`]);
+    expect((await conn.db.select().from(account).where(eq(account.id, a!.id))).length).toBe(0);
   });
 });

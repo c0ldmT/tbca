@@ -41,6 +41,16 @@ export interface CommunityView {
   name: string;
   member: boolean;
   home: boolean;
+  role: 'member' | 'moderator' | 'admin' | null;
+}
+
+export const communityRoleSchema = z.object({ role: z.enum(['member', 'moderator', 'admin']) });
+
+export interface CommunityMemberView {
+  accountId: string;
+  role: 'member' | 'moderator' | 'admin';
+  home: boolean;
+  character: { name: string; level: number; xp: number; classId: ClassId } | null;
 }
 
 export interface TeamMemberView {

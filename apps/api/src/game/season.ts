@@ -5,6 +5,7 @@ import {
   DEFAULT_GAME_CONFIG,
   type BattleRules,
   type GameConfig,
+  withDefaults,
 } from '@tbca/game-core';
 import { and, asc, eq } from 'drizzle-orm';
 
@@ -62,9 +63,9 @@ export class DrizzleSeasonRepository implements SeasonRepository {
       isTest: row.isTest,
       configVersion: row.version,
       // Ältere Konfigurationen kennen neuere Regelwerte (z. B. triangleBonus) noch nicht.
-      battle: { ...DEFAULT_BATTLE_RULES, ...row.data.battle },
+      battle: withDefaults(DEFAULT_BATTLE_RULES, row.data.battle),
       // Ältere Konfigurationen haben noch nicht alle Bereiche; fehlende kommen aus den Startwerten.
-      game: { ...DEFAULT_GAME_CONFIG, ...row.data.game },
+      game: withDefaults(DEFAULT_GAME_CONFIG, row.data.game),
       clock: {
         factor: row.timeFactor,
         anchorReal: row.clockAnchorReal,

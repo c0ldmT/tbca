@@ -23,10 +23,28 @@ export class TeamConflictError extends Error {
   }
 }
 
+export type CommunityRole = 'member' | 'moderator' | 'admin';
+
+export interface CommunityMemberRecord {
+  accountId: string;
+  role: CommunityRole;
+  isHome: boolean;
+  joinedAt: Date;
+}
+
 export interface TeamRepository {
-  communities(
-    accountId: string,
-  ): Promise<{ id: string; slug: string; name: string; member: boolean; home: boolean }[]>;
+  communities(accountId: string): Promise<
+    {
+      id: string;
+      slug: string;
+      name: string;
+      member: boolean;
+      home: boolean;
+      role: CommunityRole | null;
+    }[]
+  >;
+  members(communityId: string): Promise<CommunityMemberRecord[]>;
+  setRole(communityId: string, accountId: string, role: CommunityRole): Promise<boolean>;
   joinCommunity(communityId: string, accountId: string): Promise<void>;
   isCommunityMember(communityId: string, accountId: string): Promise<boolean>;
   teamsOf(accountId: string): Promise<TeamRecord[]>;

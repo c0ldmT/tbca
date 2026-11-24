@@ -1,6 +1,7 @@
 import { Module, type DynamicModule } from '@nestjs/common';
 import { LoggerModule } from 'nestjs-pino';
 
+import { AccountModule } from './account/account.module.js';
 import { AdminModule } from './admin/admin.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { BotsModule } from './bots/bots.module.js';
@@ -42,6 +43,7 @@ export class AppModule {
         TeamModule,
         AdminModule,
         BotsModule,
+        AccountModule,
       ],
     };
   }

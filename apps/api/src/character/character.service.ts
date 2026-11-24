@@ -13,15 +13,21 @@ import {
   type CharacterBuild,
   type ClassId,
   type CombatantSnapshot,
+  type Clock,
 } from '@tbca/game-core';
-import type { CharacterResponse, CreateCharacterRequest, LoadoutRequest } from '@tbca/shared';
+import {
+  checkName,
+  type CharacterResponse,
+  type CreateCharacterRequest,
+  type LoadoutRequest,
+} from '@tbca/shared';
 
 import { InsufficientCreditsError } from '@tbca/db';
 
 import { ApiError } from '../common/api-error.js';
 import { InventoryService } from '../inventory/inventory.service.js';
 import { SeasonService, type CurrentSeason } from '../game/season.js';
-import { CHARACTER_REPOSITORY } from '../tokens.js';
+import { CHARACTER_REPOSITORY, CLOCK } from '../tokens.js';
 import {
   CharacterExistsError,
   NameTakenError,
@@ -41,6 +47,7 @@ export class CharacterService {
     @Inject(CHARACTER_REPOSITORY) private readonly repo: CharacterRepository,
     @Inject(SeasonService) private readonly seasons: SeasonService,
     @Inject(InventoryService) private readonly inventory: InventoryService,
+    @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
   async get(accountId: string): Promise<CharacterResponse> {
@@ -106,6 +113,39 @@ export class CharacterService {
       }
     }
     return this.update(season, { ...record, allocated });
+  }
+
+  /**
+   * Charakter umbenennen (Abschnitt 6): kostet Credits, höchstens einmal je Cooldown
+   * (Standard 30 Tage, nach Spielzeit).
+   */
+  async rename(accountId: string, name: string): Promise<CharacterResponse> {
+    const { season, record } = await this.load(accountId);
+    const problem = checkName(name);
+    if (problem)
+      throw new ApiError(HttpStatus.BAD_REQUEST, `invalid_name_${problem}`, 'Name nicht erlaubt');
+    if (name === record.name) return this.view(season, record);
+    const rules = season.game.shop;
+    const now = this.clock.now();
+    const next = record.renamedAt
+      ? record.renamedAt.getTime() + rules.renameCooldownDays * 86_400_000
+      : 0;
+    if (now < next) {
+      throw new ApiError(HttpStatus.CONFLICT, 'rename_cooldown', 'Umbenennen ist noch gesperrt', {
+        availableAt: new Date(next).toISOString(),
+      });
+    }
+    try {
+      await this.repo.rename(record, name, rules.renameCredits, new Date(now));
+    } catch (error) {
+      if (error instanceof NameTakenError)
+        throw new ApiError(HttpStatus.CONFLICT, 'name_taken', 'Name vergeben');
+      if (error instanceof InsufficientCreditsError) {
+        throw new ApiError(HttpStatus.CONFLICT, 'insufficient_credits', 'Nicht genug Credits');
+      }
+      throw error;
+    }
+    return this.view(season, { ...record, name, renamedAt: new Date(now) });
   }
 
   /** Setzt alle freien Punkte zurück; kostet Level × 10 Credits (laut Konfiguration). */
@@ -207,6 +247,14 @@ export class CharacterService {
       unspentPoints: unspentPoints(game, record.level, record.allocated),
       respecCost: respecCost(game, record.level),
       credits: await this.repo.balance(record.accountId, season.id),
+      rename: {
+        cost: game.shop.renameCredits,
+        availableAt: record.renamedAt
+          ? new Date(
+              record.renamedAt.getTime() + game.shop.renameCooldownDays * 86_400_000,
+            ).toISOString()
+          : null,
+      },
       gear: record.equipment ?? {},
       stats: {
         maxHp: stats.maxHp,

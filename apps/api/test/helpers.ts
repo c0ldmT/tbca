@@ -44,7 +44,13 @@ import type {
 import type { InventoryRepository, StoredItem } from '../src/inventory/types.js';
 import type { DungeonRepository, DungeonRun, DungeonTx } from '../src/dungeon/types.js';
 import type { DiscordRepository, GuildCommunity } from '../src/discord/types.js';
-import { TeamConflictError, type TeamRecord, type TeamRepository } from '../src/team/types.js';
+import {
+  TeamConflictError,
+  type CommunityRole,
+  type TeamRecord,
+  type TeamRepository,
+} from '../src/team/types.js';
+import type { AccountDataRepository } from '../src/account/types.js';
 import type { AccountOverview, AdminRepository, AuditEntry } from '../src/admin/types.js';
 import type { ConfigRepository, ConfigVersionInfo } from '../src/admin/config.repository.js';
 import type { BotInfo, BotRepository } from '../src/bots/bot.repository.js';
@@ -72,6 +78,7 @@ import {
   ADMIN_REPOSITORY,
   CONFIG_REPOSITORY,
   BOT_REPOSITORY,
+  ACCOUNT_DATA_REPOSITORY,
   DISCORD_OAUTH,
   SEASON_REPOSITORY,
   SESSION_STORE,
@@ -232,6 +239,24 @@ export class InMemoryCharacters implements CharacterRepository {
   }
   /** Saldo je `${seasonId}:${accountId}`. */
   readonly wallets = new Map<string, number>();
+
+  async rename(record: CharacterRecord, name: string, cost: number, at: Date): Promise<void> {
+    if (
+      this.records.some(
+        (r) =>
+          r.seasonId === record.seasonId &&
+          r.id !== record.id &&
+          r.name.toLowerCase() === name.toLowerCase(),
+      )
+    ) {
+      throw new NameTakenError(name);
+    }
+    this.credit(record.seasonId, record.accountId, -cost);
+    Object.assign(
+      this.records.find((r) => r.id === record.id)!,
+      { name, renamedAt: at },
+    );
+  }
 
   async balance(accountId: string, seasonId: string): Promise<number> {
     return this.wallets.get(`${seasonId}:${accountId}`) ?? 0;
@@ -498,6 +523,12 @@ export class InMemoryDiscord implements DiscordRepository {
     this.xpChannels.set(guildId, set);
   }
 
+  readonly roles = new Map<string, string>();
+
+  async setRole(communityId: string, accountId: string, role: 'member' | 'moderator' | 'admin') {
+    this.roles.set(`${communityId}:${accountId}`, role);
+  }
+
   async ensureMember(communityId: string, accountId: string): Promise<void> {
     const list = this.members.get(accountId) ?? [];
     if (!list.some((m) => m.communityId === communityId))
@@ -529,12 +560,35 @@ export class InMemoryTeams implements TeamRepository {
     { id: '01933b5e-0000-7000-8000-00000000c001', slug: 'dev', name: 'Dev Community' },
   ];
   readonly memberships = new Map<string, Set<string>>();
+  readonly roles = new Map<string, CommunityRole>();
   readonly teams: TeamRecord[] = [];
 
   async communities(accountId: string) {
     const mine = this.memberships.get(accountId) ?? new Set();
     const first = [...mine][0];
-    return this.communityList.map((c) => ({ ...c, member: mine.has(c.id), home: c.id === first }));
+    return this.communityList.map((c) => ({
+      ...c,
+      member: mine.has(c.id),
+      home: c.id === first,
+      role: mine.has(c.id) ? (this.roles.get(`${c.id}:${accountId}`) ?? 'member') : null,
+    }));
+  }
+
+  async members(communityId: string) {
+    return [...this.memberships.entries()]
+      .filter(([, set]) => set.has(communityId))
+      .map(([accountId]) => ({
+        accountId,
+        role: this.roles.get(`${communityId}:${accountId}`) ?? ('member' as const),
+        isHome: [...(this.memberships.get(accountId) ?? [])][0] === communityId,
+        joinedAt: new Date(),
+      }));
+  }
+
+  async setRole(communityId: string, accountId: string, role: CommunityRole) {
+    if (!this.memberships.get(accountId)?.has(communityId)) return false;
+    this.roles.set(`${communityId}:${accountId}`, role);
+    return true;
   }
 
   async joinCommunity(communityId: string, accountId: string) {
@@ -774,6 +828,49 @@ export class InMemoryBots implements BotRepository {
   }
 }
 
+export class InMemoryAccountData implements AccountDataRepository {
+  readonly locales = new Map<string, 'de' | 'en' | null>();
+
+  constructor(
+    private readonly accounts: InMemoryAccounts,
+    private readonly characters: InMemoryCharacters,
+    private readonly sessions: InMemorySessions,
+    private readonly fights: InMemoryFights,
+  ) {}
+
+  async export(accountId: string) {
+    return {
+      account: { id: accountId, locale: this.locales.get(accountId) ?? null },
+      identities: this.accounts.accounts.get(accountId)?.identities ?? [],
+      characters: this.characters.records.filter((c) => c.accountId === accountId),
+    };
+  }
+
+  async delete(accountId: string, placeholderName: string) {
+    const ids = new Set(
+      this.characters.records.filter((c) => c.accountId === accountId).map((c) => c.id),
+    );
+    for (const f of this.fights.fights) {
+      f.input = {
+        ...f.input,
+        teams: f.input.teams.map((t) =>
+          t.map((c) => (ids.has(c.id) ? { ...c, name: placeholderName } : c)),
+        ),
+      };
+    }
+    this.accounts.accounts.delete(accountId);
+    for (let i = this.characters.records.length - 1; i >= 0; i--) {
+      if (this.characters.records[i]!.accountId === accountId) this.characters.records.splice(i, 1);
+    }
+    for (const [hash, s] of this.sessions.byHash)
+      if (s.accountId === accountId) this.sessions.byHash.delete(hash);
+  }
+
+  async setLocale(accountId: string, locale: 'de' | 'en' | null) {
+    this.locales.set(accountId, locale);
+  }
+}
+
 export class InMemoryFights implements FightRepository {
   readonly fights: StoredFight[] = [];
 
@@ -848,6 +945,7 @@ export interface TestApp {
   admin: InMemoryAdmin;
   configs: InMemoryConfigs;
   bots: InMemoryBots;
+  accountData: InMemoryAccountData;
   time: ManualTimeSource;
   dbUp: { value: boolean };
 }
@@ -868,6 +966,7 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
   const admin = new InMemoryAdmin(accounts, characters, sessions);
   const configs = new InMemoryConfigs(seasons.current!.id);
   const bots = new InMemoryBots(characters);
+  const accountData = new InMemoryAccountData(accounts, characters, sessions, fights);
   // 12.11.2026, 12:00 Uhr in Berlin
   const time = new ManualTimeSource(Date.UTC(2026, 10, 12, 11, 0));
   const dbUp = { value: true };
@@ -901,6 +1000,8 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
     .useValue(configs)
     .overrideProvider(BOT_REPOSITORY)
     .useValue(bots)
+    .overrideProvider(ACCOUNT_DATA_REPOSITORY)
+    .useValue(accountData)
     .overrideProvider(RATE_LIMITER)
     .useValue(new MemoryRateLimiter(time.read))
     .overrideProvider(CLOCK)
@@ -933,6 +1034,7 @@ export async function createTestApp(env: Env = testEnv()): Promise<TestApp> {
     admin,
     configs,
     bots,
+    accountData,
     time,
     dbUp,
   };

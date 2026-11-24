@@ -31,7 +31,12 @@ const message = (overrides: Record<string, unknown> = {}) =>
   });
 
 async function setup() {
-  await bot('POST', 'setup', { guildId: GUILD, guildName: 'Night City' });
+  await bot('POST', 'setup', {
+    guildId: GUILD,
+    guildName: 'Night City',
+    userId: '777777777777777777',
+    displayName: 'Boss',
+  });
   await bot('POST', 'channel-xp', { guildId: GUILD, channelId: CHANNEL, enabled: true });
   await bot('POST', 'register', {
     guildId: GUILD,
@@ -51,6 +56,13 @@ afterEach(async () => {
 });
 
 describe('Interne Discord-API', () => {
+  it('macht den einrichtenden Server-Admin zum Community-Admin', async () => {
+    await setup();
+    const bossId = [...t.accounts.accounts.keys()][0]!;
+    const communityId = t.guilds.guilds.get(GUILD)!.communityId;
+    expect(t.guilds.roles.get(`${communityId}:${bossId}`)).toBe('admin');
+  });
+
   it('verlangt das Service-Token', async () => {
     expect((await bot('GET', `profile?userId=${USER}`, undefined, 'x'.repeat(40))).statusCode).toBe(
       401,
@@ -74,7 +86,7 @@ describe('Interne Discord-API', () => {
       level: 1,
       url: `${WEB_ORIGIN}/character`,
     });
-    const accountId = [...t.accounts.accounts.keys()][0]!;
+    const accountId = [...t.accounts.accounts.keys()][1]!; // [0] ist der einrichtende Admin
     expect(t.guilds.members.get(accountId)).toEqual([expect.objectContaining({ isHome: true })]);
 
     // Späterer Web-Login mit derselben Discord-ID übernimmt den Account samt Charakter.

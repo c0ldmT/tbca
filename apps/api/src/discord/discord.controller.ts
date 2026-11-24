@@ -20,8 +20,12 @@ export class DiscordController {
   @Post('setup')
   @HttpCode(200)
   setup(@Body() body: unknown) {
-    const { guildId, guildName } = parseBody(discordSetupSchema, body);
-    return this.discord.setup(guildId, guildName);
+    const { guildId, guildName, userId, displayName } = parseBody(discordSetupSchema, body);
+    return this.discord.setup(
+      guildId,
+      guildName,
+      userId && displayName ? { userId, displayName } : undefined,
+    );
   }
 
   @Post('channel-xp')

@@ -35,7 +35,10 @@ export async function handleCommand(api: ApiClient, input: CommandInput): Promis
 
   if (input.command === 'tbca-admin') {
     if (input.subcommand === 'einrichten') {
-      const res = await api.setup(input.guildId, input.guildName);
+      const res = await api.setup(input.guildId, input.guildName, {
+        userId: input.userId,
+        displayName: input.displayName,
+      });
       return res.ok ? { content: t.setupDone(res.data.name), ephemeral: true } : fail(res.code);
     }
     if (input.subcommand === 'xp-kanal') {

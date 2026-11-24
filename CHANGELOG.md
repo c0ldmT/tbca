@@ -108,6 +108,16 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
   Sie kämpfen, laufen Dungeons, wechseln Klassen und verteilen Punkte über dieselben Regeln wie echte
   Spieler; nur in Test-Seasons, alle 5 Minuten über den Worker oder sofort im Admin-Bereich
   (Migration `0011_bot_agents`).
+- Konto: verknüpfte Plattformen anzeigen, Sprache im Konto speichern (gilt auf allen Geräten),
+  Charakter gegen Credits umbenennen (200 Credits, alle 30 Tage), alle gespeicherten Daten als JSON
+  herunterladen und das Konto selbst löschen; in Replays anderer erscheint man danach als
+  „Gelöschter Spieler“, Buchungen bleiben anonym erhalten.
+- Community-Rollen: Wer einen Discord-Server mit `/tbca-admin einrichten` anlegt, wird
+  Community-Admin; Admins vergeben Rollen, Moderatoren korrigieren XP ihrer Mitglieder (höchstens
+  ±5 000 je Eingriff), alles im Audit-Log; Verwaltungsseite je Community.
+- Datenschutzerklärung beschreibt, was TBCA tatsächlich speichert; Betreiberangaben für Impressum
+  und Datenschutz stehen in `apps/web/public/legal.json`.
+- Gespeicherte Konfigurationen werden mit neuen Feldern aus dem Code ergänzt (tiefe Zusammenführung).
 - Website: Arena mit Gegnersuche und letzten Kämpfen, HUD-Replay mit Lebens- und Energiebalken,
   Schadenszahlen, Status, Glitch bei Crits, Geschwindigkeit und Textlog; Replays per Link teilbar.
 

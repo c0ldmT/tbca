@@ -106,7 +106,12 @@ export const characterResponseSchema = z.object({
     threat: z.number().int(),
   }),
   loadout: loadoutRequestSchema,
+  /** Umbenennen: Kosten und frühester nächster Zeitpunkt (null = sofort möglich). */
+  rename: z.object({ cost: z.number().int(), availableAt: z.string().nullable() }),
   /** Ausgerüstete Items, z. B. für die Vorschau der Kampfwerte im Browser. */
   gear: z.custom<Partial<Record<EquipSlot, ItemData>>>((v) => typeof v === 'object' && v !== null),
 });
 export type CharacterResponse = z.infer<typeof characterResponseSchema>;
+
+/** PUT /api/characters/me/name */
+export const renameSchema = z.object({ name: z.string().trim().min(1).max(40) });

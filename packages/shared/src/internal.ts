@@ -15,6 +15,9 @@ export const discordUserSchema = z.object({
 export const discordSetupSchema = z.object({
   guildId: snowflake,
   guildName: z.string().min(1).max(100),
+  /** Wer einrichtet, wird Community-Admin. */
+  userId: snowflake.optional(),
+  displayName: z.string().min(1).max(100).optional(),
 });
 
 export const discordChannelXpSchema = z.object({

@@ -1,6 +1,11 @@
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { CONFIG_SCHEMA_VERSION, type SeasonConfigData } from '@tbca/db';
-import { DEFAULT_BATTLE_RULES, DEFAULT_GAME_CONFIG, validateGameConfig } from '@tbca/game-core';
+import {
+  DEFAULT_BATTLE_RULES,
+  DEFAULT_GAME_CONFIG,
+  validateGameConfig,
+  withDefaults,
+} from '@tbca/game-core';
 import type { AdminConfigList, AdminConfigVersion } from '@tbca/shared';
 
 import { ApiError } from '../common/api-error.js';
@@ -46,8 +51,14 @@ export class ConfigService {
       notes: row.notes,
       // Fehlende Bereiche älterer Versionen werden mit den Startwerten gezeigt.
       data: {
-        battle: { ...DEFAULT_BATTLE_RULES, ...row.data.battle },
-        game: { ...DEFAULT_GAME_CONFIG, ...row.data.game },
+        battle: withDefaults(DEFAULT_BATTLE_RULES, row.data.battle) as unknown as Record<
+          string,
+          unknown
+        >,
+        game: withDefaults(DEFAULT_GAME_CONFIG, row.data.game) as unknown as Record<
+          string,
+          unknown
+        >,
       },
     };
   }
@@ -121,7 +132,7 @@ export class ConfigService {
 
   private assertValid(data: SeasonConfigData): void {
     const problems = data.game
-      ? validateGameConfig({ ...DEFAULT_GAME_CONFIG, ...data.game })
+      ? validateGameConfig(withDefaults(DEFAULT_GAME_CONFIG, data.game))
       : ['Spielinhalte fehlen'];
     if (problems.length > 0) {
       throw new ApiError(

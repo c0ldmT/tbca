@@ -10,10 +10,11 @@ export class ApiClient {
     private readonly fetchFn: typeof fetch = fetch,
   ) {}
 
-  setup(guildId: string, guildName: string) {
+  setup(guildId: string, guildName: string, user?: { userId: string; displayName: string }) {
     return this.call<{ communityId: string; name: string; xpChannels: string[] }>('POST', 'setup', {
       guildId,
       guildName,
+      ...user,
     });
   }
 

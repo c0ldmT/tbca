@@ -29,7 +29,7 @@ export {
 
 export * from './content/types.js';
 export { DEFAULT_GAME_CONFIG } from './content/default-config.js';
-export { validateGameConfig } from './content/validate.js';
+export { validateGameConfig, withDefaults } from './content/validate.js';
 
 export {
   availableAbilities,

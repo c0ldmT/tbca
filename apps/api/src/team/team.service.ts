@@ -12,6 +12,7 @@ import {
 } from '@tbca/game-core';
 import {
   TEAM_MAX_MEMBERS,
+  type CommunityMemberView,
   type CommunityView,
   type TeamChallengeResponse,
   type TeamSummary,
@@ -25,8 +26,23 @@ import type { Env } from '../config/env.js';
 import { dayKey } from '../fight/day.js';
 import type { FightRepository } from '../fight/types.js';
 import { SeasonService, type CurrentSeason } from '../game/season.js';
-import { CHARACTER_REPOSITORY, CLOCK, ENV, FIGHT_REPOSITORY, TEAM_REPOSITORY } from '../tokens.js';
-import { TeamConflictError, type TeamRecord, type TeamRepository } from './types.js';
+import {
+  ADMIN_REPOSITORY,
+  CHARACTER_REPOSITORY,
+  CLOCK,
+  ENV,
+  FIGHT_REPOSITORY,
+  TEAM_REPOSITORY,
+} from '../tokens.js';
+import type { AdminRepository } from '../admin/types.js';
+
+const MODERATOR_XP_LIMIT = 5_000;
+import {
+  TeamConflictError,
+  type CommunityRole,
+  type TeamRecord,
+  type TeamRepository,
+} from './types.js';
 
 const err = (status: HttpStatus, code: string, message: string) =>
   new ApiError(status, code, message);
@@ -45,10 +61,108 @@ export class TeamService {
     @Inject(SeasonService) private readonly seasons: SeasonService,
     @Inject(CLOCK) private readonly clock: Clock,
     @Inject(ENV) private readonly env: Env,
+    @Inject(ADMIN_REPOSITORY) private readonly admin: AdminRepository,
   ) {}
 
   communities(accountId: string): Promise<CommunityView[]> {
     return this.teams.communities(accountId);
+  }
+
+  /** Mitgliederliste für Moderatoren und Admins der Community. */
+  async communityMembers(accountId: string, communityId: string): Promise<CommunityMemberView[]> {
+    await this.requireRole(accountId, communityId, 'moderator');
+    const season = await this.seasons.current();
+    const members = await this.teams.members(communityId);
+    const chars = await this.charactersOf(
+      season,
+      members.map((m) => m.accountId),
+    );
+    return members.map((m, i) => ({
+      accountId: m.accountId,
+      role: m.role,
+      home: m.isHome,
+      character: chars[i]
+        ? {
+            name: chars[i]!.name,
+            level: chars[i]!.level,
+            xp: chars[i]!.xp,
+            classId: chars[i]!.classId,
+          }
+        : null,
+    }));
+  }
+
+  /** Rollen vergibt nur ein Community-Admin; der letzte Admin kann sich nicht selbst absetzen. */
+  async setCommunityRole(
+    accountId: string,
+    communityId: string,
+    target: string,
+    role: CommunityRole,
+  ) {
+    await this.requireRole(accountId, communityId, 'admin');
+    const members = await this.teams.members(communityId);
+    const admins = members.filter((m) => m.role === 'admin');
+    if (role !== 'admin' && admins.length === 1 && admins[0]!.accountId === target) {
+      throw err(HttpStatus.CONFLICT, 'last_admin', 'Die Community braucht mindestens einen Admin');
+    }
+    if (!(await this.teams.setRole(communityId, target, role))) {
+      throw err(HttpStatus.NOT_FOUND, 'not_a_member', 'Kein Mitglied dieser Community');
+    }
+    await this.admin.audit({
+      actorAccountId: accountId,
+      action: 'community.role',
+      targetType: 'account',
+      targetId: target,
+      data: { communityId, role },
+    });
+    return this.communityMembers(accountId, communityId);
+  }
+
+  /** XP-Korrektur durch Moderatoren, begrenzt und nur für Mitglieder der eigenen Community. */
+  async moderateXp(
+    accountId: string,
+    communityId: string,
+    target: string,
+    amount: number,
+    reason: string,
+  ) {
+    await this.requireRole(accountId, communityId, 'moderator');
+    if (Math.abs(amount) > MODERATOR_XP_LIMIT) {
+      throw err(
+        HttpStatus.BAD_REQUEST,
+        'xp_limit',
+        `Moderatoren korrigieren höchstens ±${MODERATOR_XP_LIMIT} XP`,
+      );
+    }
+    if (!(await this.teams.members(communityId)).some((m) => m.accountId === target)) {
+      throw err(HttpStatus.NOT_FOUND, 'not_a_member', 'Kein Mitglied dieser Community');
+    }
+    const season = await this.seasons.current();
+    const c = await this.characters.findForAccount(target, season.id);
+    if (!c) throw err(HttpStatus.NOT_FOUND, 'no_character', 'Kein Charakter in dieser Season');
+    const xp = Math.max(0, c.xp + amount);
+    const level = levelFromXp(season.game, xp).level;
+    await this.admin.setProgress(c.id, xp, level);
+    await this.admin.audit({
+      actorAccountId: accountId,
+      action: 'community.xp',
+      targetType: 'character',
+      targetId: c.id,
+      data: { communityId, amount, reason, xpBefore: c.xp, xpAfter: xp },
+    });
+    return this.communityMembers(accountId, communityId);
+  }
+
+  private async requireRole(accountId: string, communityId: string, min: 'moderator' | 'admin') {
+    const role = (await this.teams.communities(accountId)).find((c) => c.id === communityId)?.role;
+    const rank = { member: 0, moderator: 1, admin: 2 } as const;
+    if (!role || rank[role] < rank[min]) {
+      throw err(
+        HttpStatus.FORBIDDEN,
+        'not_community_staff',
+        'Dafür fehlen dir die Rechte in dieser Community',
+      );
+    }
   }
 
   async joinCommunity(accountId: string, communityId: string): Promise<CommunityView[]> {

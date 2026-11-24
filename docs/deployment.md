@@ -31,6 +31,10 @@ In der **Produktions**-App im Discord-Developer-Portal die Redirect-URL
 Danach dich selbst zum Superadmin machen (einmal auf der Website angemeldet, Discord-ID im
 Entwicklermodus kopieren): `TBCA_ENV=production scripts/admin.sh grant-superadmin <discord-id>`.
 
+Vor dem öffentlichen Start die Betreiberangaben in `apps/web/public/legal.json` eintragen (Name,
+Anschrift, E-Mail) – sie erscheinen in Impressum und Datenschutzerklärung und werden ins Image
+gebaut. Die Datenschutzerklärung beschreibt den Stand des Codes; bei Zweifeln rechtlich prüfen lassen.
+
 ## Raspberry Pi 3
 
 Der Pi braucht ein 64-Bit-Betriebssystem (Raspberry Pi OS Lite 64-bit) und etwas Swap

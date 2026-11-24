@@ -141,3 +141,21 @@ export function validateGameConfig(config: GameConfig): string[] {
   }
   return problems;
 }
+
+const isPlainObject = (v: unknown): v is Record<string, unknown> =>
+  typeof v === 'object' && v !== null && !Array.isArray(v);
+
+/**
+ * Ergänzt eine gespeicherte Konfiguration um Felder, die der Code inzwischen kennt, die Version
+ * aber noch nicht hat. Objekte werden rekursiv zusammengeführt, Listen (Vorlagen, Fähigkeiten …)
+ * gelten wie gespeichert.
+ */
+export function withDefaults<T>(defaults: T, stored: unknown): T {
+  if (!isPlainObject(defaults) || !isPlainObject(stored)) return (stored ?? defaults) as T;
+  const out: Record<string, unknown> = { ...defaults };
+  for (const [key, value] of Object.entries(stored)) {
+    out[key] =
+      key in defaults ? withDefaults((defaults as Record<string, unknown>)[key], value) : value;
+  }
+  return out as T;
+}

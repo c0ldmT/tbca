@@ -151,4 +151,7 @@ export interface ShopRules {
   readonly priceCreditsPerBudget: number;
   /** Verkauf an den Shop bringt diesen Anteil des Werts (Promille). */
   readonly sellPermille: number;
+  /** Charakter umbenennen: Kosten in Credits und Mindestabstand in Tagen (Abschnitt 6). */
+  readonly renameCredits: number;
+  readonly renameCooldownDays: number;
 }

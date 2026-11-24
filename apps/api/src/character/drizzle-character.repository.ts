@@ -96,6 +96,7 @@ export class DrizzleCharacterRepository implements CharacterRepository {
         loadouts.map((l) => [l.classId, { abilities: l.abilities, tactics: l.tactics }]),
       ),
       isBot: owner?.isBot ?? false,
+      renamedAt: row.renamedAt,
       equipment: Object.fromEntries(gear.map((g) => [g.slot, g.data])),
     };
   }
@@ -133,6 +134,28 @@ export class DrizzleCharacterRepository implements CharacterRepository {
       const constraint = uniqueViolation(error);
       if (constraint === 'character_season_name_idx') throw new NameTakenError(record.name);
       if (constraint === 'character_account_season_idx') throw new CharacterExistsError();
+      throw error;
+    }
+  }
+
+  async rename(record: CharacterRecord, name: string, cost: number, at: Date): Promise<void> {
+    try {
+      await this.db.transaction(async (tx) => {
+        if (cost > 0) {
+          await transferCredits(tx, {
+            seasonId: record.seasonId,
+            kind: 'rename',
+            refId: record.id,
+            lines: [
+              { accountId: record.accountId, amount: -cost },
+              { system: 'sink:rename', amount: cost },
+            ],
+          });
+        }
+        await tx.update(character).set({ name, renamedAt: at }).where(eq(character.id, record.id));
+      });
+    } catch (error) {
+      if (uniqueViolation(error) === 'character_season_name_idx') throw new NameTakenError(name);
       throw error;
     }
   }

@@ -11,6 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
+  renameSchema,
   attributesRequestSchema,
   checkName,
   classRequestSchema,
@@ -61,6 +62,11 @@ export class CharacterController {
       req.auth!.accountId,
       parseBody(attributesRequestSchema, body),
     );
+  }
+
+  @Put('me/name')
+  rename(@Req() req: FastifyRequest, @Body() body: unknown): Promise<CharacterResponse> {
+    return this.characters.rename(req.auth!.accountId, parseBody(renameSchema, body).name);
   }
 
   @Post('me/respec')

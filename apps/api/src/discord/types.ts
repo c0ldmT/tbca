@@ -11,6 +11,12 @@ export interface DiscordRepository {
   /** Legt eine Community für den Server an (oder liefert die vorhandene). */
   ensureGuildCommunity(guildId: string, name: string): Promise<GuildCommunity>;
   setChannelXp(guildId: string, channelId: string, enabled: boolean): Promise<void>;
+  /** Rolle in der Community setzen (Mitgliedschaft muss bestehen). */
+  setRole(
+    communityId: string,
+    accountId: string,
+    role: 'member' | 'moderator' | 'admin',
+  ): Promise<void>;
   /** Mitgliedschaft sicherstellen; die erste Community wird Heimat. */
   ensureMember(communityId: string, accountId: string): Promise<void>;
   /**

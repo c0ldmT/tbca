@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { DEFAULT_GAME_CONFIG, validateGameConfig, type GameConfig } from '../src/index.js';
+import {
+  DEFAULT_GAME_CONFIG,
+  validateGameConfig,
+  withDefaults,
+  type GameConfig,
+} from '../src/index.js';
 
 const clone = (): GameConfig => structuredClone(DEFAULT_GAME_CONFIG);
 
@@ -37,5 +42,16 @@ describe('validateGameConfig', () => {
     const problems = validateGameConfig(c as unknown as GameConfig);
     expect(problems).toContain('Klasse medtech fehlt');
     expect(problems.some((p) => p.includes('Budget der Kategorie torso'))).toBe(true);
+  });
+});
+
+describe('withDefaults', () => {
+  it('ergänzt neue Felder in verschachtelten Bereichen und übernimmt Listen wie gespeichert', () => {
+    const stored = { shop: { sellPermille: 300 }, items: { templates: [{ id: 'only' }] } };
+    const merged = withDefaults(DEFAULT_GAME_CONFIG, stored);
+    expect(merged.shop.sellPermille).toBe(300);
+    expect(merged.shop.renameCredits).toBe(DEFAULT_GAME_CONFIG.shop.renameCredits);
+    expect(merged.items.templates).toEqual([{ id: 'only' }]);
+    expect(merged.items.statCost).toEqual(DEFAULT_GAME_CONFIG.items.statCost);
   });
 });

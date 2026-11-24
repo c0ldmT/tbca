@@ -25,6 +25,7 @@ export class DrizzleTeamRepository implements TeamRepository {
         name: community.name,
         member: sql<boolean>`${communityMember.accountId} is not null`,
         home: sql<boolean>`coalesce(${communityMember.isHome}, false)`,
+        role: communityMember.role,
       })
       .from(community)
       .leftJoin(
@@ -36,6 +37,30 @@ export class DrizzleTeamRepository implements TeamRepository {
       )
       .orderBy(asc(community.name));
     return rows;
+  }
+
+  async members(communityId: string) {
+    return this.db
+      .select({
+        accountId: communityMember.accountId,
+        role: communityMember.role,
+        isHome: communityMember.isHome,
+        joinedAt: communityMember.joinedAt,
+      })
+      .from(communityMember)
+      .where(eq(communityMember.communityId, communityId))
+      .orderBy(asc(communityMember.joinedAt));
+  }
+
+  async setRole(communityId: string, accountId: string, role: 'member' | 'moderator' | 'admin') {
+    const rows = await this.db
+      .update(communityMember)
+      .set({ role })
+      .where(
+        and(eq(communityMember.communityId, communityId), eq(communityMember.accountId, accountId)),
+      )
+      .returning({ id: communityMember.accountId });
+    return rows.length > 0;
   }
 
   async joinCommunity(communityId: string, accountId: string): Promise<void> {

@@ -11,6 +11,8 @@ export interface CharacterRecord {
   xp: number;
   allocated: Attributes;
   loadouts: Partial<Record<ClassId, CharacterBuild['loadout']>>;
+  /** Zeitpunkt der letzten Umbenennung. */
+  renamedAt?: Date | null;
   /** Computergesteuerter Gegner (Bot-Account). */
   isBot?: boolean;
   /** Ausgerüstete Items (beim Laden gefüllt). */
@@ -34,6 +36,11 @@ export interface CharacterRepository {
    * Transaktion abgebucht (wirft InsufficientCreditsError, wenn der Saldo nicht reicht).
    */
   save(record: CharacterRecord, charge?: { amount: number; kind: 'respec' }): Promise<void>;
+  /**
+   * Benennt um und bucht die Gebühr in einer Transaktion; wirft NameTakenError bzw.
+   * InsufficientCreditsError.
+   */
+  rename(record: CharacterRecord, name: string, cost: number, at: Date): Promise<void>;
   /** Credits des Accounts in der Season. */
   balance(accountId: string, seasonId: string): Promise<number>;
   isNameTaken(seasonId: string, name: string): Promise<boolean>;

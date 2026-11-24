@@ -13,6 +13,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
+  adminAmountSchema,
+  communityRoleSchema,
   createTeamSchema,
   joinTeamSchema,
   kickSchema,
@@ -39,6 +41,38 @@ export class CommunityController {
   @HttpCode(200)
   join(@Req() req: FastifyRequest, @Param('id', new ParseUUIDPipe()) id: string) {
     return this.teams.joinCommunity(req.auth!.accountId, id);
+  }
+
+  @Get(':id/members')
+  members(@Req() req: FastifyRequest, @Param('id', new ParseUUIDPipe()) id: string) {
+    return this.teams.communityMembers(req.auth!.accountId, id);
+  }
+
+  @Put(':id/members/:accountId/role')
+  setRole(
+    @Req() req: FastifyRequest,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Param('accountId', new ParseUUIDPipe()) target: string,
+    @Body() body: unknown,
+  ) {
+    return this.teams.setCommunityRole(
+      req.auth!.accountId,
+      id,
+      target,
+      parseBody(communityRoleSchema, body).role,
+    );
+  }
+
+  @Post(':id/members/:accountId/xp')
+  @HttpCode(200)
+  xp(
+    @Req() req: FastifyRequest,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Param('accountId', new ParseUUIDPipe()) target: string,
+    @Body() body: unknown,
+  ) {
+    const { amount, reason } = parseBody(adminAmountSchema, body);
+    return this.teams.moderateXp(req.auth!.accountId, id, target, amount, reason);
   }
 }
 

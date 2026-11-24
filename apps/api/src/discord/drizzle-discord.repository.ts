@@ -72,6 +72,19 @@ export class DrizzleDiscordRepository implements DiscordRepository {
       });
   }
 
+  async setRole(
+    communityId: string,
+    accountId: string,
+    role: 'member' | 'moderator' | 'admin',
+  ): Promise<void> {
+    await this.db
+      .update(communityMember)
+      .set({ role })
+      .where(
+        and(eq(communityMember.communityId, communityId), eq(communityMember.accountId, accountId)),
+      );
+  }
+
   async ensureMember(communityId: string, accountId: string): Promise<void> {
     await this.db.transaction(async (tx) => {
       const [home] = await tx

@@ -484,6 +484,8 @@ export const DEFAULT_GAME_CONFIG: GameConfig = {
     rotationMaxRarity: 6,
     priceCreditsPerBudget: 5,
     sellPermille: 200,
+    renameCredits: 200,
+    renameCooldownDays: 30,
   },
   dungeon: {
     runsPerDay: 3,

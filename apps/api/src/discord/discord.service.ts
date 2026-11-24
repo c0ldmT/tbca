@@ -48,8 +48,22 @@ export class DiscordService {
     @Inject(ENV) private readonly env: Env,
   ) {}
 
-  setup(guildId: string, guildName: string): Promise<GuildCommunity> {
-    return this.discord.ensureGuildCommunity(guildId, guildName);
+  /**
+   * Richtet den Server als Community ein. Wer das tut (Discord-Recht „Server verwalten“), wird
+   * Community-Admin – auch ohne Charakter, über einen Schatten-Account.
+   */
+  async setup(
+    guildId: string,
+    guildName: string,
+    admin?: { userId: string; displayName: string },
+  ): Promise<GuildCommunity> {
+    const guild = await this.discord.ensureGuildCommunity(guildId, guildName);
+    if (admin) {
+      const accountId = await this.account(admin.userId, admin.displayName);
+      await this.discord.ensureMember(guild.communityId, accountId);
+      await this.discord.setRole(guild.communityId, accountId, 'admin');
+    }
+    return guild;
   }
 
   async setChannelXp(
