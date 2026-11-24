@@ -1,6 +1,6 @@
 {
   "name": "tbca",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "TurnBased Cyber Arena – rundenbasiertes Cyberpunk-Auto-Battler-RPG für Communities",
   "license": "MIT",

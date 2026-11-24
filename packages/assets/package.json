@@ -1,6 +1,6 @@
 {
   "name": "@tbca/assets",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "Design-Tokens; später SVG-Icon-Generator und ZzFX-Sounds",
   "license": "MIT",

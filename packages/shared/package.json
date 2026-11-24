@@ -1,6 +1,6 @@
 {
   "name": "@tbca/shared",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "Geteilte Zod-Schemas, Typen und Konstanten für Web, API und Bots",
   "license": "MIT",

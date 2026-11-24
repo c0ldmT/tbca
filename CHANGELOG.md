@@ -6,6 +6,11 @@ Versionierung nach [SemVer](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.1.0] – 2026-11-24
+
+Erstes spielbares MVP (Phase 1): Discord, PvP inklusive Teams, Dungeon, Wirtschaft, Admin-Basis
+und Deployment auf VPS oder Raspberry Pi.
+
 ### Phase 1
 
 - `@tbca/game-core`: Kampf-Engine v2 mit vier Klassen (Bruiser, Gunner, Netrunner, Medtech),

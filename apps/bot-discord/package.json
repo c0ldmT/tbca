@@ -1,6 +1,6 @@
 {
   "name": "@tbca/bot-discord",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "Discord-Bot: Slash-Commands und Aktivitäts-XP als dünner Client der API",
   "license": "MIT",
