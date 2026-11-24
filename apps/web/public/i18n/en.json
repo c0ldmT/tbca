@@ -10,7 +10,8 @@
     "arena": "Arena",
     "shop": "Shop",
     "dungeon": "Dungeon",
-    "teams": "Teams"
+    "teams": "Teams",
+    "account": "Account"
   },
   "auth": {
     "login": "Sign in with Discord",
@@ -65,13 +66,47 @@
     "winTeam": "{{ name }} win after {{ rounds }} rounds"
   },
   "legal": {
+    "missing": "The operator details are still missing. The operator of this instance adds them in public/legal.json.",
     "imprint": {
-      "title": "Legal notice",
-      "body": "The operator of this instance provides the legally required details."
+      "title": "Imprint",
+      "provider": "Information according to § 5 DDG",
+      "body": "The operator named above is responsible for the content. TBCA is a non-commercial community game."
     },
     "privacy": {
       "title": "Privacy policy",
-      "body": "TBCA stores platform IDs, display names and activity counters, never message contents. The operator of this instance provides the full policy."
+      "controller": "Controller: {{ name }}, reachable at {{ email }} (postal address in the imprint).",
+      "s1": {
+        "title": "Login with Discord",
+        "body": "You log in with Discord (OAuth, only the “identify” permission). We receive your Discord ID, display name and avatar address – no email address and no password."
+      },
+      "s2": {
+        "title": "Game data",
+        "body": "We store what is needed to play: characters, attributes, tactics, items, credits and their bookings, fights with replays, dungeon runs, teams and community memberships including roles."
+      },
+      "s3": {
+        "title": "Chat activity",
+        "body": "For activity XP the Discord bot evaluates messages in memory only: length and a shortened hash to detect repetitions. Message texts are never stored. The hash stays in the cache for at most 10 minutes; only daily counters (number of messages, XP granted) are stored permanently."
+      },
+      "s4": {
+        "title": "Cookies and local storage",
+        "body": "We only set technically necessary cookies: the login session (httpOnly) and briefly a security cookie during login. Your language choice is kept in your browser's storage. There is no tracking, no analytics, no advertising and no third-party fonts or scripts."
+      },
+      "s5": {
+        "title": "Server logs and abuse protection",
+        "body": "Logs contain the method, path, status and time of a request – no IP addresses, cookies or contents. To prevent abuse we count requests per session or IP address for one minute in the cache."
+      },
+      "s6": {
+        "title": "Legal bases and retention",
+        "body": "Processing serves to provide the game (Art. 6(1)(b) GDPR) and to prevent abuse (Art. 6(1)(f)). Data is kept as long as your account exists; sessions expire after inactivity. Database backups are kept for at most 14 days."
+      },
+      "s7": {
+        "title": "Your rights",
+        "body": "Under “Account” you can download all stored data as a file and delete your account yourself. This removes characters, items, sessions and memberships; in other players' replays you then appear as “Deleted player”, bookings remain anonymously. You also have the right to rectification, restriction, objection and to lodge a complaint with a data protection authority."
+      },
+      "s8": {
+        "title": "Discord",
+        "body": "For login and the bot we use Discord (Discord Inc., USA); Discord's privacy policy applies in addition. TBCA is hosted by the operator of this instance."
+      }
     }
   },
   "notFound": {
@@ -321,7 +356,14 @@
     "invalid_config": "The configuration is invalid:",
     "config_not_draft": "Only drafts can be edited.",
     "config_not_found": "Version not found.",
-    "bot_not_found": "Bot not found."
+    "bot_not_found": "Bot not found.",
+    "rename_cooldown": "You can rename again once the 30 days have passed.",
+    "confirmation_required": "Type LÖSCHEN to confirm.",
+    "superadmin_delete": "Superadmins must give up the role first.",
+    "not_community_staff": "You don't have the rights for that in this community.",
+    "last_admin": "The community needs at least one admin.",
+    "xp_limit": "Moderators correct at most ±5,000 XP.",
+    "invalid_name": "That name isn't allowed (3–20 characters, no reserved words)."
   },
   "pvp": {
     "title": "Arena",
@@ -670,5 +712,48 @@
       "saved": "Draft saved and validated.",
       "published": "Published – applies to new fights and items right away."
     }
+  },
+  "account": {
+    "title": "Account",
+    "platforms": "Linked platforms",
+    "linkLater": "More platforms such as Twitch can be linked once they are supported (phase 2).",
+    "language": "Language",
+    "languageHint": "Stored in your account and applies on all devices.",
+    "locales": {
+      "de": "Deutsch",
+      "en": "English"
+    },
+    "saved": "Saved.",
+    "renamed": "Character renamed.",
+    "rename": {
+      "title": "Rename character",
+      "info": "Renaming {{ name }} costs {{ cost }} credits and is possible every 30 days.",
+      "locked": "Next rename from {{ date }}.",
+      "new": "New name",
+      "submit": "Rename ({{ cost }} credits)"
+    },
+    "data": {
+      "title": "Your data",
+      "exportInfo": "Download everything TBCA stores about your account (JSON).",
+      "export": "Download data",
+      "deleteTitle": "Delete account",
+      "deleteInfo": "Permanently deletes account, characters, items, team memberships and sessions. In other players' replays you appear as “Deleted player”. Type LÖSCHEN to confirm.",
+      "confirm": "Confirmation",
+      "delete": "Delete account permanently"
+    }
+  },
+  "community": {
+    "title": "Community",
+    "intro": "Admins assign roles; moderators correct XP (at most ±5,000 per action). Everything is written to the audit log.",
+    "manage": "Manage",
+    "members": "Members ({{ count }})",
+    "role": "Role",
+    "roles": {
+      "member": "Member",
+      "moderator": "Moderator",
+      "admin": "Admin"
+    },
+    "roleSaved": "Role saved.",
+    "xpSaved": "XP corrected."
   }
 }

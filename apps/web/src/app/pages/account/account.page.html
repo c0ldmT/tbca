@@ -1,0 +1,116 @@
+<ng-container *transloco="let t">
+  <header class="head">
+    <h1>{{ t('account.title') }}</h1>
+  </header>
+
+  @if (auth.state() === null) {
+    <section class="tbca-panel">
+      <a class="tbca-button" [href]="auth.loginUrl()">{{ t('auth.login') }}</a>
+    </section>
+  } @else if (auth.user(); as me) {
+    @if (error()) {
+      <p class="tbca-error" role="alert">
+        {{ t(error()!.startsWith('invalid_name') ? 'errors.invalid_name' : 'errors.' + error()) }}
+      </p>
+    }
+    @if (notice()) {
+      <p class="notice" role="status">{{ t(notice()!) }}</p>
+    }
+
+    <section class="tbca-panel" aria-labelledby="platforms-title">
+      <h2 id="platforms-title">{{ t('account.platforms') }}</h2>
+      <ul class="platforms">
+        @for (i of me.identities; track i.provider) {
+          <li>
+            <span class="provider">{{ i.provider }}</span>
+            <span>{{ i.displayName }}</span>
+          </li>
+        }
+      </ul>
+      <p class="tbca-hint">{{ t('account.linkLater') }}</p>
+    </section>
+
+    <section class="tbca-panel" aria-labelledby="lang-title">
+      <h2 id="lang-title">{{ t('account.language') }}</h2>
+      <p class="tbca-hint">{{ t('account.languageHint') }}</p>
+      <div class="row" role="group" [attr.aria-label]="t('account.language')">
+        @for (l of language.locales; track l) {
+          <button
+            type="button"
+            class="tbca-button tbca-button--ghost"
+            [attr.aria-pressed]="language.current() === l"
+            [disabled]="busy()"
+            (click)="setLocale(l)"
+          >
+            {{ t('account.locales.' + l) }}
+          </button>
+        }
+      </div>
+    </section>
+
+    @if (characters.state(); as c) {
+      <section class="tbca-panel" aria-labelledby="rename-title">
+        <h2 id="rename-title">{{ t('account.rename.title') }}</h2>
+        <p class="tbca-hint">
+          {{ t('account.rename.info', { name: c.name, cost: c.rename.cost }) }}
+        </p>
+        @if (renameLocked(); as at) {
+          <p class="tbca-hint">{{ t('account.rename.locked', { date: formatDate(at) }) }}</p>
+        } @else {
+          <form class="row" (submit)="$event.preventDefault(); rename()">
+            <label class="tbca-label">
+              {{ t('account.rename.new') }}
+              <input
+                class="tbca-input"
+                maxlength="20"
+                [value]="newName()"
+                (input)="newName.set($any($event.target).value)"
+              />
+            </label>
+            <button
+              class="tbca-button"
+              type="submit"
+              [disabled]="busy() || newName().trim().length < 3 || c.credits < c.rename.cost"
+            >
+              {{ t('account.rename.submit', { cost: c.rename.cost }) }}
+            </button>
+          </form>
+        }
+      </section>
+    }
+
+    <section class="tbca-panel" aria-labelledby="data-title">
+      <h2 id="data-title">{{ t('account.data.title') }}</h2>
+      <p class="tbca-hint">{{ t('account.data.exportInfo') }}</p>
+      <button
+        type="button"
+        class="tbca-button tbca-button--ghost"
+        [disabled]="busy()"
+        (click)="export()"
+      >
+        {{ t('account.data.export') }}
+      </button>
+
+      <h3>{{ t('account.data.deleteTitle') }}</h3>
+      <p class="tbca-hint">{{ t('account.data.deleteInfo') }}</p>
+      <form class="row" (submit)="$event.preventDefault(); remove()">
+        <label class="tbca-label">
+          {{ t('account.data.confirm') }}
+          <input
+            class="tbca-input"
+            autocomplete="off"
+            [value]="confirmation()"
+            (input)="confirmation.set($any($event.target).value)"
+          />
+        </label>
+        <button
+          class="tbca-button danger"
+          type="submit"
+          [disabled]="busy() || confirmation() !== 'LÖSCHEN'"
+        >
+          {{ t('account.data.delete') }}
+        </button>
+      </form>
+    </section>
+  }
+</ng-container>

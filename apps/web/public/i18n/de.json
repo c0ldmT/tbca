@@ -10,7 +10,8 @@
     "arena": "Arena",
     "shop": "Shop",
     "dungeon": "Dungeon",
-    "teams": "Teams"
+    "teams": "Teams",
+    "account": "Konto"
   },
   "auth": {
     "login": "Mit Discord anmelden",
@@ -65,13 +66,47 @@
     "winTeam": "{{ name }} gewinnen nach {{ rounds }} Runden"
   },
   "legal": {
+    "missing": "Die Betreiberangaben fehlen noch. Der Betreiber dieser Instanz trägt sie in public/legal.json ein.",
     "imprint": {
       "title": "Impressum",
-      "body": "Die Angaben nach § 5 DDG ergänzt der Betreiber dieser Instanz."
+      "provider": "Angaben gemäß § 5 DDG",
+      "body": "Verantwortlich für den Inhalt ist der oben genannte Betreiber. TBCA ist ein nicht-kommerzielles Community-Spiel."
     },
     "privacy": {
       "title": "Datenschutzerklärung",
-      "body": "TBCA speichert Plattform-IDs, Anzeigenamen und Aktivitätszähler, aber nie Nachrichteninhalte. Die vollständige Erklärung ergänzt der Betreiber dieser Instanz."
+      "controller": "Verantwortlich: {{ name }}, erreichbar unter {{ email }} (Anschrift im Impressum).",
+      "s1": {
+        "title": "Anmeldung über Discord",
+        "body": "Du meldest dich mit Discord an (OAuth, nur Berechtigung „identify“). Wir erhalten deine Discord-ID, deinen Anzeigenamen und die Adresse deines Avatars – keine E-Mail-Adresse und kein Passwort."
+      },
+      "s2": {
+        "title": "Spielstand",
+        "body": "Wir speichern, was zum Spielen nötig ist: Charaktere, Attribute, Taktiken, Items, Credits und deren Buchungen, Kämpfe mit Replays, Dungeon-Runs, Teams und Community-Mitgliedschaften samt Rollen."
+      },
+      "s3": {
+        "title": "Chat-Aktivität",
+        "body": "Für Aktivitäts-XP wertet der Discord-Bot Nachrichten nur im Arbeitsspeicher aus: Länge und ein gekürzter Hash zur Erkennung von Wiederholungen. Nachrichtentexte werden nie gespeichert. Der Hash liegt höchstens 10 Minuten im Zwischenspeicher; dauerhaft gespeichert werden nur Tageszähler (Anzahl Nachrichten, vergebene XP)."
+      },
+      "s4": {
+        "title": "Cookies und lokale Speicherung",
+        "body": "Wir setzen nur technisch notwendige Cookies: die Anmelde-Session (httpOnly) und während des Logins kurz einen Sicherheits-Cookie. Deine Sprachwahl liegt im Speicher deines Browsers. Es gibt kein Tracking, keine Analyse-Tools, keine Werbung und keine Schriftarten oder Skripte von Drittanbietern."
+      },
+      "s5": {
+        "title": "Server-Protokolle und Missbrauchsschutz",
+        "body": "Protokolle enthalten Methode, Pfad, Status und Zeit einer Anfrage – keine IP-Adressen, Cookies oder Inhalte. Zum Schutz vor Missbrauch zählen wir Anfragen je Session bzw. IP-Adresse für eine Minute im Zwischenspeicher."
+      },
+      "s6": {
+        "title": "Rechtsgrundlagen und Speicherdauer",
+        "body": "Die Verarbeitung dient der Bereitstellung des Spiels (Art. 6 Abs. 1 lit. b DSGVO) und dem Schutz vor Missbrauch (lit. f). Daten bleiben gespeichert, solange dein Konto besteht; Sessions laufen nach Inaktivität ab. Datenbank-Backups werden höchstens 14 Tage aufbewahrt."
+      },
+      "s7": {
+        "title": "Deine Rechte",
+        "body": "Unter „Konto“ kannst du alle gespeicherten Daten als Datei herunterladen und dein Konto selbst löschen. Dabei werden Charaktere, Items, Sessions und Mitgliedschaften entfernt; in Replays anderer Spieler erscheinst du danach als „Gelöschter Spieler“, Buchungen bleiben anonym erhalten. Du hast außerdem das Recht auf Berichtigung, Einschränkung, Widerspruch und Beschwerde bei einer Datenschutz-Aufsichtsbehörde."
+      },
+      "s8": {
+        "title": "Discord",
+        "body": "Für Login und Bot nutzen wir Discord (Discord Inc., USA). Dabei gelten zusätzlich die Datenschutzbestimmungen von Discord. Gehostet wird TBCA vom Betreiber dieser Instanz."
+      }
     }
   },
   "notFound": {
@@ -321,7 +356,14 @@
     "invalid_config": "Die Konfiguration ist ungültig:",
     "config_not_draft": "Nur Entwürfe lassen sich bearbeiten.",
     "config_not_found": "Version nicht gefunden.",
-    "bot_not_found": "Bot nicht gefunden."
+    "bot_not_found": "Bot nicht gefunden.",
+    "rename_cooldown": "Umbenennen ist erst nach Ablauf der 30 Tage wieder möglich.",
+    "confirmation_required": "Zur Bestätigung LÖSCHEN eingeben.",
+    "superadmin_delete": "Superadmins müssen die Rolle zuerst abgeben.",
+    "not_community_staff": "Dafür fehlen dir die Rechte in dieser Community.",
+    "last_admin": "Die Community braucht mindestens einen Admin.",
+    "xp_limit": "Moderatoren korrigieren höchstens ±5 000 XP.",
+    "invalid_name": "Dieser Name ist nicht erlaubt (3–20 Zeichen, keine reservierten Wörter)."
   },
   "pvp": {
     "title": "Arena",
@@ -670,5 +712,48 @@
       "saved": "Entwurf gespeichert und geprüft.",
       "published": "Veröffentlicht – gilt ab sofort für neue Kämpfe und Items."
     }
+  },
+  "account": {
+    "title": "Konto",
+    "platforms": "Verknüpfte Plattformen",
+    "linkLater": "Weitere Plattformen wie Twitch lassen sich verknüpfen, sobald sie unterstützt werden (Phase 2).",
+    "language": "Sprache",
+    "languageHint": "Wird im Konto gespeichert und gilt auf allen Geräten.",
+    "locales": {
+      "de": "Deutsch",
+      "en": "English"
+    },
+    "saved": "Gespeichert.",
+    "renamed": "Charakter umbenannt.",
+    "rename": {
+      "title": "Charakter umbenennen",
+      "info": "{{ name }} umbenennen kostet {{ cost }} Credits und ist alle 30 Tage möglich.",
+      "locked": "Nächste Umbenennung ab {{ date }}.",
+      "new": "Neuer Name",
+      "submit": "Umbenennen ({{ cost }} Credits)"
+    },
+    "data": {
+      "title": "Deine Daten",
+      "exportInfo": "Lade alles herunter, was TBCA zu deinem Konto speichert (JSON).",
+      "export": "Daten herunterladen",
+      "deleteTitle": "Konto löschen",
+      "deleteInfo": "Löscht Konto, Charaktere, Items, Teams-Mitgliedschaften und Sessions endgültig. In Replays anderer erscheinst du als „Gelöschter Spieler“. Zur Bestätigung LÖSCHEN eingeben.",
+      "confirm": "Bestätigung",
+      "delete": "Konto endgültig löschen"
+    }
+  },
+  "community": {
+    "title": "Community",
+    "intro": "Rollen vergeben Admins; Moderatoren korrigieren XP (höchstens ±5 000 je Eingriff). Alles steht im Audit-Log.",
+    "manage": "Verwalten",
+    "members": "Mitglieder ({{ count }})",
+    "role": "Rolle",
+    "roles": {
+      "member": "Mitglied",
+      "moderator": "Moderator",
+      "admin": "Admin"
+    },
+    "roleSaved": "Rolle gespeichert.",
+    "xpSaved": "XP korrigiert."
   }
 }

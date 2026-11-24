@@ -261,6 +261,11 @@
         @for (c of communities(); track c.id) {
           <li>
             <span>{{ c.name }}</span>
+            @if (c.role === 'admin' || c.role === 'moderator') {
+              <a class="tbca-button tbca-button--ghost" [routerLink]="['/communities', c.id]">{{
+                t('community.manage')
+              }}</a>
+            }
             @if (c.home) {
               <span class="chip">{{ t('teams.home') }}</span>
             } @else if (c.member) {

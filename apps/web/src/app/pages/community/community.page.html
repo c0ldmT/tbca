@@ -1,0 +1,84 @@
+<ng-container *transloco="let t">
+  <header class="head">
+    <a routerLink="/teams">← {{ t('app.teams') }}</a>
+    <h1>{{ community()?.name ?? t('community.title') }}</h1>
+    <p class="tbca-hint">{{ t('community.intro') }}</p>
+  </header>
+
+  @if (error()) {
+    <p class="tbca-error" role="alert">{{ t('errors.' + error()) }}</p>
+  }
+  @if (notice()) {
+    <p class="notice" role="status">{{ t(notice()!) }}</p>
+  }
+
+  <section class="tbca-panel" aria-labelledby="members-title">
+    <h2 id="members-title">{{ t('community.members', { count: members().length }) }}</h2>
+    <ul class="accounts">
+      @for (m of members(); track m.accountId) {
+        <li class="account">
+          <div class="account__who">
+            <strong>{{ m.character?.name ?? t('teams.noCharacter') }}</strong>
+            <span class="tbca-hint">
+              @if (m.character; as c) {
+                {{ t('classes.' + c.classId) }}, {{ t('character.level', { level: c.level }) }},
+                {{ c.xp }} XP
+              }
+              @if (m.home) {
+                · {{ t('teams.home') }}
+              }
+            </span>
+          </div>
+          <div class="row">
+            <label class="tbca-label">
+              {{ t('community.role') }}
+              <select
+                class="tbca-select"
+                [disabled]="!isAdmin() || busy()"
+                (change)="setRole(m, $any($event.target).value)"
+              >
+                @for (r of roles; track r) {
+                  <option [value]="r" [selected]="m.role === r">
+                    {{ t('community.roles.' + r) }}
+                  </option>
+                }
+              </select>
+            </label>
+            @if (m.character) {
+              <label class="tbca-label">
+                {{ t('admin.players.amount') }}
+                <input
+                  class="tbca-input narrow"
+                  type="number"
+                  min="-5000"
+                  max="5000"
+                  [value]="form(m.accountId).amount"
+                  (input)="patch(m.accountId, { amount: $any($event.target).value })"
+                />
+              </label>
+              <label class="tbca-label grow">
+                {{ t('admin.players.reason') }}
+                <input
+                  class="tbca-input"
+                  maxlength="200"
+                  [value]="form(m.accountId).reason"
+                  (input)="patch(m.accountId, { reason: $any($event.target).value })"
+                />
+              </label>
+              <button
+                type="button"
+                class="tbca-button tbca-button--ghost"
+                [disabled]="
+                  busy() || !form(m.accountId).amount || form(m.accountId).reason.length < 3
+                "
+                (click)="correct(m)"
+              >
+                {{ t('admin.players.xp') }}
+              </button>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  </section>
+</ng-container>

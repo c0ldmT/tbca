@@ -67,6 +67,14 @@ export class CharacterService {
     );
   }
 
+  async rename(name: string): Promise<CharacterResponse> {
+    const res = await this.read(
+      this.http.put<CharacterResponse>('/api/characters/me/name', { name }, this.csrf()),
+    );
+    this.state.set(res);
+    return res;
+  }
+
   inventory(): Promise<InventoryView> {
     return this.read(this.http.get<InventoryView>('/api/inventory'));
   }
